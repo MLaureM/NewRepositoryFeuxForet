@@ -40,7 +40,7 @@ import csv
 
 warnings.filterwarnings("ignore")
 
-df = pd.read_csv('Firesclean.csv',index_col=0)
+df = pd.read_csv('C:\Users\10344872\OneDrive - embecta\Documents\GitHub\StreamlitRepository\NewRepositoryFeuxForet',index_col=0)
 st.dataframe(df.head(5))
 
 st.sidebar.title("Sommaire")
