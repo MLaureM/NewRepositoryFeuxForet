@@ -8,10 +8,7 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-
-st.set_page_config(layout="wide")
 st.title('Prédiction feux de forêt USA 🔥')
-
 from collections import Counter
 from imblearn.ensemble import EasyEnsembleClassifier
 from imblearn.ensemble import BalancedRandomForestClassifier
@@ -19,7 +16,7 @@ from imblearn.ensemble import BalancedBaggingClassifier
 from imblearn.over_sampling import RandomOverSampler, SMOTE
 from imblearn.under_sampling import RandomUnderSampler,  ClusterCentroids
 from imblearn.metrics import classification_report_imbalanced, geometric_mean_score
-
+from xgboost import XGBClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import OneHotEncoder
@@ -27,6 +24,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import classification_report
+from sklearn.metrics import RocCurveDisplay
 from sklearn import svm
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
@@ -38,54 +36,9 @@ from sklearn import model_selection
 from sklearn import tree
 from sklearn.metrics import recall_score, f1_score, confusion_matrix, classification_report
 from sklearn.datasets import make_classification
-<<<<<<< HEAD
-from xgboost import XGBClassifier
-import xgboost as xgb
-import warnings
-import csv
-import dropbox
-from io import BytesIO
-warnings.filterwarnings("ignore")
+from sklearn.metrics import roc_curve, roc_auc_score
+from sklearn.metrics import precision_recall_curve, auc
 
-#from google.colab import drive
-#drive.mount('/content/drive')
-#pd.read_csv('/content/drive/My Drive/20082024 Projet Datascientest Feux de forêt USA')
-
-
-#import dropbox
-# Configuration de l'accès à Dropbox
-#DROPBOX_ACCESS_TOKEN = 'sl.B7knc246PEcajtdw4_VJQrM4DcPH7catk9JW5M5kOAIdqYZbKUUDRZOW7cQ4eElOOY8H1NlAc7qWLn9nuNa3TZSzKuxY9TqumGpH9xaTVpqdRzJ2YXBwvPE43G5-GJbA4MdokNTGQn2kga3uUhvVw-0'
-#dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
-# Fonction pour télécharger le fichier CSV depuis Dropbox
-#def download_csv_from_dropbox(dropbox_path, local_path):
-#    with open(local_path, "wb") as f:
-#        metadata, res = dbx.files_download(path=dropbox_path)
-#        f.write(res.content)
-# Chemin du fichier CSV sur Dropbox et chemin local temporaire
-#dropbox_path = '/Firesclean.csv'
-#local_path = 'temp.csv'
-# Télécharger le fichier CSV
-#download_csv_from_dropbox(dropbox_path, local_path)
-# Charger le fichier CSV dans un DataFrame
-#df1 = pd.read_csv(local_path)
-# Afficher le DataFrame avec Streamlit
-#st.title('Affichage du DataFrame')
-#st.write(df1)
-=======
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.metrics import classification_report
-from sklearn import model_selection
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
-from xgboost import XGBClassifier
-import sklearn.metrics as metrics
-from sklearn.metrics import RocCurveDisplay
-from sklearn.metrics import (precision_recall_curve,PrecisionRecallDisplay)
-from plotly.subplots import make_subplots
-import plotly.express as px
-import plotly.graph_objects as go
-import traceback
-import plotly.figure_factory as ff
->>>>>>> 783e27f7dee33c03dcea02f9b046238cbbee55de
 
 #Mise en forme couleur du fond de l'application
 page_bg_img="""<style>
@@ -112,11 +65,6 @@ def load_data():
   data=pd.read_csv('Firesclean.csv',index_col=0)
   return data
 df=load_data()
-<<<<<<< HEAD
-=======
-
-#Création "du plan" avec les pages streamlit
->>>>>>> 783e27f7dee33c03dcea02f9b046238cbbee55de
 st.sidebar.title("Sommaire")
 pages=["Contexte et présentation", "Preprocessing", "DataVizualization", "Prédiction causes de feux", "Prédiction classes de feux", "Conclusion"]
 page=st.sidebar.radio("Aller vers", pages)
@@ -124,7 +72,7 @@ page=st.sidebar.radio("Aller vers", pages)
 # Création contenu de la première page (page 0) avec le contexte et présentation du projet
 if page == pages[0] : 
   st.write("### Contexte et présentation du projet")
-  st.image("ImageFeu.jpg")
+  #st.image("ImageFeu.jpg")
   st.text("Le projet “Feux de Forêts” s’inscrit dans un contexte crucial de préservation de l’environnement et de sécurité publique.") 
   st.text("Ces forêts ont des conséquences dévastatrices sur les écosystèmes, les communautés locales et l’économie.")
 
@@ -302,40 +250,40 @@ if page == pages[2] :
     st.plotly_chart(fig5)
   
   st.subheader("4 - Répartition géographique")
-  if st.checkbox("Afficher graphiques répartition géographique") :
+  #if st.checkbox("Afficher graphiques répartition géographique") :
   #Réprésentation géographique des feux de classe E à G (> 300 acres) par taille (taille de la bulle) et par cause (couleur de la bulle)
-    Fires_bis = df
-    modif1 = ["Campfire", "Debris Burning", "Smoking", "Fireworks", "Children"]
-    modif2 = ["Powerline", "Railroad", "Structure", "Equipment Use"]
-    Fires_bis["STAT_CAUSE_DESCR"] = Fires_bis["STAT_CAUSE_DESCR"].replace("Missing/Undefined", "Miscellaneous")
-    Fires_bis["STAT_CAUSE_DESCR"] = Fires_bis["STAT_CAUSE_DESCR"].replace(modif1, "Origine humaine")
-    Fires_bis["STAT_CAUSE_DESCR"] = Fires_bis["STAT_CAUSE_DESCR"].replace(modif2, "Equipnt Infrastr")
-    Fires_bis["FIRE_SIZE_CLASS"] = Fires_bis["FIRE_SIZE_CLASS"].replace(["A", "B", "C"], "ABC")
-    Fires_bis["FIRE_SIZE_CLASS"] = Fires_bis["FIRE_SIZE_CLASS"].replace(["D", "E", "F"], "DEF")
-    FiresClasse = df[(Fires_bis['FIRE_SIZE_CLASS'] != "ABC")&(df['FIRE_SIZE_CLASS'] != "B")&(df['FIRE_SIZE_CLASS'] != "C")&(df['FIRE_SIZE_CLASS'] != "D")]
-    FiresClasse = df[(Fires_bis['FIRE_SIZE_CLASS'] != "ABC")]
-    fig6 = px.scatter_geo(FiresClasse,
-          lon = FiresClasse['LONGITUDE'],
-          lat = FiresClasse['LATITUDE'],
-          color="STAT_CAUSE_DESCR",
-              #facet_col="FIRE_YEAR", #pour créer un graph par année
+  Fires_bis = df
+  modif1 = ["Campfire", "Debris Burning", "Smoking", "Fireworks", "Children"]
+  modif2 = ["Powerline", "Railroad", "Structure", "Equipment Use"]
+  Fires_bis["STAT_CAUSE_DESCR"] = Fires_bis["STAT_CAUSE_DESCR"].replace("Missing/Undefined", "Miscellaneous")
+  Fires_bis["STAT_CAUSE_DESCR"] = Fires_bis["STAT_CAUSE_DESCR"].replace(modif1, "Origine humaine")
+  Fires_bis["STAT_CAUSE_DESCR"] = Fires_bis["STAT_CAUSE_DESCR"].replace(modif2, "Equipnt Infrastr")
+  Fires_bis["FIRE_SIZE_CLASS"] = Fires_bis["FIRE_SIZE_CLASS"].replace(["A", "B", "C"], "ABC")
+  Fires_bis["FIRE_SIZE_CLASS"] = Fires_bis["FIRE_SIZE_CLASS"].replace(["D", "E", "F"], "DEF")
+  FiresClasse = df[(Fires_bis['FIRE_SIZE_CLASS'] != "ABC")&(df['FIRE_SIZE_CLASS'] != "B")&(df['FIRE_SIZE_CLASS'] != "C")&(df['FIRE_SIZE_CLASS'] != "D")]
+  FiresClasse = df[(Fires_bis['FIRE_SIZE_CLASS'] != "ABC")]
+    #fig6 = px.scatter_geo(FiresClasse,
+    #      lon = FiresClasse['LONGITUDE'],
+    #      lat = FiresClasse['LATITUDE'],
+    #      color="STAT_CAUSE_DESCR",
+    #          #facet_col="FIRE_YEAR", #pour créer un graph par année
      #   #facet_col_wrap,# pour définir le nombre de graph par ligne
       #  #animation_frame="FIRE_YEAR",#pour créer une animation sur l'année
-          color_discrete_sequence=["blue","orange","red","grey","purple"],
-          labels={"STAT_CAUSE_DESCR": "Cause"},
-          hover_name="STATE", # column added to hover information
-          size=FiresClasse['FIRE_SIZE']/1000, # size of markers
-          projection='albers usa',
-          locationmode = 'USA-states',
-          width=800,
-          height=500,
-          title="Répartition géographique des feux par cause et taille",basemap_visible=True)
-    fig6.update_geos(resolution=50,lataxis_showgrid=True, lonaxis_showgrid=True,bgcolor='rgba(0,0,0,0)',framecolor='blue',showframe=True,showland=True,landcolor='#abebc6',projection_type="albers usa")
-    fig6.update_layout(title_text="Répartition géographique des feux par cause et taille", title_x = 0.3, title_y = 0.95,paper_bgcolor='rgba(0,0,0,0)',
-    plot_bgcolor='rgba(0,0,0,0)',width=1000, height=500,legend=dict(x=0.5, y=1.05,orientation="h",xanchor="center",yanchor="bottom",font=dict(
-            family="Arial",size=15,color="black")),margin=dict(l=50, r=50, t=100, b=50),titlefont=dict(size=20))       ,
-        
-    st.plotly_chart(fig6)
+    #      color_discrete_sequence=["blue","orange","red","grey","purple"],
+    #      labels={"STAT_CAUSE_DESCR": "Cause"},
+    #      hover_name="STATE", # column added to hover information
+    #      size=FiresClasse['FIRE_SIZE']/1000, # size of markers
+    #      projection='albers usa',
+    #      locationmode = 'USA-states',
+    #      width=800,
+    #      height=500,
+    #      title="Répartition géographique des feux par cause et taille",basemap_visible=True)
+    #fig6.update_geos(resolution=50,lataxis_showgrid=True, lonaxis_showgrid=True,bgcolor='rgba(0,0,0,0)',framecolor='blue',showframe=True,showland=True,landcolor='#e0efe7',projection_type="albers usa")
+    #fig6.update_layout(title_text="Répartition géographique des feux par cause et taille", title_x = 0.3, title_y = 0.95,paper_bgcolor='rgba(0,0,0,0)',
+    #plot_bgcolor='rgba(0,0,0,0)',width=1000, height=500,legend=dict(x=0.5, y=1.05,orientation="h",xanchor="center",yanchor="bottom",font=dict(
+    #        family="Arial",size=15,color="black")),margin=dict(l=50, r=50, t=100, b=50),titlefont=dict(size=20))      ,
+    
+    #st.plotly_chart(fig6)
   if st.checkbox("Afficher graphiques répartition géographique et année") :
     fig7 = px.scatter_geo(FiresClasse,
          lon = FiresClasse['LONGITUDE'],
@@ -352,7 +300,7 @@ if page == pages[2] :
           width=800,
           height=500,
           title="Répartition géographique des feux par cause, taille et année",basemap_visible=True)
-    fig7.update_geos(resolution=50,lataxis_showgrid=True, lonaxis_showgrid=True,bgcolor='rgba(0,0,0,0)',framecolor='blue',showframe=True,showland=True,landcolor='#abebc6',projection_type="albers usa")
+    fig7.update_geos(resolution=50,lataxis_showgrid=True, lonaxis_showgrid=True,bgcolor='rgba(0,0,0,0)',framecolor='blue',showframe=True,showland=True,landcolor='#e0efe7',projection_type="albers usa")
     fig7.update_layout(title_text="Répartition géographique des feux par cause et taille", title_x = 0.3, title_y = 0.95,paper_bgcolor='rgba(0,0,0,0)',
     plot_bgcolor='rgba(0,0,0,0)',width=1000, height=500,legend=dict(x=0.5, y=1.05,orientation="h",xanchor="center",yanchor="bottom",font=dict(
             family="Arial",size=15,color="black")),margin=dict(l=50, r=50, t=100, b=50),titlefont=dict(size=20))   
@@ -478,38 +426,33 @@ if page == pages[4] :
 
   # Analyse de la peformance des modèles
   def plot_perf(graph):
-    #if 'Matrice confusion' in graph:
-    #  st.subheader('Matrice confusion')       
-    #  cm = metrics.ConfusionMatrixDisplay(confusion_matrix(y_test,y_pred) , display_labels = [0, 1])
-    #  cm = confusion_matrix(y_test, y_pred)
-    #  disp_cm = ConfusionMatrixDisplay(confusion_matrix=cm,
-    #                          display_labels=[0, 1])
-    #  st.pyplot()
-
+  
     if 'Matrice confusion' in graph:
      cm = confusion_matrix(y_test, y_pred)
-     fig = px.imshow(cm,labels={"x": "Predicted Label", "y": "True Label"},width=400,height=400,text_auto=True,contrast_rescaling='minmax')
-     layout = go.Layout(title='Confusion Metrix')
-     st.plotly_chart(fig)
+     figML1 = px.imshow(cm,labels={"x": "Predicted Label", "y": "True Label"},width=400,height=400,text_auto=True)#color_continuous_scale='hot'
+     layout = go.Layout(title='Confusion Metrix',paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)')
+     figML1.update_layout(paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=1000, height=450,legend=dict(x=0.5, y=1.05,orientation="h",xanchor="center",yanchor="bottom",font=dict(
+            family="Arial",size=15,color="black")),margin=dict(l=100, r=100, t=100, b=100),titlefont=dict(size=20))
+     st.plotly_chart(figML1)      
+
 
     if 'Courbe ROC' in graph:
       st.subheader('Courbe ROC')
-      fig=plt.figure(figsize=(5,5))
-      gs = fig.add_gridspec(2, 2)
-      sns.set_context("paper")
-      sns.set(rc={"axes.facecolor": "#f5f5f5", "figure.facecolor": "#F4E4AA"})
-      model_disp = RocCurveDisplay.from_predictions(y_test, y_pred,alpha=0.1)
-      plt.legend(loc = 'lower right',fontsize=5)
-      plt.plot([0, 1], [0, 1],'k--')
-      plt.xlim([0, 1])
-      plt.ylim([0, 1])
-      plt.ylabel('True Positive Rate',fontsize=7)
-      plt.xlabel('False Positive Rate',fontsize=7)
-      plt.xticks(fontsize=6)
-      plt.yticks(fontsize=6)
-      #plt.title("Courbe ROC", fontsize=5)
-      st.pyplot()
 
+      precision, recall, thresholds = precision_recall_curve(y_test, y_pred)
+      fpr, tpr, thresholds = roc_curve(y_test, y_pred)
+      roc_auc = auc(fpr, tpr)
+
+      figML2 = px.area(x=fpr, y=tpr,title=f'(AUC={auc(fpr, tpr):.4f})',labels=dict(x='Taux faux positifs', y='Taux vrais positifs'))
+      figML2.add_shape(type='line', line=dict(dash='dash'),x0=0, x1=1, y0=0, y1=1)
+      figML2.update_yaxes(scaleanchor="x", scaleratio=1)
+      figML2.update_xaxes(constrain='domain')
+      figML2.update_layout(title_x = 0.4, title_y = 0.95,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=1000, height=450,legend=dict(x=0.5, y=0.93,orientation="h",xanchor="center",yanchor="bottom",font=dict(
+            family="Arial",size=15,color="black")),margin=dict(l=100, r=100, t=100, b=50),titlefont=dict(size=20))
+      st.plotly_chart(figML2)
+
+      
+  
     if 'Courbe Recall' in graph:
       st.subheader('Courbe Recall')
       precision, recall, _ = precision_recall_curve(y_test, y_pred)
