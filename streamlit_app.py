@@ -4,42 +4,41 @@ import requests
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
+st.set_page_config(layout="wide")
 st.title('Prédiction feux de forêt USA 🔥')
 
 from collections import Counter
 from imblearn.ensemble import EasyEnsembleClassifier
 from imblearn.ensemble import BalancedRandomForestClassifier
 from imblearn.ensemble import BalancedBaggingClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import LabelEncoder
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.metrics import f1_score
-from imblearn.over_sampling import RandomOverSampler
-from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
-from sklearn.impute import SimpleImputer
 from imblearn.over_sampling import RandomOverSampler, SMOTE
 from imblearn.under_sampling import RandomUnderSampler,  ClusterCentroids
 from imblearn.metrics import classification_report_imbalanced, geometric_mean_score
+
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
 from sklearn.metrics import classification_report
 from sklearn import svm
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import GridSearchCV, train_test_split, StratifiedKFold, cross_val_score
 from sklearn import model_selection
 from sklearn import tree
-from sklearn.metrics import recall_score
-from sklearn.model_selection import GridSearchCV, train_test_split, StratifiedKFold, cross_val_score
-from sklearn.neural_network import MLPClassifier
+from sklearn.metrics import recall_score, f1_score, confusion_matrix, classification_report
 from sklearn.datasets import make_classification
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.metrics import classification_report
-from sklearn import model_selection
-from sklearn.metrics import confusion_matrix
 from xgboost import XGBClassifier
+import xgboost as xgb
 import warnings
 import csv
 import dropbox
@@ -76,8 +75,6 @@ def load_data():
   data=pd.read_csv('Firesclean.csv',index_col=0)
   return data
 df=load_data()
-
-
 st.sidebar.title("Sommaire")
 pages=["Contexte et présentation du projet", "Jeu de données et preprocessing", "DataVizualization", "Prédiction causes de feux", "Prédiction classes de feux", "Conclusion"]
 page=st.sidebar.radio("Aller vers", pages)
@@ -94,15 +91,80 @@ if page == pages[1] :
     st.write("### Jeu de données et statistiques")
     st.dataframe(df.head(5))
     st.write("### statistiques")
-    st.dataframe(df.describe())
+    st.dataframe(df.describe(), use_container_width=True)
+  if st.checkbox("Afficher la dimension") :
+     st.write(f"La dimension : {df.shape}")
   if st.checkbox("Afficher les na") :
-    st.dataframe(df.isna().sum())
+    st.dataframe(df.isna().sum(), width=300, height=640)
 
 if page == pages[2] : 
   st.write("### DataVizualisation")
 
 if page == pages[3] : 
   st.write("### Prédiction causes de feux")
+  # Création de la variable DURATION en jours
+  # Suppression des variables non utiles au ML et utilisation de l'année de feu comme index
+  Drop_col_ML = ["FPA_ID", "DISCOVERY_DATE", "DISCOVERY_DOY", "CONT_DOY", "FIRE_SIZE"] #"OBJECTID", "FOD_ID", "DISCOVERY_TIME", "CONT_DATE", "CONT_TIME", "Shape", "STAT_CAUSE_DESCR"
+  Fires35 = df.dropna()
+  Fires_ML = Fires35.drop(Drop_col_ML, axis = 1)
+  # Suppression des lignes de "COUNTY", "AVG_TEMP [°C]", "AVG_PCP [mm]" ayant des données manquantes 
+  Fires_ML = Fires_ML.dropna(subset = ["STATE", "AVG_TEMP [°C]", "AVG_PCP [mm]"])
+  if st.checkbox("Afficher jeu données pour Machine learning") :
+    st.dataframe(Fires_ML.head(5))
+
+  st.divider()
+  # Distribution des causes de feux
+  #with st.container():
+  st.write("### Distribution initiale des causes de feux")
+  col1, col2= st.columns([1, 2])
+  with col1:
+      count = Fires_ML["STAT_CAUSE_DESCR"].value_counts()
+      color = ["blue", "magenta", "orange", "yellow", "magenta", "blue", "blue", "blue", "blue", "blue", "blue", "blue", "blue"]
+      fig, ax = plt.subplots(figsize=(15, 10)) 
+      ax.bar(count.index, count.values, color=color)
+      ax.set_ylabel("COUNT", fontsize=20)
+      ax.set_xticklabels(count.index, rotation=45, fontsize=20)
+      ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
+      st.pyplot(fig)
+  with col2:
+      st.write()
+  st.write("""
+  On observe un grand déséquilibre du jeu de données. Ce qui va rendre complexe la prédiction de l'analyse.
+  Les feux manquants, non-définis et autres représentent environ le quart des feux. Compte tenu de leur caractère inerte 
+  par rapport à l'objectif de l'étude, nous les supprimerons.
+  De même, compte tenu des diverses qui peuvent parfois se ressembler, nous procéderons à une fusion des causes qui peuvent 
+  être regroupés dans une cause parent.
+  """)
+
+  st.divider()
+  # Suppression des causes non-définies et fusion des autres
+  st.write("### XXXXXXXXXXXXXXXX")
+  st.write("Nous allons regrouper les feux en 3 catégories pour réduire le nombre de causes:")
+  st.write("**Humaine (20)** : debris burning (5), Campfire (4), Children (8), Smoking (3), Equipment Use (2), Railroad (6), Powerline (11), Structure(12), Fireworks (10)")
+  st.write("**Criminelle (21)** : Arson (7)")
+  st.write("**Naturelle (22)** : Ligthning (1)")
+
+  Fires_ML = Fires_ML[(Fires_ML.loc[:, "STAT_CAUSE_CODE"] != 9) & (Fires_ML.loc[:, "STAT_CAUSE_CODE"] != 13)]
+  Fires_ML["STAT_CAUSE_CODE"] = Fires_ML["STAT_CAUSE_CODE"].replace([3, 4, 5, 8, 2, 6, 10, 11, 12], 20)
+  Fires_ML["STAT_CAUSE_CODE"] = Fires_ML["STAT_CAUSE_CODE"].replace(7, 21)
+  Fires_ML["STAT_CAUSE_CODE"] = Fires_ML["STAT_CAUSE_CODE"].replace(1, 22)
+  Fires_ML["STAT_CAUSE_CODE"] = Fires_ML["STAT_CAUSE_CODE"].replace({20: 0, 21: 1, 22: 2})
+
+  st.divider()
+  # Nouvelle distribution des causes suite au regroupement des causes initiales
+  st.write("### Distribution des causes après regroupement")
+  col1, col2= st.columns([1, 2])
+  with col1:
+      count2 = Fires_ML["STAT_CAUSE_CODE"].value_counts()
+      color = ["blue", "orange", "yellow"]
+      fig, ax = plt.subplots(figsize=(15, 13))  # Adjust the figure size as needed
+      ax.bar(count.index, count2.values, color=color)
+      ax.set_ylabel("COUNT", fontsize=20)
+      ax.set_xticklabels([0, 1, 2], ["Humaine", "Criminelle", "Naturelle"], rotation = 30, fontsize=20)
+      ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
+      st.pyplot(fig)
+  with col2:
+      st.write()
 
 if page == pages[4] : 
   st.write("### Prédiction classes de feux")
