@@ -17,6 +17,7 @@ from imblearn.over_sampling import RandomOverSampler, SMOTE
 from imblearn.under_sampling import RandomUnderSampler,  ClusterCentroids
 from imblearn.metrics import classification_report_imbalanced, geometric_mean_score
 from xgboost import XGBClassifier
+import xgboost as xgb
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import OneHotEncoder
