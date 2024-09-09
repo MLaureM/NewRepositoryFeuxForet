@@ -9,7 +9,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-st.set_page_config(layout="wide")
 st.title('Prédiction feux de forêt USA 🔥')
 
 from collections import Counter
@@ -38,7 +37,6 @@ from sklearn import model_selection
 from sklearn import tree
 from sklearn.metrics import recall_score, f1_score, confusion_matrix, classification_report
 from sklearn.datasets import make_classification
-<<<<<<< HEAD
 from xgboost import XGBClassifier
 import xgboost as xgb
 import warnings
@@ -47,31 +45,6 @@ import dropbox
 from io import BytesIO
 warnings.filterwarnings("ignore")
 
-#from google.colab import drive
-#drive.mount('/content/drive')
-#pd.read_csv('/content/drive/My Drive/20082024 Projet Datascientest Feux de forêt USA')
-
-
-#import dropbox
-# Configuration de l'accès à Dropbox
-#DROPBOX_ACCESS_TOKEN = 'sl.B7knc246PEcajtdw4_VJQrM4DcPH7catk9JW5M5kOAIdqYZbKUUDRZOW7cQ4eElOOY8H1NlAc7qWLn9nuNa3TZSzKuxY9TqumGpH9xaTVpqdRzJ2YXBwvPE43G5-GJbA4MdokNTGQn2kga3uUhvVw-0'
-#dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
-# Fonction pour télécharger le fichier CSV depuis Dropbox
-#def download_csv_from_dropbox(dropbox_path, local_path):
-#    with open(local_path, "wb") as f:
-#        metadata, res = dbx.files_download(path=dropbox_path)
-#        f.write(res.content)
-# Chemin du fichier CSV sur Dropbox et chemin local temporaire
-#dropbox_path = '/Firesclean.csv'
-#local_path = 'temp.csv'
-# Télécharger le fichier CSV
-#download_csv_from_dropbox(dropbox_path, local_path)
-# Charger le fichier CSV dans un DataFrame
-#df1 = pd.read_csv(local_path)
-# Afficher le DataFrame avec Streamlit
-#st.title('Affichage du DataFrame')
-#st.write(df1)
-=======
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import classification_report
 from sklearn import model_selection
@@ -85,9 +58,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 import traceback
 import plotly.figure_factory as ff
->>>>>>> 783e27f7dee33c03dcea02f9b046238cbbee55de
 
-#Mise en forme couleur du fond de l'application
+# Mise en forme couleur du fond de l'application
 page_bg_img="""<style>
 [data-testid="stAppViewContainer"]{
 background-color: #F4E4AA;
@@ -112,11 +84,9 @@ def load_data():
   data=pd.read_csv('Firesclean.csv',index_col=0)
   return data
 df=load_data()
-<<<<<<< HEAD
-=======
 
 #Création "du plan" avec les pages streamlit
->>>>>>> 783e27f7dee33c03dcea02f9b046238cbbee55de
+
 st.sidebar.title("Sommaire")
 pages=["Contexte et présentation", "Preprocessing", "DataVizualization", "Prédiction causes de feux", "Prédiction classes de feux", "Conclusion"]
 page=st.sidebar.radio("Aller vers", pages)
@@ -124,7 +94,7 @@ page=st.sidebar.radio("Aller vers", pages)
 # Création contenu de la première page (page 0) avec le contexte et présentation du projet
 if page == pages[0] : 
   st.write("### Contexte et présentation du projet")
-  st.image("ImageFeu.jpg")
+  #st.image("ImageFeu.jpg")
   st.text("Le projet “Feux de Forêts” s’inscrit dans un contexte crucial de préservation de l’environnement et de sécurité publique.") 
   st.text("Ces forêts ont des conséquences dévastatrices sur les écosystèmes, les communautés locales et l’économie.")
 
@@ -392,16 +362,19 @@ if page == pages[3] :
   st.write("### Distribution initiale des causes de feux")
   col1, col2= st.columns([1, 2])
   with col1:
-      count = Fires_ML["STAT_CAUSE_DESCR"].value_counts()
-      color = ["blue", "magenta", "orange", "yellow", "magenta", "blue", "blue", "blue", "blue", "blue", "blue", "blue", "blue"]
-      fig, ax = plt.subplots(figsize=(15, 10)) 
+      count = Fires_ML["STAT_CAUSE_DESCR_1"].value_counts()
+      color = ["blue", "magenta", "orange", "yellow", "blue", "blue", "blue", "blue", "blue", "blue", "blue", "blue", "blue"]
+      fig, ax = plt.subplots(figsize=(20, 15), facecolor='none') 
       ax.bar(count.index, count.values, color=color)
-      ax.set_ylabel("COUNT", fontsize=20)
-      ax.set_xticklabels(count.index, rotation=45, fontsize=20)
+      ax.set_facecolor('none') 
+      fig.patch.set_alpha(0.0) 
+      ax.set_ylabel("COUNT", fontsize=40)
+      ax.set_xticks(range(len(count.index)))
+      ax.set_xticklabels(count.index, rotation=80, fontsize=40)
       ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
       st.pyplot(fig)
   with col2:
-      st.write()
+      st.write("")
   st.write("""
   On observe un grand déséquilibre du jeu de données. Ce qui va rendre complexe la prédiction de l'analyse.
   Les feux manquants, non-définis et autres représentent environ le quart des feux. Compte tenu de leur caractère inerte 
@@ -412,7 +385,7 @@ if page == pages[3] :
 
   st.divider()
   # Suppression des causes non-définies et fusion des autres
-  st.write("### XXXXXXXXXXXXXXXX")
+  st.write("### Suppression des causes non-définies et fusion des autres")
   st.write("Nous allons regrouper les feux en 3 catégories pour réduire le nombre de causes:")
   st.write("**Humaine (20)** : debris burning (5), Campfire (4), Children (8), Smoking (3), Equipment Use (2), Railroad (6), Powerline (11), Structure(12), Fireworks (10)")
   st.write("**Criminelle (21)** : Arson (7)")
@@ -426,19 +399,22 @@ if page == pages[3] :
 
   st.divider()
   # Nouvelle distribution des causes suite au regroupement des causes initiales
-  st.write("### Distribution des causes après regroupement")
+  st.write("### Distribution des causes apès regroupement")
   col1, col2= st.columns([1, 2])
   with col1:
       count2 = Fires_ML["STAT_CAUSE_CODE"].value_counts()
-      color = ["blue", "orange", "yellow"]
-      fig, ax = plt.subplots(figsize=(15, 13))  # Adjust the figure size as needed
-      ax.bar(count.index, count2.values, color=color)
-      ax.set_ylabel("COUNT", fontsize=20)
-      ax.set_xticklabels([0, 1, 2], ["Humaine", "Criminelle", "Naturelle"], rotation = 30, fontsize=20)
+      color = ["blue", "magenta", "yellow"]
+      fig, ax = plt.subplots(figsize=(20, 15), facecolor='none')  
+      ax.bar(count2.index, count2.values, color=color)
+      ax.set_facecolor('none') 
+      fig.patch.set_alpha(0.0) 
+      ax.set_ylabel("COUNT", fontsize=40)
+      ax.set_xticks([0, 1, 2])
+      ax.set_xticklabels(["Humaine", "Criminelle", "Naturelle"], rotation = 30, fontsize=40)
       ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
       st.pyplot(fig)
   with col2:
-      st.write()
+      st.write("")
 
 if page == pages[4] : 
   st.write("### Prédiction classes de feux")
