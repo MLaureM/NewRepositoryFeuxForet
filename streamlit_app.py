@@ -620,7 +620,7 @@ if page == pages[3] :
          #elif use_imp_model:
          #   model = models['XGBoost imp']
           else:
-              model = models['XGBoost']
+             model = models['XGBoost']
       elif model_choice == 'Logistic Regression':
           model = models['Logistic Regression']
       elif model_choice == 'Decision Tree':
