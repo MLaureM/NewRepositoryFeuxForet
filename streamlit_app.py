@@ -22,6 +22,7 @@ import xgboost as xgb
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import label_binarize
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
@@ -521,6 +522,21 @@ if page == pages[3] :
   #loaded_xgb_imp_model = joblib.load('xgb_imp_model.pkl', mmap_mode='r')
   #loaded_xgb_test_model = joblib.load('xgb_test_model.pkl')
 
+  # Dictionary to map model names to loaded models
+  models = {
+    'Logistic Regression': loaded_lr_model,
+    'Decision Tree': loaded_dt_model,
+    'Random Forest': loaded_rf_model,
+    'Random Forest OS': loaded_rf_ros_model,
+    'Random Forest Best': loaded_rf_best_model,
+    'XGBoost': loaded_xgb_model,
+    'XGBoost OS': loaded_xgb_ros_model
+  }
+
+  # Load precision-recall curve data
+  precision_recall_data = joblib.load('precision_recall_curve_data.joblib')
+
+
   # Load scaler
   ss = joblib.load('scaler.pkl')
 
@@ -581,7 +597,8 @@ if page == pages[3] :
           return "Unknown"  
       
   # Function to calculate metrics
-  def calculate_metrics(model, X_train, y_train, X_test, y_test):
+  def calculate_metrics(model_choice, X_train, y_train, X_test, y_test):
+      model = models[model_choice]
       y_pred_train = model.predict(X_train)
       y_pred_test = model.predict(X_test)
       cm = confusion_matrix(y_test, y_pred_test)
@@ -596,24 +613,25 @@ if page == pages[3] :
   def train_model(model_choice, apply_oversampling=False, use_best_model=False, use_imp_model=False):
       if model_choice == 'Random Forest':
           if apply_oversampling:
-             y_pred = y_pred_rf_ros
+             model = models['Random Forest OS']
           elif use_best_model:
-             y_pred = y_pred_rf_best
+             model = models['Random Forest Best']
           else:
-             y_pred = y_pred_rf
+             model = models['Random Forest']
       elif model_choice == 'XGBoost':
           if apply_oversampling:
-             y_pred = y_pred_xgb_ros
-          #elif use_imp_model:
-          #    y_pred = y_pred_xgb_imp
+             model = models['XGBoost OS']
+         #elif use_imp_model:
+         #   model = models['XGBoost imp']
           else:
-              y_pred = y_pred_xgb
+              model = models['XGBoost']
       elif model_choice == 'Logistic Regression':
-         y_pred = y_pred_lr
+          model = models['Logistic Regression']
       elif model_choice == 'Decision Tree':
-          y_pred = y_pred_dt
+          model = models['Decision Tree']
       else:
           raise ValueError("Invalid model choice")
+      y_pred = model.predict(X_test)
       return y_pred
   
   # Execution button
@@ -636,7 +654,7 @@ if page == pages[3] :
              st.write(metric['Matrice Confusion'])
          elif metric_choice == "Courbe Precision-Recall":
              st.write("Courbe Precision-Recall:")
-             precision, recall, _ = precision_recall_curve(y_test, model.predict_proba(X_test)[:, 1])
+             precision, recall = precision_recall_data
              plt.figure()
              plt.plot(recall, precision, marker='.')
              plt.xlabel('Recall')
@@ -649,24 +667,6 @@ if page == pages[3] :
          st.write(f"Cause prédit: {map_prediction_to_label(predicted_class)}")
       else:
          st.write("Séletionne un modèle")
-
-  # prediction
-  y_pred_lr= loaded_lr_model.predict(X_test_sc)
-  y_pred_dt= loaded_dt_model.predict(X_test)
-  y_pred_rf= loaded_rf_model.predict(X_test)
-  y_pred_rf_ros= loaded_rf_ros_model.predict(X_test)
-  y_pred_rf_best= loaded_rf_best_model.predict(X_test)
-  #y_pred_gb= loaded_gb_model.predict(X_test)
-  #y_pred_gb_ros= loaded_gb_ros_model.predict(X_test)
-  #y_pred_gb_best= loaded_gb_best_model.predict(X_test)
-  #y_pred_knn= loaded_knn_model.predict(X_test)
-  #y_pred_knn_ros= loaded_knn_ros_model.predict(X_test)
-  y_pred_xgb= loaded_xgb_model.predict(X_test)
-  y_pred_xgb_ros= loaded_xgb_ros_model.predict(X_test)
-  #y_pred_xgb_imp= loaded_xgb_imp_model.predict(X_test_2)
-  #y_pred_xgb_test= loaded_xgb_test_model.predict(X_test)
-  
-       
   # Predict button
   #if st.sidebar.button('Predict'):
  
