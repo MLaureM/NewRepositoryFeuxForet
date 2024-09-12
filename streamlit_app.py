@@ -1,49 +1,49 @@
+# Streamlit
 import streamlit as st
 st.set_page_config(layout="wide",)
+st.title('Prédiction feux de forêt USA 🔥')
+# Data Manipulation
 import pandas as pd
+import numpy as np
 import requests
+# Visualization
 import seaborn as sns
 import matplotlib.pyplot as plt
-import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-import joblib
 from plotly.subplots import make_subplots
-st.title('Prédiction feux de forêt USA 🔥')
+# Utility
+import joblib
 from collections import Counter
-from imblearn.ensemble import EasyEnsembleClassifier
-from imblearn.ensemble import BalancedRandomForestClassifier
-from imblearn.ensemble import BalancedBaggingClassifier
+from itertools import cycle
+# Imbalanced Learning
+from imblearn.ensemble import EasyEnsembleClassifier, BalancedRandomForestClassifier, BalancedBaggingClassifier
 from imblearn.over_sampling import RandomOverSampler, SMOTE
-from imblearn.under_sampling import RandomUnderSampler,  ClusterCentroids
+from imblearn.under_sampling import RandomUnderSampler, ClusterCentroids
 from imblearn.metrics import classification_report_imbalanced, geometric_mean_score
+# XGBoost
 from xgboost import XGBClassifier
 import xgboost as xgb
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import LabelEncoder
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.preprocessing import label_binarize
+# Scikit-Learn Preprocessing
+from sklearn.preprocessing import StandardScaler, LabelEncoder, OneHotEncoder, label_binarize
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
-from sklearn.metrics import RocCurveDisplay
-from sklearn import svm
+# Scikit-Learn Models
+from sklearn import svm, model_selection, tree
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.neural_network import MLPClassifier
+# Scikit-Learn Model Selection
 from sklearn.model_selection import GridSearchCV, train_test_split, StratifiedKFold, cross_val_score
-from sklearn import model_selection
-from sklearn import tree
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, ConfusionMatrixDisplay, classification_report
+# Scikit-Learn Metrics
+from sklearn.metrics import (
+    accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, ConfusionMatrixDisplay, 
+    classification_report, roc_curve, roc_auc_score, auc, PrecisionRecallDisplay, average_precision_score, 
+    precision_recall_curve, RocCurveDisplay)
 from sklearn.datasets import make_classification
-from sklearn.metrics import roc_curve, roc_auc_score
-from sklearn.metrics import auc, roc_auc_score
-from sklearn.metrics import PrecisionRecallDisplay, precision_recall_curve
 from sklearn.utils import class_weight
-from itertools import cycle
-
 
 # Mise en forme couleur du fond de l'application
 page_bg_img="""<style>
@@ -430,7 +430,7 @@ if page == pages[3] :
   # Pondération des labels 
   classes_weights = class_weight.compute_sample_weight(class_weight='balanced', y=y_train)
   #classes_weights_imp = class_weight.compute_sample_weight(class_weight='balanced', y=y_train_2)
-  #imp_col_xgb = ["LATITUDE", "LONGITUDE", "FIRE_YEAR", "DURATION", "AVG_TEMP", "AVG_PCP", "SIN_WEEK", "COS_WEEK", "SIN_DAY","FIRE_SIZE_CLASS_A"]
+  imp_col_xgb = ["LATITUDE", "LONGITUDE", "FIRE_YEAR", "DURATION", "AVG_TEMP", "AVG_PCP", "SIN_WEEK", "COS_WEEK", "SIN_DAY","FIRE_SIZE_CLASS_A"]
   #X_train_2 = X_train_final[imp_col_xgb]
   #X_test_2 = X_test_final[imp_col_xgb]
 
@@ -532,14 +532,10 @@ if page == pages[3] :
     'XGBoost': loaded_xgb_model,
     'XGBoost OS': loaded_xgb_ros_model
   }
-
   # Load precision-recall curve data
-  precision_recall_data = joblib.load('precision_recall_curve_data.joblib')
-
-
+  #precision_recall_data = joblib.load('precision_recall_curve_pkl', mmap_mode='r')
   # Load scaler
   ss = joblib.load('scaler.pkl')
-
   # Load metrics
   metrics = joblib.load('metrics.joblib')
 
@@ -634,6 +630,12 @@ if page == pages[3] :
       y_pred = model.predict(X_test)
       return y_pred
   
+  # Function to plot Precision-recall-courve
+  def load_and_display_plot(filename):
+      ax = joblib.load(filename)
+      fig = ax.get_figure()
+      st.pyplot(fig)
+
   # Execution button
   execution_button = st.sidebar.button("Execution")
   if execution_button:
@@ -654,13 +656,8 @@ if page == pages[3] :
              st.write(metric['Matrice Confusion'])
          elif metric_choice == "Courbe Precision-Recall":
              st.write("Courbe Precision-Recall:")
-             precision, recall = precision_recall_data
-             plt.figure()
-             plt.plot(recall, precision, marker='.')
-             plt.xlabel('Recall')
-             plt.ylabel('Precision')
-             st.pyplot(plt)
-
+             load_and_display_plot('precision_recall_curve.pkl')
+             
          # Display prediction 
          st.write("Prédiction Cause de feux forêt:")
          predicted_class = y_pred[0]  
@@ -669,7 +666,8 @@ if page == pages[3] :
          st.write("Séletionne un modèle")
   # Predict button
   #if st.sidebar.button('Predict'):
- 
+  
+
 
 if page == pages[4] : 
   st.write("### Prédiction classes de feux")
