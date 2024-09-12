@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
+import joblib
 from plotly.subplots import make_subplots
 st.title('Prédiction feux de forêt USA 🔥')
 from collections import Counter
@@ -24,7 +25,6 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
-from sklearn.metrics import classification_report
 from sklearn.metrics import RocCurveDisplay
 from sklearn import svm
 from sklearn.svm import SVC
@@ -35,10 +35,14 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import GridSearchCV, train_test_split, StratifiedKFold, cross_val_score
 from sklearn import model_selection
 from sklearn import tree
-from sklearn.metrics import recall_score, f1_score, confusion_matrix, classification_report
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, ConfusionMatrixDisplay, classification_report
 from sklearn.datasets import make_classification
 from sklearn.metrics import roc_curve, roc_auc_score
-from sklearn.metrics import precision_recall_curve, auc
+from sklearn.metrics import auc, roc_auc_score
+from sklearn.metrics import PrecisionRecallDisplay, precision_recall_curve
+from sklearn.utils import class_weight
+from itertools import cycle
+
 
 # Mise en forme couleur du fond de l'application
 page_bg_img="""<style>
@@ -323,17 +327,120 @@ if page == pages[2] :
     plt.title("Heatmap of all the selected features of data set", fontsize = 15)
     st.pyplot()
 
+
 if page == pages[3] : 
   st.write("### Prédiction causes de feux")
  
   # Suppression des variables non utiles au ML et utilisation de l'année de feu comme index
-  Drop_col_ML = ["FPA_ID","DISCOVERY_DATE","DISCOVERY_DOY","DISCOVERY_TIME","CONT_DOY","CONT_DATE","CONT_TIME","FIRE_SIZE","STAT_CAUSE_DESCR","COUNTY","FIPS_NAME"] 
-  Fires35 = df.dropna()
-  Fires_ML = Fires35.drop(Drop_col_ML, axis = 1)
-  # Suppression des lignes de "COUNTY", "AVG_TEMP [°C]", "AVG_PCP [mm]" ayant des données manquantes 
-  Fires_ML = Fires_ML.dropna(subset = ["STATE", "AVG_TEMP [°C]", "AVG_PCP [mm]"])
+  Drop_col_ML = ["FPA_ID","DISCOVERY_DATE","DISCOVERY_DOY","DISCOVERY_TIME","CONT_DOY","CONT_DATE","CONT_TIME","FIRE_SIZE","STAT_CAUSE_DESCR","FIPS_NAME","FIPS_CODE","COUNTY","STATE",'NWCG_REPORTING_UNIT_NAME']
+  Fires_ML = df.drop(Drop_col_ML, axis = 1)
+  Fires_ML = Fires_ML.rename(columns={"AVG_TEMP [°C]": "AVG_TEMP", "AVG_PCP [mm]": "AVG_PCP"})
+  # Suppression des lignes de "AVG_TEMP [°C]", "AVG_PCP [mm]" ayant des données manquantes 
+  Fires_ML = Fires_ML.dropna(subset=["AVG_TEMP", "AVG_PCP"])
+
+  # Transformation
+  Fires_ML["DAY_OF_WEEK_DISCOVERY"] = Fires_ML["DAY_OF_WEEK_DISCOVERY"].replace({0:1, 1:2, 2:3, 3:4, 4:5, 5:6, 6:7})
+  Fires_ML.sort_values(["FIRE_YEAR", "MONTH_DISCOVERY", "DISCOVERY_WEEK", "DAY_OF_WEEK_DISCOVERY"], inplace = True)
+  Fires_ML2= Fires_ML.drop("STAT_CAUSE_DESCR_1", axis=1)
+  
+  feats, target = Fires_ML2.drop("STAT_CAUSE_CODE", axis = 1), Fires_ML2["STAT_CAUSE_CODE"]
+  # Function to dummy out our X dataset
+  def create_X_dummies(X):
+      X = X.merge(pd.get_dummies(X['FIRE_SIZE_CLASS'], drop_first = False, prefix = 'FIRE_SIZE_CLASS'),
+                  how = 'inner',
+                  left_index = True,
+                  right_index = True)
+      X.drop(columns = ['FIRE_SIZE_CLASS'], inplace= True) #'NWCG_REPORTING_AGENCY', 'OWNER_CODE','STATE'
+      return X
+  feats = create_X_dummies(feats)
+
+  # Data split of features and target  
+  X_train, X_test, y_train, y_test = train_test_split(feats, target, test_size = 0.25, shuffle = False)
+
+  # Séparation des variables suivant leur type
+  circular_cols = ["MONTH_DISCOVERY", "DISCOVERY_WEEK", "DAY_OF_WEEK_DISCOVERY"]
+  num_cols = feats.drop(circular_cols, axis = 1).columns
+  num_train, circular_train = X_train[num_cols], X_train[circular_cols]
+  num_test, circular_test = X_test[num_cols], X_test[circular_cols]
+  # Encodage des variables temporelles cycliques
+  circular_train["SIN_MONTH"] = circular_train["MONTH_DISCOVERY"].apply(lambda m: np.sin(2*np.pi*m/12))
+  circular_train["COS_MONTH"] = circular_train["MONTH_DISCOVERY"].apply(lambda m: np.cos(2*np.pi*m/12))
+  circular_train["SIN_WEEK"] = circular_train["DISCOVERY_WEEK"].apply(lambda w: np.sin(2*np.pi*w/53))
+  circular_train["COS_WEEK"] = circular_train["DISCOVERY_WEEK"].apply(lambda w: np.cos(2*np.pi*w/53))
+  circular_train["SIN_DAY"] = circular_train["DAY_OF_WEEK_DISCOVERY"].apply(lambda d: np.sin(2*np.pi*d/7))
+  circular_train["COS_DAY"] = circular_train["DAY_OF_WEEK_DISCOVERY"].apply(lambda d: np.cos(2*np.pi*d/7))  
+  circular_test["SIN_MONTH"] = circular_test["MONTH_DISCOVERY"].apply(lambda m: np.sin(2*np.pi*m/12))
+  circular_test["COS_MONTH"] = circular_test["MONTH_DISCOVERY"].apply(lambda m: np.cos(2*np.pi*m/12))
+  circular_test["SIN_WEEK"] = circular_test["DISCOVERY_WEEK"].apply(lambda w: np.sin(2*np.pi*w/53))
+  circular_test["COS_WEEK"] = circular_test["DISCOVERY_WEEK"].apply(lambda w: np.cos(2*np.pi*w/53))
+  circular_test["SIN_DAY"] = circular_test["DAY_OF_WEEK_DISCOVERY"].apply(lambda d: np.sin(2*np.pi*d/7))
+  circular_test["COS_DAY"] = circular_test["DAY_OF_WEEK_DISCOVERY"].apply(lambda d: np.cos(2*np.pi*d/7))
+  # Suppression des variables cycliques sources pour éviter le doublon d'informations
+  circular_train = circular_train.drop(circular_cols, axis = 1).reset_index(drop = True)
+  circular_test = circular_test.drop(circular_cols, axis = 1).reset_index(drop = True)
+  # Récupération des noms de colonnes des nouvelles variables
+  circular_cols = circular_train.columns
+
+  # Function to impute missing values
+  def num_imputer(num_train_data, num_test_data):
+    # Initialisation des variables
+    CLASS = ["FIRE_SIZE_CLASS_A", "FIRE_SIZE_CLASS_B", "FIRE_SIZE_CLASS_C", "FIRE_SIZE_CLASS_D", "FIRE_SIZE_CLASS_E", 
+             "FIRE_SIZE_CLASS_F", "FIRE_SIZE_CLASS_G"]
+    num_train_data[CLASS] = num_train_data[CLASS].astype(int)
+    num_test_data[CLASS] = num_test_data[CLASS].astype(int)
+    # Instanciation de la méthode SimpleImputer
+    numeric_imputer = SimpleImputer(strategy="median")
+
+    sub_col = ["DURATION"] + CLASS
+    sub_num_train_data = num_train_data[sub_col].copy()
+    sub_num_test_data = num_test_data[sub_col].copy()
+      
+    for fire_class in CLASS:
+        # Impute training data
+        train_mask = sub_num_train_data[fire_class] == 1
+        if train_mask.any():
+            num_train_imputed = numeric_imputer.fit_transform(sub_num_train_data[train_mask])
+            sub_num_train_data.loc[train_mask, "DURATION"] = num_train_imputed[:, 0]
+        
+        # Impute test data
+        test_mask = sub_num_test_data[fire_class] == 1
+        if test_mask.any():
+            num_test_imputed = numeric_imputer.transform(sub_num_test_data[test_mask])
+            sub_num_test_data.loc[test_mask, "DURATION"] = num_test_imputed[:, 0]
+
+    num_train_data["DURATION"] = sub_num_train_data["DURATION"]
+    num_test_data["DURATION"] = sub_num_test_data["DURATION"]    
+    return num_train_data, num_test_data    
+
+  # Gestion des valeurs manquantes des variables numériques
+  num_train_imputed, num_test_imputed = num_imputer(num_train, num_test)
+  num_train_imputed, num_test_imputed = num_train_imputed.reset_index(drop = True), num_test_imputed.reset_index(drop = True)
+  X_train = pd.concat([num_train_imputed, circular_train], axis = 1)
+  X_test = pd.concat([num_test_imputed, circular_test], axis = 1)
+  X_total = pd.concat([X_train, X_test], axis = 0)
+  y_total = pd.concat([y_train, y_test], axis = 0)
+ 
+  # Initialize the scaler
+  ss = StandardScaler()
+  # Scale the training and test data
+  X_train_sc = ss.fit_transform(X_train)
+  X_test_sc = ss.transform(X_test)
+  
+  # Pondération des labels 
+  classes_weights = class_weight.compute_sample_weight(class_weight='balanced', y=y_train)
+  #classes_weights_imp = class_weight.compute_sample_weight(class_weight='balanced', y=y_train_2)
+  #imp_col_xgb = ["LATITUDE", "LONGITUDE", "FIRE_YEAR", "DURATION", "AVG_TEMP", "AVG_PCP", "SIN_WEEK", "COS_WEEK", "SIN_DAY","FIRE_SIZE_CLASS_A"]
+  #X_train_2 = X_train_final[imp_col_xgb]
+  #X_test_2 = X_test_final[imp_col_xgb]
+
+  # Combine back into a single DataFrame
+  #X_train['target'] = y_train
+  #X_test['target'] = y_test
+  Fires_ML3 = pd.concat([X_train, X_test])
+  #Fires_ML3 = Fires_ML3.drop("target", axis=1)
+
   if st.checkbox("Afficher jeu données pour Machine learning") :
-    st.dataframe(Fires_ML.head(5))
+    st.dataframe(Fires_ML3.head(5))
 
   st.divider()
   # Distribution des causes de feux
@@ -378,7 +485,7 @@ if page == pages[3] :
 
   st.divider()
   # Nouvelle distribution des causes suite au regroupement des causes initiales
-  st.write("### Distribution des causes apès regroupement")
+  st.write("### Distribution des causes après regroupement")
   col1, col2= st.columns([1, 2])
   with col1:
       count2 = Fires_ML["STAT_CAUSE_CODE"].value_counts()
@@ -394,6 +501,175 @@ if page == pages[3] :
       st.pyplot(fig)
   with col2:
       st.write("")
+
+  st.divider()
+  st.write("### Modèle Selection")
+
+  # Load models
+  loaded_lr_model = joblib.load('lr_model.pkl', mmap_mode='r')
+  loaded_dt_model = joblib.load('dt_model.pkl', mmap_mode='r')
+  loaded_rf_model = joblib.load('rf_model.pkl', mmap_mode='r')
+  loaded_rf_ros_model = joblib.load('rf_ros_model.pkl', mmap_mode='r')
+  loaded_rf_best_model = joblib.load('rf_best_model.pkl', mmap_mode='r')
+  #loaded_gb_model = joblib.load('gb_model.pkl')
+  #loaded_gb_ros_model = joblib.load('gb_ros_model.pkl')
+  #loaded_gb_best_model = joblib.load('gb_best_model.pkl')
+  #loaded_knn_model = joblib.load('knn_model.pkl')
+  #loaded_knn_ros_model = joblib.load('knn_ros_model.pkl')
+  loaded_xgb_model = joblib.load('xgb_model.pkl', mmap_mode='r')
+  loaded_xgb_ros_model = joblib.load('xgb_ros_model.pkl', mmap_mode='r')
+  #loaded_xgb_imp_model = joblib.load('xgb_imp_model.pkl', mmap_mode='r')
+  #loaded_xgb_test_model = joblib.load('xgb_test_model.pkl')
+
+  # Load scaler
+  ss = joblib.load('scaler.pkl')
+
+  # Load metrics
+  metrics = joblib.load('metrics.joblib')
+
+  # Main Model choice dropdown
+  model_choice = st.selectbox("Modèle Selection:", ['Random Forest', 'XGBoost','Decision Tree','Logistic Regression']) 
+
+  # Checkboxes for model options
+  apply_oversampling = st.checkbox("Appliquer Oversampling")
+  use_best_model = st.checkbox("Appliquer Best Parametrès")
+  use_imp_model = st.checkbox("Appliquer Features Importance")
+
+  # Ensure only one checkbox is selected
+  if sum([apply_oversampling, use_best_model, use_imp_model]) > 1:
+     st.error("Choix unique: Appliquer Oversampling, Appliquer Best Parametrès, ou Appliquer Features Importance")
+
+  # Sidebar elements
+  st.sidebar.header("Options")
+  metric_choice = st.sidebar.selectbox("Choix graphique",["Matric Confusion ", "Courbe Precision-Recall"])
+  
+  # Display hyperparameters based on selected model
+  if not use_best_model:
+    st.sidebar.header("Hyperparameters")
+  
+    if model_choice == 'Logistic Regression':
+      st.sidebar.header("Logistic Regression")
+      max_iter = st.sidebar.slider('Max Iterations', min_value=100, max_value=1000, value=500)
+
+    elif model_choice == 'Decision Tree':
+      st.sidebar.header("Decision Tree")
+      # No special parameters for Decision Tree
+
+    elif model_choice == 'Random Forest':
+      st.sidebar.header("Random Forest")
+      n_estimators = st.sidebar.slider('Number of Estimators', min_value=10, max_value=100, value=50)
+      min_samples_leaf = st.sidebar.slider('Min Samples Leaf', min_value=1, max_value=5, value=3)
+      max_depth = st.sidebar.slider('Max Depth', min_value=1, max_value=5, value=3)
+      min_samples_split = st.sidebar.slider('Min Samples Split', min_value=1000, max_value=20000, value=10000)
+      max_features = st.sidebar.selectbox('Max Features', ["sqrt", "log2"])
+
+    elif model_choice == 'XGBoost':
+      st.sidebar.header("XGBoost")
+      tree_method = st.sidebar.selectbox('Tree Method', ["approx"])
+      objective = st.sidebar.selectbox('Objective', ["multi:softprob"])
+      n_estimators_xgb = st.sidebar.slider('Number of Estimators', min_value=50, max_value=500, step=50, value=100)
+  
+  # Function to map predicted class to label
+  def map_prediction_to_label(prediction):
+      if prediction == 1:
+          return "Humaine"
+      elif prediction == 2:
+         return "Criminelle"
+      elif prediction == 3:
+         return "Naturelle"
+      else:
+          return "Unknown"  
+      
+  # Function to calculate metrics
+  def calculate_metrics(model, X_train, y_train, X_test, y_test):
+      y_pred_train = model.predict(X_train)
+      y_pred_test = model.predict(X_test)
+      cm = confusion_matrix(y_test, y_pred_test)
+      train_accuracy = accuracy_score(y_train, y_pred_train)
+      test_accuracy = accuracy_score(y_test, y_pred_test)
+      precision = precision_score(y_test, y_pred_test, average='weighted')
+      recall = recall_score(y_test, y_pred_test, average='weighted')
+      f1 = f1_score(y_test, y_pred_test, average='weighted')
+      return cm, train_accuracy, test_accuracy, precision, recall, f1
+
+  # Function to train model based on selected options
+  def train_model(model_choice, apply_oversampling=False, use_best_model=False, use_imp_model=False):
+      if model_choice == 'Random Forest':
+          if apply_oversampling:
+             y_pred = y_pred_rf_ros
+          elif use_best_model:
+             y_pred = y_pred_rf_best
+          else:
+             y_pred = y_pred_rf
+      elif model_choice == 'XGBoost':
+          if apply_oversampling:
+             y_pred = y_pred_xgb_ros
+          #elif use_imp_model:
+          #    y_pred = y_pred_xgb_imp
+          else:
+              y_pred = y_pred_xgb
+      elif model_choice == 'Logistic Regression':
+         y_pred = y_pred_lr
+      elif model_choice == 'Decision Tree':
+          y_pred = y_pred_dt
+      else:
+          raise ValueError("Invalid model choice")
+      return y_pred
+  
+  # Execution button
+  execution_button = st.sidebar.button("Execution")
+  if execution_button:
+      if model_choice:
+         y_pred = train_model(model_choice, apply_oversampling, use_best_model, use_imp_model)
+         cm, train_accuracy, test_accuracy, precision, recall, f1 = calculate_metrics(model_choice, X_train, y_train, X_test, y_test)
+         metric = metrics[model_choice]
+
+         st.write(f"Metrics for {model_choice}:")
+         st.write(f"Train Accuracy: {metric['train_accuracy']}")
+         st.write(f"Test Accuracy: {metric['test_accuracy']}")
+         st.write(f"Precision: {metric['precision']}")
+         st.write(f"Recall: {metric['recall']}")
+         st.write(f"F1 Score: {metric['f1_score']}")
+
+         if metric_choice == "Matrice Confusion":
+             st.write("Matrice Confusion:")
+             st.write(metric['Matrice Confusion'])
+         elif metric_choice == "Courbe Precision-Recall":
+             st.write("Courbe Precision-Recall:")
+             precision, recall, _ = precision_recall_curve(y_test, model.predict_proba(X_test)[:, 1])
+             plt.figure()
+             plt.plot(recall, precision, marker='.')
+             plt.xlabel('Recall')
+             plt.ylabel('Precision')
+             st.pyplot(plt)
+
+         # Display prediction 
+         st.write("Prédiction Cause de feux forêt:")
+         predicted_class = y_pred[0]  
+         st.write(f"Cause prédit: {map_prediction_to_label(predicted_class)}")
+      else:
+         st.write("Séletionne un modèle")
+
+  # prediction
+  y_pred_lr= loaded_lr_model.predict(X_test_sc)
+  y_pred_dt= loaded_dt_model.predict(X_test)
+  y_pred_rf= loaded_rf_model.predict(X_test)
+  y_pred_rf_ros= loaded_rf_ros_model.predict(X_test)
+  y_pred_rf_best= loaded_rf_best_model.predict(X_test)
+  #y_pred_gb= loaded_gb_model.predict(X_test)
+  #y_pred_gb_ros= loaded_gb_ros_model.predict(X_test)
+  #y_pred_gb_best= loaded_gb_best_model.predict(X_test)
+  #y_pred_knn= loaded_knn_model.predict(X_test)
+  #y_pred_knn_ros= loaded_knn_ros_model.predict(X_test)
+  y_pred_xgb= loaded_xgb_model.predict(X_test)
+  y_pred_xgb_ros= loaded_xgb_ros_model.predict(X_test)
+  #y_pred_xgb_imp= loaded_xgb_imp_model.predict(X_test_2)
+  #y_pred_xgb_test= loaded_xgb_test_model.predict(X_test)
+  
+       
+  # Predict button
+  #if st.sidebar.button('Predict'):
+ 
 
 if page == pages[4] : 
   st.write("### Prédiction classes de feux")
