@@ -71,6 +71,7 @@ def load_data():
   return data
 df=load_data()
 
+st.write("Test")
 st.sidebar.title("Sommaire")
 pages=["Contexte et présentation", "Preprocessing", "DataVizualization", "Prédiction causes de feux", "Prédiction classes de feux", "Conclusion"]
 page=st.sidebar.radio("Aller vers", pages)
