@@ -39,6 +39,7 @@ from sklearn.metrics import recall_score, f1_score, confusion_matrix, classifica
 from sklearn.datasets import make_classification
 from sklearn.metrics import roc_curve, roc_auc_score
 from sklearn.metrics import precision_recall_curve, auc
+from sklearn.preprocessing import MinMaxScaler
 
 # Mise en forme couleur du fond de l'application
 page_bg_img="""<style>
@@ -102,8 +103,53 @@ if page == pages[2] :
   st.write("Certains outliers sont liés à des erreurs de données (feux de plus de 1 an), d’autres restent des valeurs possibles (feux de très grande taille) qui seront conservés dans nos différentes analyses")
   #if st.checkbox("Afficher Boxplots") :
   # Graphique Gigi
+  df['DAY_OF_WEEK_DISCOVERYName'] = pd.to_datetime(df['DISCOVERY_DATE']).dt.day_name()
+  fig = make_subplots(rows=2, cols=2,subplot_titles=("Fire_Class","Cause_Feux","Etat", "Année","Mois"))
 
-  st.subheader("2 - Répartition des feux par cause et classe")
+  Classe_feux = go.Histogram(histfunc="count",x=df['FIRE_SIZE_CLASS'])
+  Cause_feux = go.Histogram(histfunc="count",x=df['STAT_CAUSE_DESCR_1'])
+  Etat = go.Histogram(histfunc="count",x=df['STATE'])
+
+  
+  fig.append_trace(Classe_feux, 1, 1)
+  fig.append_trace(Cause_feux, 1, 2)
+  fig.append_trace(Etat, 2, 1)
+
+
+  fig.update_layout(paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=1000, height=800,showlegend=False)
+  st.plotly_chart(fig)
+
+  col1, col2 = st.columns(2)
+  
+  with col1:
+   numerical_columns=['AVG_TEMP [°C]','AVG_PCP [mm]','FIRE_SIZE','DURATION']
+   scaler = MinMaxScaler()
+   Boxplotscaled= pd.DataFrame(scaler.fit_transform(df[numerical_columns]), columns=numerical_columns)
+   fig, ax = plt.subplots(figsize = (4,4))
+   sns.set_style(style='white')
+   sns.set(rc={"axes.facecolor": "#F4E4AA", "figure.facecolor": "#F4E4AA"})
+   sns.boxplot(data=Boxplotscaled)
+   plt.title('Box Plot (après standardisation)')
+   plt.xticks(rotation=45)
+   plt.title('Box Plot')
+   st.write(fig)
+
+  with col2:
+    numerical_columns = ['FIRE_SIZE','LATITUDE','LONGITUDE','AVG_TEMP [°C]','AVG_PCP [mm]','FIRE_YEAR','MONTH_DISCOVERY','DURATION']
+# layout of the subplots
+    num_cols = 3
+    num_rows = -(-len(numerical_columns) // num_cols)
+
+# Create a large figure to hold all subplots
+    plt.figure(figsize= (15, num_rows * 3))
+    fig, ax = plt.subplot(3,3,1)
+    plt.hist(df[numerical_columns], bins=30, color='c')
+    plt.title(f'Histogram of {col}')
+    plt.xlabel(col)
+    plt.ylabel('Frequency')
+
+    plt.tight_layout()
+    st.write(fig)
 
   st.write("Les feux d’origine humaine (volontaire et involontaire) représentent 50% des départs, tandis que les causes naturelles (foudre) représentent 62,1% des surfaces brûlées.")
 
@@ -286,7 +332,33 @@ if page == pages[2] :
     
     #st.plotly_chart(fig6)
   if st.checkbox("Afficher graphiques répartition géographique et année") :
-    fig7 = px.scatter_geo(FiresClasse,
+    col1, col2 = st.columns(2)
+
+    with col1:
+      fig7 = px.scatter_geo(FiresClasse,
+         lon = FiresClasse['LONGITUDE'],
+          lat = FiresClasse['LATITUDE'],
+          color="STAT_CAUSE_DESCR",
+    #    #facet_col="FIRE_YEAR", #pour créer un graph par année
+     #   #facet_col_wrap,# pour définir le nombre de graph par ligne
+        #animation_frame="FIRE_YEAR",#pour créer une animation sur l'année
+          color_discrete_sequence=["blue","orange","red","grey","purple"],
+          labels={"STAT_CAUSE_DESCR": "Cause"},
+          hover_name="STATE", # column added to hover information
+          size=FiresClasse['FIRE_SIZE']/1000, # size of markers
+          projection='albers usa',
+          width=800,
+          height=500,
+          title="Répartition géographique des feux par cause, taille",basemap_visible=True)
+      fig7.update_geos(resolution=50,lataxis_showgrid=True, lonaxis_showgrid=True,bgcolor='rgba(0,0,0,0)',framecolor='blue',showframe=True,showland=True,landcolor='#e0efe7',projection_type="albers usa")
+      fig7.update_layout(title_text="Répartition géographique des feux par cause et taille", title_x = 0.1, title_y = 0.95,paper_bgcolor='rgba(0,0,0,0)',
+      plot_bgcolor='rgba(0,0,0,0)',width=1000, height=500,legend=dict(x=0.5, y=0.95,orientation="h",xanchor="center",yanchor="bottom",font=dict(
+            family="Arial",size=11,color="black")),margin=dict(l=50, r=50, t=100, b=150),titlefont=dict(size=18))   
+    
+      st.plotly_chart(fig7)
+
+    with col2:
+      fig7_ = px.scatter_geo(FiresClasse,
          lon = FiresClasse['LONGITUDE'],
           lat = FiresClasse['LATITUDE'],
           color="STAT_CAUSE_DESCR",
@@ -300,28 +372,42 @@ if page == pages[2] :
           projection='albers usa',
           width=800,
           height=500,
-          title="Répartition géographique des feux par cause, taille et année",basemap_visible=True)
-    fig7.update_geos(resolution=50,lataxis_showgrid=True, lonaxis_showgrid=True,bgcolor='rgba(0,0,0,0)',framecolor='blue',showframe=True,showland=True,landcolor='#e0efe7',projection_type="albers usa")
-    fig7.update_layout(title_text="Répartition géographique des feux par cause et taille", title_x = 0.3, title_y = 0.95,paper_bgcolor='rgba(0,0,0,0)',
-    plot_bgcolor='rgba(0,0,0,0)',width=1000, height=500,legend=dict(x=0.5, y=1.05,orientation="h",xanchor="center",yanchor="bottom",font=dict(
-            family="Arial",size=15,color="black")),margin=dict(l=50, r=50, t=100, b=50),titlefont=dict(size=20))   
+          title="Focus par année",basemap_visible=True)
+      fig7_.update_geos(resolution=50,lataxis_showgrid=True, lonaxis_showgrid=True,bgcolor='rgba(0,0,0,0)',framecolor='blue',showframe=True,showland=True,landcolor='#e0efe7',projection_type="albers usa")
+      fig7_.update_layout(title_text="Focus par année", title_x = 0.4, title_y = 0.95,paper_bgcolor='rgba(0,0,0,0)',
+      plot_bgcolor='rgba(0,0,0,0)',width=1000, height=500,legend=dict(x=0.5, y=0.95,orientation="h",xanchor="center",yanchor="bottom",font=dict(
+            family="Arial",size=11,color="black")),margin=dict(l=50, r=50, t=100, b=50),titlefont=dict(size=18))   
     
-    st.plotly_chart(fig7)
+      st.plotly_chart(fig7_)
+         
+     
     
   st.subheader("5 - Analyse corrélations entre variables")
 # Plot heatmap - correlation matrix for all numerical columns
 #style.use('ggplot')
   
   if st.checkbox("Afficher heatmap") :
+    df_Fires_ML_num = df.select_dtypes(include=[np.number])
+    plt.subplots(figsize = (10,7))
     sns.set_style(style='white')
     sns.set(rc={"axes.facecolor": "#F4E4AA", "figure.facecolor": "#F4E4AA"})
-    plt.subplots(figsize = (10,7))
     df_Fires_ML_num = df.select_dtypes(include=[np.number])
     mask = np.zeros_like(df_Fires_ML_num.corr(), dtype='bool')
     mask[np.triu_indices_from(mask)] = True
+    fig7b, ax = plt.subplots(figsize = (10,7))
     sns.heatmap(df_Fires_ML_num.corr(), cmap=sns.diverging_palette(20, 220, n=200), annot=True, center = 0, mask=mask, annot_kws={"size": 8})
     plt.title("Heatmap of all the selected features of data set", fontsize = 15)
-    st.pyplot()
+    st.write(fig7b)
+
+    #df_Fires_ML_num = df.select_dtypes(include=[np.number])
+    #fig7b, ax = plt.subplots(figsize = (10,7))
+    #sns.heatmap(df_Fires_ML_num.corr(), ax=ax)
+    #st.write(fig7b)
+
+    #df_Fires_ML_num = df.select_dtypes(include=[np.number])
+    #fig7b = px.imshow(df_Fires_ML_num)
+    #st.plotly_chart(fig7b)
+
 
 if page == pages[3] : 
   st.write("### Prédiction causes de feux")
