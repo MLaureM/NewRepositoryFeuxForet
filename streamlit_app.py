@@ -40,6 +40,8 @@ from sklearn.datasets import make_classification
 from sklearn.metrics import roc_curve, roc_auc_score
 from sklearn.metrics import precision_recall_curve, auc
 from sklearn.preprocessing import MinMaxScaler
+import folium
+from streamlit_folium import st_folium
 
 # Mise en forme couleur du fond de l'application
 page_bg_img="""<style>
@@ -98,63 +100,51 @@ if page == pages[1] :
 if page == pages[2] : 
   st.header("DataVizualisation")
   st.write("Nous avons analysé le dataset sous différents angles afin d’en faire ressortir les principales caractéristiques.")
-  st.subheader("1 - Analyse des Outliers & Distribution")
+  st.subheader("1 - Analyse des Outliers & distribution des valeurs catégorielles et numériques")
   st.write("On remarque une distribution hétérogène des variables avec de nombreux outliers.")
   st.write("Certains outliers sont liés à des erreurs de données (feux de plus de 1 an), d’autres restent des valeurs possibles (feux de très grande taille) qui seront conservés dans nos différentes analyses")
-  #if st.checkbox("Afficher Boxplots") :
-  # Graphique Gigi
-  df['DAY_OF_WEEK_DISCOVERYName'] = pd.to_datetime(df['DISCOVERY_DATE']).dt.day_name()
-  fig = make_subplots(rows=2, cols=2,subplot_titles=("Fire_Class","Cause_Feux","Etat", "Année","Mois"))
+  with st.container():
+  # with st.expander("Afficher la distribution des valeurs continues et catégorielles") :
+    col1, col2 = st.columns(2)
+    with col1 :
+      fig = make_subplots(rows=2, cols=3,subplot_titles=("Fire_Class","Cause_Feux","Etat","Année","Mois"))
 
-  Classe_feux = go.Histogram(histfunc="count",x=df['FIRE_SIZE_CLASS'])
-  Cause_feux = go.Histogram(histfunc="count",x=df['STAT_CAUSE_DESCR_1'])
-  Etat = go.Histogram(histfunc="count",x=df['STATE'])
-
+      Classe_feux = go.Histogram(histfunc="count",x=df['FIRE_SIZE_CLASS'])
+      Cause_feux = go.Histogram(histfunc="count",x=df['STAT_CAUSE_DESCR_1'])
+      Etat = go.Histogram(histfunc="count",x=df['STATE'])
+      Année = go.Histogram(histfunc="count",x=df['FIRE_YEAR'])
+      Mois = go.Histogram(histfunc="count",x=df['MONTH_DISCOVERY'])
   
-  fig.append_trace(Classe_feux, 1, 1)
-  fig.append_trace(Cause_feux, 1, 2)
-  fig.append_trace(Etat, 2, 1)
+      fig.append_trace(Classe_feux, 1, 1)
+      fig.append_trace(Cause_feux, 1, 2)
+      fig.append_trace(Etat, 1, 3)
+      fig.append_trace(Année, 2, 1)
+      fig.append_trace(Mois, 2, 2)
 
+      fig.update_layout(paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',showlegend=False,width=1000, height=600)
+      st.plotly_chart(fig)
 
-  fig.update_layout(paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=1000, height=800,showlegend=False)
-  st.plotly_chart(fig)
+    with col2 :
+      fig = make_subplots(rows=2, cols=3,subplot_titles=("Durée","Taille feux","Précipitations","Latitude","Longitude",'Température'))
+      Duration=go.Violin(y=df['DURATION'], line_color='black',meanline_visible=True, fillcolor='lightseagreen', opacity=0.6)
+      Fire_size=go.Violin(y=df['FIRE_SIZE'], box_visible=True, line_color='black',meanline_visible=True, fillcolor='lightseagreen', opacity=0.6)
+      Précipitations=go.Violin(y=df['AVG_PCP [mm]'], box_visible=True, line_color='black',meanline_visible=True, fillcolor='lightseagreen', opacity=0.6)
+      Latitudes=go.Violin(y=df['LATITUDE'], box_visible=True, line_color='black',meanline_visible=True, fillcolor='lightseagreen', opacity=0.6)
+      Longitude=go.Violin(y=df['LONGITUDE'], box_visible=True, line_color='black',meanline_visible=True, fillcolor='lightseagreen', opacity=0.6)
+      Température=go.Violin(y=df['AVG_TEMP [°C]'], box_visible=True, line_color='black',meanline_visible=True, fillcolor='lightseagreen', opacity=0.6)
 
-  col1, col2 = st.columns(2)
-  
-  with col1:
-   numerical_columns=['AVG_TEMP [°C]','AVG_PCP [mm]','FIRE_SIZE','DURATION']
-   scaler = MinMaxScaler()
-   Boxplotscaled= pd.DataFrame(scaler.fit_transform(df[numerical_columns]), columns=numerical_columns)
-   fig, ax = plt.subplots(figsize = (4,4))
-   sns.set_style(style='white')
-   sns.set(rc={"axes.facecolor": "#F4E4AA", "figure.facecolor": "#F4E4AA"})
-   sns.boxplot(data=Boxplotscaled)
-   plt.title('Box Plot (après standardisation)')
-   plt.xticks(rotation=45)
-   plt.title('Box Plot')
-   st.write(fig)
+      fig.append_trace(Duration, 1, 1)
+      fig.append_trace(Fire_size, 1, 2)
+      fig.append_trace(Précipitations, 1, 3)
+      fig.append_trace(Latitudes, 2, 1)
+      fig.append_trace(Longitude, 2, 2)
+      fig.append_trace(Température, 2, 3)
+      fig.update_layout(paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',showlegend=False,width=1000, height=600)
+      st.plotly_chart(fig)
 
-  with col2:
-    numerical_columns = ['FIRE_SIZE','LATITUDE','LONGITUDE','AVG_TEMP [°C]','AVG_PCP [mm]','FIRE_YEAR','MONTH_DISCOVERY','DURATION']
-# layout of the subplots
-    num_cols = 3
-    num_rows = -(-len(numerical_columns) // num_cols)
-
-# Create a large figure to hold all subplots
-    plt.figure(figsize= (15, num_rows * 3))
-    fig, ax = plt.subplot(3,3,1)
-    plt.hist(df[numerical_columns], bins=30, color='c')
-    plt.title(f'Histogram of {col}')
-    plt.xlabel(col)
-    plt.ylabel('Frequency')
-
-    plt.tight_layout()
-    st.write(fig)
-
-  st.write("Les feux d’origine humaine (volontaire et involontaire) représentent 50% des départs, tandis que les causes naturelles (foudre) représentent 62,1% des surfaces brûlées.")
-
-  #Pie Chart répartition par cause
-  if st.checkbox("Afficher graphiques par cause") :
+  st.subheader("2 - Répartition des feux par cause et classe")
+  col1, col2 = st.columns([0.75, 0.25],gap="small",vertical_alignment="center")
+  with col1 :
     Fires_cause = df.groupby("STAT_CAUSE_DESCR").agg({"FPA_ID":"count", "FIRE_SIZE":"sum"}).reset_index()
     Fires_cause = Fires_cause.rename({"FPA_ID":"COUNT_FIRE", "FIRE_SIZE":"FIRE_SIZE_SUM"}, axis = 1)
     Indic = ["≈ Hawaii + Massachusetts", "≈ Hawaii + Massachusetts", "≈ Washington + Georgia", "≈ Maine", "≈ New Jersey + Massachusetts"]
@@ -166,14 +156,24 @@ if page == pages[2] :
            hole = 0.5,direction = "clockwise",title = dict(text = "Surfaces (acres)", font=dict(size=20))),row = 1, col = 2)
     fig.update_traces(textfont_size=15,sort=False,marker=dict(colors=['#F1C40F', '#F39C12', '#e74c3c','#E67E22','#d35400']))
     fig.update_layout(title_text="Répartition des feux par causes (1992 - 2015)", title_x = 0.3, title_y = 0.95,paper_bgcolor='rgba(0,0,0,0)',
-    plot_bgcolor='rgba(0,0,0,0)',width=1000, height=450,legend=dict(x=0.5, y=1.05,orientation="h",xanchor="center",yanchor="bottom",font=dict(
-            family="Arial",size=15,color="black")),margin=dict(l=100, r=100, t=100, b=100),titlefont=dict(size=20))
-
+    plot_bgcolor='rgba(0,0,0,0)',width=1000, height=400,legend=dict(x=0.5, y=0.83,orientation="h",xanchor="center",yanchor="bottom",font=dict(
+            family="Arial",size=12,color="black")),margin=dict(l=100, r=100, t=0, b=0),titlefont=dict(size=15))
+    
     st.plotly_chart(fig)
+
+  #Pie Chart répartition par cause
+  with col2 :
+  #if st.checkbox("Afficher graphiques par cause") :
+    st.divider()
+
+    st.markdown(":orange[Les feux d’origine humaine] (volontaire et involontaire) représentent :orange[50% des départs].")
+    
+    st.markdown(":orange[Les causes naturelles] (foudre) représentent :orange[62,1% des surfaces brûlées].")
+
+    st.divider()
   
-  st.write("Les feux de petite taille (A et B, <9,9 acres) représentent 62 % du nombre de départs mais seulement 2% des surfaces brûlées.  78 % des surfaces brûlées sont liées aux feux de la classe G (avec des feux allant de 5000 à 600 000 acres).")
-  if st.checkbox("Afficher graphiques par classe") :
-  #Pie Chart répartition par classe
+  col1, col2 = st.columns([0.75, 0.25],gap="small",vertical_alignment="center")
+  with col1 :
     Fires_class = df.groupby("FIRE_SIZE_CLASS").agg({"FPA_ID":"count", "FIRE_SIZE":"sum"}).reset_index()
     Fires_class = Fires_class.rename({"FPA_ID":"COUNT_FIRE", "FIRE_SIZE":"FIRE_SIZE_SUM"}, axis = 1)
     Indic = ["≈ ", "≈ ","≈ Connecticut", "≈ New Jersey", "≈ Maryland", "≈ Virginie Occidentale + Delaware", "≈ Californie + Hawaii"]
@@ -194,9 +194,13 @@ if page == pages[2] :
       row = 1, col = 2)
     fig1.update_traces(textfont_size=15,sort=False,marker=dict(colors=['yellow','brown','#F1C40F', '#F39C12', '#e74c3c','#E67E22','#d35400']))
     fig1.update_layout(title_text="Répartition des feux suivant leur taille (1992 - 2015)", title_x = 0.3, title_y = 0.95,paper_bgcolor='rgba(0,0,0,0)',
-    plot_bgcolor='rgba(0,0,0,0)',width=1000, height=450,legend=dict(x=0.5, y=1.05,orientation="h",xanchor="center",yanchor="bottom",font=dict(
-            family="Arial",size=15,color="black")),margin=dict(l=100, r=100, t=100, b=100),titlefont=dict(size=20))
+    plot_bgcolor='rgba(0,0,0,0)',width=1000, height=400,legend=dict(x=0.5, y=0.83,orientation="h",xanchor="center",yanchor="bottom",font=dict(
+            family="Arial",size=12,color="black")),margin=dict(l=100, r=100, t=0, b=0),titlefont=dict(size=15))
     st.plotly_chart(fig1)
+  with col2 :
+    st.divider()
+    st.write(":orange[Les feux de petite taille (A et B, <9,9 acres)] représentent :orange[62 % du nombre de départs] mais seulement :orange[2% des surfaces brûlées].  :orange[78 % des surfaces brûlées sont liées aux feux de la classe G] (avec des feux allant de 5000 à 600 000 acres).")
+    st.divider()
 
   st.subheader("3 - Répartition temporelle des feux")
   st.write("Cet axe révèle assez clairement des périodes à risque sur les départs et la gravité des feux")
@@ -486,9 +490,6 @@ if page == pages[4] :
   Fires34=df.dropna()
   FiresML2= Fires34.loc[:,['MONTH_DISCOVERY','FIRE_SIZE_CLASS','STAT_CAUSE_DESCR','AVG_TEMP [°C]','AVG_PCP [mm]','LONGITUDE','LATITUDE','STATE']]
   FiresML2['FIRE_SIZE_CLASS'] = FiresML2['FIRE_SIZE_CLASS'].replace({"A":0,"B":0,"C":0,"D":1,"E":1,"F":1,"G":1})
-  if st.checkbox("Afficher jeu données pour Machine learning") :
-    st.dataframe(FiresML2.head(5))
-  
   feats = FiresML2.drop('FIRE_SIZE_CLASS', axis=1)
   target = FiresML2['FIRE_SIZE_CLASS'].astype('int')
   X_train, X_test, y_train, y_test = train_test_split(feats, target, test_size=0.25, random_state = 42,stratify=target)
@@ -514,7 +515,11 @@ if page == pages[4] :
   le = LabelEncoder()
   y_train = le.fit_transform(y_train)
   y_test = le.transform(y_test)
+
   
+  if st.checkbox("Afficher jeu données pour Machine learning") :
+    st.dataframe(FiresML2.head(5))
+      
   classifier=st.selectbox("classificateur",("XGBoost","BalancedRandomForest"))
 
   # Analyse de la peformance des modèles
@@ -528,10 +533,8 @@ if page == pages[4] :
             family="Arial",size=15,color="black")),margin=dict(l=100, r=100, t=100, b=100),titlefont=dict(size=20))
      st.plotly_chart(figML1)      
 
-
     if 'Courbe ROC' in graph:
       st.subheader('Courbe ROC')
-
       precision, recall, thresholds = precision_recall_curve(y_test, y_pred)
       fpr, tpr, thresholds = roc_curve(y_test, y_pred)
       roc_auc = auc(fpr, tpr)
@@ -544,14 +547,12 @@ if page == pages[4] :
             family="Arial",size=15,color="black")),margin=dict(l=100, r=100, t=100, b=50),titlefont=dict(size=20))
       st.plotly_chart(figML2)
 
-      
-  
     if 'Courbe Recall' in graph:
       st.subheader('Courbe Recall')
       precision, recall, _ = precision_recall_curve(y_test, y_pred)
       model_disp = PrecisionRecallDisplay(precision=precision, recall=recall)
       st.pyplot()
-
+  
   if classifier == "XGBoost":
     st.sidebar.subheader("Hyperparamètres XGBoost")
     max_bin_test = st.sidebar.slider("Max_Bin selection",100, 700, 400)
@@ -561,8 +562,53 @@ if page == pages[4] :
     #learning_rate_test = st.sidebar.slider("learning_rate selection",0.00, 1.00, 0.31)
     #tree_method_test = st.sidebar.radio("tree_method selection",("hist","approx"))
 
-  #Graphiques performances 
-    graphes_perf = st.sidebar.multiselect("Choix graphiques",("Matrice confusion","Courbe ROC","Courbe Recall"))
+    #with st.sidebar :
+      #st.header("Graphiques performance")
+      #graphes_perf = st.multiselect("Choix graphiques",("Matrice confusion","Courbe ROC","Courbe Recall"))
+  
+    with st.sidebar :
+      st.header("Input features")
+      mois=st.slider('mois',1,12,6)
+      Cause=st.selectbox("Cause",('Non défini', 'Origine humaine', 'Équipements', 'Criminel', 'Foudre'))
+      Température=st.slider('Température',-25.00,40.00,16.00)
+      Précipitations=st.slider('Précipitation',0.00,917.00,63.00)
+      Longitude=st.slider('Longitude',-178.00,-65.00,-96.00)
+      Latitude=st.slider('Latitude',17.00,71.00,37.00)
+      Etat=st.selectbox('Etat',("Alaska", "Alabama", "Arkansas", "Arizona", "California", "Colorado", "Connecticut", "District of Colombia", "Delaware", "Florida", "Georgia", "Hawaii", "Iowa", "Idaho",
+        "Illinois", "Indiana", "Kansas", "Kentucky", "Louisiana", "Massachusetts", "Maryland", "Maine", "Michigan", "Minnesota", "Missouri", "Mississippi", "Montana",
+        "North Carolina", "North Dakota", "Nebraska", "New Hampshire", "New Jersey", "New Mexico", "Nevada", "New York", "Ohio", "Oklahoma", "Oregon", "Pennsylvania",
+        "Puerto Rico", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Virginia", "Vermont", "Washington", "Wisconsin", "West Virginia", "Wyoming"))
+      
+    data={'MONTH_DISCOVERY':mois,'STAT_CAUSE_DESCR':Cause,'AVG_TEMP [°C]':Température,'AVG_PCP [mm]':Précipitations,"LONGITUDE":Longitude,"LATITUDE":Latitude,'STATE':Etat}
+    input_df=pd.DataFrame(data,index=[0])
+    input_array=np.array(input_df)
+    input_fires=pd.concat([input_df,feats],axis=0)
+    
+    #Data Prep
+    #encode x
+    num_input_fires=input_fires.drop(['STAT_CAUSE_DESCR','MONTH_DISCOVERY','STATE'],axis=1)
+    num_input_fires= sc.fit_transform(num_input_fires)    
+    oneh = OneHotEncoder(drop = 'first', sparse_output=False)
+    cat_input_fires=input_fires.drop(['AVG_TEMP [°C]','AVG_PCP [mm]','MONTH_DISCOVERY','LONGITUDE','LATITUDE'],axis=1)
+    cat_input_fires=oneh.fit_transform(cat_input_fires)
+    circular_cols = ['MONTH_DISCOVERY']
+    circular_input_fires = input_fires[circular_cols]
+    circular_input_fires['MONTH_DISCOVERY'] = circular_input_fires['MONTH_DISCOVERY'].apply(lambda h : np.sin(2 * np.pi * h / 12))
+    circular_input_fires['MONTH_DISCOVERY'] = circular_input_fires['MONTH_DISCOVERY'].apply(lambda h : np.cos(2 * np.pi * h / 12))
+    df_fires_encoded=np.concatenate((num_input_fires,cat_input_fires,circular_input_fires),axis=1)
+    x=df_fires_encoded[1:]
+
+    #with st.expander('Input features'):
+    #  st.write('Input df')
+    #  input_df[:10]
+    #  st.write('Combined')
+    #  input_fires[:10]
+    #  st.write('x encoded')
+    #  df_fires_encoded[:1]
+    #  st.write('X_Train')
+    #  X_train[:10]
+    #  st.write('X_test')
+    #  X_test[:10]
 
   if st.sidebar.button("Execution",key="classify"):
     st.subheader("XGBoost Results")
@@ -573,21 +619,57 @@ if page == pages[4] :
                         learning_rate=0.31,
                         tree_method='hist' ).fit(X_train,y_train)
     y_pred=model.predict(X_test)
+    y_pred_input=model.predict(df_fires_encoded[:1])
+    prediction=model.predict(df_fires_encoded[:1])
+    prediction_proba=model.predict_proba(df_fires_encoded[:1])
+
     #Métriques
     accuracy=model.score(X_test,y_test)
     #precision=precision_score(y_test,y_pred).round(4)
     recall=recall_score(y_test,y_pred)
 
+    col1, col2,col3 = st.columns([0.2,0.4,0.4],gap="small",vertical_alignment="center")
+    with col1 :
     #Afficher
-    st.write("Accuracy",round(accuracy,4))
+      st.write("Accuracy",round(accuracy,4))
     #st.write("precision",precision.round(4))
-    st.write("recall",round(recall,4))
+      st.write("recall",round(recall,4))
 
+    #st.write("Proba",prediction_proba)
     #Afficher les graphique performance
-    plot_perf(graphes_perf)
+    #plot_perf(graphes_perf)
+    with col2 :
+      st.subheader('Matrice de confusion') 
+      cm = confusion_matrix(y_test, y_pred)
+      figML1 = px.imshow(cm,labels={"x": "Predicted Label", "y": "True Label"},width=400,height=400,text_auto=True)#color_continuous_scale='hot'
+      layout = go.Layout(title='Confusion Metrix',paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)')
+      figML1.update_layout(paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=1000, height=450,legend=dict(x=0.5, y=1.05,orientation="h",xanchor="center",yanchor="bottom",font=dict(
+            family="Arial",size=15,color="black")),margin=dict(l=100, r=100, t=100, b=100),titlefont=dict(size=20))
+      st.plotly_chart(figML1)      
 
-  sns.histplot(data=FiresML2, x="FIRE_SIZE_CLASS",bins=2,stat="percent",discrete=False)
-  plt.show()
+    with col3 :  
+      st.subheader('Courbe ROC')
+      precision, recall, thresholds = precision_recall_curve(y_test, y_pred)
+      fpr, tpr, thresholds = roc_curve(y_test, y_pred)
+      roc_auc = auc(fpr, tpr)
+      figML2 = px.area(x=fpr, y=tpr,title=f'(AUC={auc(fpr, tpr):.4f})',labels=dict(x='Taux faux positifs', y='Taux vrais positifs'))
+      figML2.add_shape(type='line', line=dict(dash='dash'),x0=0, x1=1, y0=0, y1=1)
+      figML2.update_yaxes(scaleanchor="x", scaleratio=1)
+      figML2.update_xaxes(constrain='domain')
+      figML2.update_layout(title_x = 0.4, title_y = 0.95,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=1000, height=450,legend=dict(x=0.5, y=0.93,orientation="h",xanchor="center",yanchor="bottom",font=dict(
+            family="Arial",size=15,color="black")),margin=dict(l=100, r=100, t=100, b=50),titlefont=dict(size=20))
+      st.plotly_chart(figML2)
+
+    st.write("Probabilité de classe de feux en fonction des features selectionnées")
+    st.write("Paramètres selectionnés")
+    input_df[:1]
+    st.write("Probabilité par classe",prediction_proba)
+    
+
+
+
+
+
 
   if classifier == "BalancedRandomForest":
     st.sidebar.subheader("Hyperparamètres BalancedRandomForest")
@@ -627,6 +709,9 @@ if page == pages[4] :
 
   sns.histplot(data=FiresML2, x="FIRE_SIZE_CLASS",bins=2,stat="percent",discrete=False)
   plt.show()
+
+
+
 
 
 if page == pages[5] : 
