@@ -6,3 +6,4 @@ imblearn
 seaborn
 requests
 xgboost
+streamlit_folium
