@@ -42,6 +42,8 @@ from sklearn.metrics import precision_recall_curve, auc
 from sklearn.preprocessing import MinMaxScaler
 import folium
 from streamlit_folium import st_folium
+from sklearn.metrics import confusion_matrix
+import sklearn.metrics as metrics
 
 # Mise en forme couleur du fond de l'application
 page_bg_img="""<style>
@@ -113,7 +115,7 @@ if page == pages[1] :
 if page == pages[2] : 
   st.header("DataVizualisation")
   st.write("Nous avons analysé le dataset sous différents angles afin d’en faire ressortir les principales caractéristiques.")
-  st.subheader("1 - Analyse des outliers et de la répartitions des valeurs nuémriques")
+  st.subheader("1 - Analyse des outliers et de la répartitions des valeurs numériques")
  
   col1, col2 =st.columns([0.55, 0.45],gap="small",vertical_alignment="center")
   with col1 :
@@ -150,8 +152,11 @@ if page == pages[2] :
            hole = 0.6,direction = "clockwise",title = dict(text = "Surfaces (acres)", font=dict(size=20))),row = 1, col = 2)
     fig.update_traces(textfont_size=15,sort=False,marker=dict(colors=['#F1C40F', '#F39C12', '#e74c3c','#E67E22','#d35400']))
     fig.update_layout(title_text="Répartition des feux par causes (1992 - 2015)", title_x = 0.2, title_y = 0.95,paper_bgcolor='rgba(0,0,0,0)',
-    plot_bgcolor='rgba(0,0,0,0)',width=1000, height=500,legend=dict(x=0.5, y=0.83,orientation="h",xanchor="center",yanchor="bottom",font=dict(
-            family="Arial",size=13,color="black")),margin=dict(l=0, r=0, t=0, b=0),titlefont=dict(size=15))
+    plot_bgcolor='rgba(0,0,0,0)',legend=dict(x=0.5, y=0.83,orientation="h",xanchor="center",yanchor="bottom",font=dict(
+            family="Arial",size=13,color="black")),margin=dict(l=0, r=0, t=0, b=0),titlefont=dict(size=15),autosize=True,width=700,height=700)
+    
+
+
     
     st.plotly_chart(fig)
 
@@ -187,9 +192,9 @@ if page == pages[2] :
            title = dict(text = "Surfaces (acres)", font=dict(size=20))),
       row = 1, col = 2)
     fig1.update_traces(textfont_size=15,sort=False,marker=dict(colors=['yellow','brown','#F1C40F', '#F39C12', '#e74c3c','#E67E22','#d35400']))
-    fig1.update_layout(title_text="Répartition des feux suivant leur taille (1992 - 2015)", title_x = 0.3, title_y = 0.95,paper_bgcolor='rgba(0,0,0,0)',
-    plot_bgcolor='rgba(0,0,0,0)',width=1200, height=700,legend=dict(x=0.5, y=0.83,orientation="h",xanchor="center",yanchor="bottom",font=dict(
-            family="Arial",size=12,color="black")),margin=dict(l=0, r=0, t=0, b=0),titlefont=dict(size=15))
+    fig1.update_layout(title_text="Répartition des feux suivant leur taille (1992 - 2015)", title_x = 0.2, title_y = 0.95,paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)',legend=dict(x=0.3, y=0.83,orientation="h",xanchor="center",yanchor="bottom",font=dict(
+            family="Arial",size=12,color="black")),margin=dict(l=0, r=0, t=0, b=0),titlefont=dict(size=15),autosize=True,width=700,height=700)
     st.plotly_chart(fig1)
   with col2 :
     st.divider()
@@ -350,7 +355,7 @@ if page == pages[2] :
           title="Répartition géographique des feux par cause, taille",basemap_visible=True)
       fig7.update_geos(resolution=50,lataxis_showgrid=True, lonaxis_showgrid=True,bgcolor='rgba(0,0,0,0)',framecolor='blue',showframe=True,showland=True,landcolor='#e0efe7',projection_type="albers usa")
       fig7.update_layout(title_text="Répartition géographique des feux par cause et taille", title_x = 0.1, title_y = 0.95,paper_bgcolor='rgba(0,0,0,0)',
-      plot_bgcolor='rgba(0,0,0,0)',width=1000, height=500,legend=dict(x=0.5, y=0.95,orientation="h",xanchor="center",yanchor="bottom",font=dict(
+      plot_bgcolor='rgba(0,0,0,0)',width=1000, height=700,legend=dict(x=0.5, y=0.95,orientation="h",xanchor="center",yanchor="bottom",font=dict(
             family="Arial",size=11,color="black")),margin=dict(l=50, r=50, t=100, b=150),titlefont=dict(size=18))   
     
       st.plotly_chart(fig7)
@@ -481,6 +486,7 @@ if page == pages[3] :
 
 if page == pages[4] : 
   st.write("### Prédiction classes de feux")
+
   Fires34=df.dropna()
   FiresML2= Fires34.loc[:,['MONTH_DISCOVERY','FIRE_SIZE_CLASS','STAT_CAUSE_DESCR','AVG_TEMP [°C]','AVG_PCP [mm]','LONGITUDE','LATITUDE','STATE']]
   FiresML2['FIRE_SIZE_CLASS'] = FiresML2['FIRE_SIZE_CLASS'].replace({"A":0,"B":0,"C":0,"D":1,"E":1,"F":1,"G":1})
@@ -510,9 +516,11 @@ if page == pages[4] :
   y_train = le.fit_transform(y_train)
   y_test = le.transform(y_test)
 
+
+
   
-  if st.checkbox("Afficher jeu données pour Machine learning") :
-    st.dataframe(FiresML2.head(5))
+  #if st.checkbox("Afficher jeu données pour Machine learning") :
+  #  st.dataframe(FiresML2.head(5))
       
   classifier=st.selectbox("classificateur",("XGBoost","BalancedRandomForest"))
 
@@ -555,10 +563,9 @@ if page == pages[4] :
     #colsample_bytree_test = st.sidebar.slider("colsample_bytree selection",0.00, 1.00, 0.96)
     #learning_rate_test = st.sidebar.slider("learning_rate selection",0.00, 1.00, 0.31)
     #tree_method_test = st.sidebar.radio("tree_method selection",("hist","approx"))
-
     #with st.sidebar :
-      #st.header("Graphiques performance")
-      #graphes_perf = st.multiselect("Choix graphiques",("Matrice confusion","Courbe ROC","Courbe Recall"))
+    #st.header("Graphiques performance")
+    #graphes_perf = st.multiselect("Choix graphiques",("Matrice confusion","Courbe ROC","Courbe Recall"))
   
     with st.sidebar :
       st.header("Input features")
@@ -592,57 +599,81 @@ if page == pages[4] :
     df_fires_encoded=np.concatenate((num_input_fires,cat_input_fires,circular_input_fires),axis=1)
     x=df_fires_encoded[1:]
 
-    #with st.expander('Input features'):
-    #  st.write('Input df')
-    #  input_df[:10]
-    #  st.write('Combined')
-    #  input_fires[:10]
-    #  st.write('x encoded')
-    #  df_fires_encoded[:1]
-    #  st.write('X_Train')
-    #  X_train[:10]
-    #  st.write('X_test')
-    #  X_test[:10]
+
+    #m = folium.Map(location=[36.966428, -95.844032],zoom_start=3.4988)
+      #folium.Marker([df['LATITUDE'], df['LONGITUDE']], popup="Liberty Bell", tooltip="Liberty Bell").add_to(m)
+    #folium.Marker([39.949610, -75.150282], popup="Liberty Bell", tooltip="Liberty Bell").add_to(m)
+    #st_folium(m)
+
+
+
 
   if st.sidebar.button("Execution",key="classify"):
     st.subheader("XGBoost Results")
-    model=XGBClassifier(max_bin=max_bin_test,
+  model=XGBClassifier(max_bin=max_bin_test,
                         scale_pos_weight=scale_pos_weight_test,
                         subsample=0.92,
                         colsample_bytree=0.96,
                         learning_rate=0.31,
                         tree_method='hist' ).fit(X_train,y_train)
-    y_pred=model.predict(X_test)
-    y_pred_input=model.predict(df_fires_encoded[:1])
-    prediction=model.predict(df_fires_encoded[:1])
-    prediction_proba=model.predict_proba(df_fires_encoded[:1])
+  y_pred=model.predict(X_test)
+  y_pred_input=model.predict(df_fires_encoded[:1])
+  prediction=model.predict(df_fires_encoded[:1])
+  prediction_proba=model.predict_proba(df_fires_encoded[:1])
 
     #Métriques
-    accuracy=model.score(X_test,y_test)
+  accuracy=model.score(X_test,y_test)
     #precision=precision_score(y_test,y_pred).round(4)
-    recall=recall_score(y_test,y_pred)
+  recall=recall_score(y_test,y_pred)
+  LAT=input_df[:1].LATITUDE.to_numpy()
+  LONG=input_df[:1].LONGITUDE.to_numpy()
 
-    col1, col2,col3 = st.columns([0.2,0.4,0.4],gap="small",vertical_alignment="center")
-    with col1 :
+  col1, col2 = st.columns([0.5,0.5],gap="small",vertical_alignment="center")
+  with col1 :
+    with st.container(height=450):
+        m = folium.Map(location=[36.966428, -95.844032],zoom_start=4)
+        folium.Marker([LAT, LONG], popup=input_df[:1].STATE, tooltip=input_df[:1].STATE,icon=folium.Icon(color='orange', icon='fire', prefix='fa')).add_to(m)
+        st_data = st_folium(m, width=1200)
+    
+  with col2 :
+    st.write("Paramètres selectionnés")
+    input_df[:1]
+    st.write("Probabilité par classe",prediction_proba)
+    
+
+
+  col1, col2 = st.columns([0.5,0.5],gap="small",vertical_alignment="center")
+  with col1 :
+    with st.container(height=200):      
     #Afficher
-      st.write("Accuracy",round(accuracy,4))
+      st.write("Accuracy",round(model.score(X_test,y_test),4))
     #st.write("precision",precision.round(4))
-      st.write("recall",round(recall,4))
+      st.write("Recall",round(recall,4))
 
-    #st.write("Proba",prediction_proba)
-    #Afficher les graphique performance
-    #plot_perf(graphes_perf)
-    with col2 :
-      st.subheader('Matrice de confusion') 
-      cm = confusion_matrix(y_test, y_pred)
-      figML1 = px.imshow(cm,labels={"x": "Predicted Label", "y": "True Label"},width=400,height=400,text_auto=True)#color_continuous_scale='hot'
-      layout = go.Layout(title='Confusion Metrix',paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)')
-      figML1.update_layout(paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=1000, height=450,legend=dict(x=0.5, y=1.05,orientation="h",xanchor="center",yanchor="bottom",font=dict(
-            family="Arial",size=15,color="black")),margin=dict(l=100, r=100, t=100, b=100),titlefont=dict(size=20))
-      st.plotly_chart(figML1)      
+   
+    with st.container(height=500):     
+      feats1 = {}
+      for feature, importance in zip(feats.columns,model.feature_importances_):
+        feats1[feature] = importance
+      importances= pd.DataFrame.from_dict(feats1, orient='index').rename(columns={0: 'Importance'})
+      importances.sort_values(by='Importance', ascending=False).head(8)
+      fig,ax=plt.subplots(figsize=(5,5))
+      sns.barplot(x=importances['Importance'], y=importances.index,ax=ax)
+      fig.patch.set_alpha(0.0)
+      ax.set_facecolor('none')       
+      st.plotly_chart(fig)
 
-    with col3 :  
-      st.subheader('Courbe ROC')
+      #feature_important = model.get_booster().get_score(importance_type='weight')
+      #keys = list(feature_important.keys())
+      #values = list(feature_important.values())
+
+      #data = pd.DataFrame(data=values, index=keys, columns=["score"]).sort_values(by = "score", ascending=False)
+      #data.nlargest(40, columns="score").plot(kind='barh', figsize = (20,10))
+      #data
+
+
+  with col2 :
+    with st.container(height=350):
       precision, recall, thresholds = precision_recall_curve(y_test, y_pred)
       fpr, tpr, thresholds = roc_curve(y_test, y_pred)
       roc_auc = auc(fpr, tpr)
@@ -650,19 +681,50 @@ if page == pages[4] :
       figML2.add_shape(type='line', line=dict(dash='dash'),x0=0, x1=1, y0=0, y1=1)
       figML2.update_yaxes(scaleanchor="x", scaleratio=1)
       figML2.update_xaxes(constrain='domain')
-      figML2.update_layout(title_x = 0.4, title_y = 0.95,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=1000, height=450,legend=dict(x=0.5, y=0.93,orientation="h",xanchor="center",yanchor="bottom",font=dict(
-            family="Arial",size=15,color="black")),margin=dict(l=100, r=100, t=100, b=50),titlefont=dict(size=20))
+      figML2.update_layout(title='Courbe ROC',title_x = 0.4, title_y = 0.95,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=1000, height=450,legend=dict(x=0.5, y=0.93,orientation="h",xanchor="center",yanchor="bottom",font=dict(
+      family="Arial",size=15,color="black")),margin=dict(l=100, r=100, t=100, b=50),titlefont=dict(size=15))
       st.plotly_chart(figML2)
 
-    st.write("Probabilité de classe de feux en fonction des features selectionnées")
-    st.write("Paramètres selectionnés")
-    input_df[:1]
-    st.write("Probabilité par classe",prediction_proba)
-    
+    with st.container(height=350):
+      #st.subheader('Matrice de confusion') 
+      cm = confusion_matrix(y_test, y_pred)
+      figML1 = px.imshow(cm,labels={"x": "Predicted Label", "y": "True Label"},width=800,height=800,text_auto=True)#color_continuous_scale='hot'
+      #layout = go.Layout(title='Matrice de confusion',paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)')
+      figML1.update_layout(title='Matrice de confusion',title_x = 0.35, title_y =0.95,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=1100, height=390,legend=dict(x=0.5, y=1,orientation="h",xanchor="center",yanchor="bottom",font=dict(
+      family="Arial",size=15,color="black")),margin=dict(l=50, r=40, t=50, b=60))
+      figML1.update_traces(dict(showscale=False,coloraxis=None), selector={'type':'heatmap'})
+      #titlefont=dict(size=20)
+      st.plotly_chart(figML1)
 
 
 
 
+
+    #col1, col2,col3 = st.columns([0.2,0.4,0.4],gap="small",vertical_alignment="center")
+    #with col1:
+    #m = folium.Map(location=[36.966428, -95.844032],zoom_start=3.4988)
+      #folium.Marker([df['LATITUDE'], df['LONGITUDE']], popup="Liberty Bell", tooltip="Liberty Bell").add_to(m)
+    #folium.Marker([39.949610, -75.150282], popup="Liberty Bell", tooltip="Liberty Bell").add_to(m)
+    #st_folium(m)
+    #st_data = st_folium(m, width=700,height=500)
+
+    #center=st.session_state["center"],
+    #zoom=st.session_state["zoom"],
+    #key="new",
+    #feature_group_to_add=fg,
+    #height=400,
+    #width=700,
+
+    #with col2:
+    #st.write("Probabilité de classe de feux en fonction des features selectionnées")
+    #st.write("Paramètres selectionnés")
+    #input_df[:1]
+    #st.write("Probabilité par classe",prediction_proba) 
+
+    #with col3:
+    #st.write("Probabilité par classe",prediction_proba) 
+
+  
 
 
   if classifier == "BalancedRandomForest":
@@ -699,12 +761,6 @@ if page == pages[4] :
     st.write("Accuracy",accuracy.round(4))
     #st.write("precision",precision.round(4))
     st.write("recall",recall.round(4))
-
-
-  sns.histplot(data=FiresML2, x="FIRE_SIZE_CLASS",bins=2,stat="percent",discrete=False)
-  plt.show()
-
-
 
 
 
