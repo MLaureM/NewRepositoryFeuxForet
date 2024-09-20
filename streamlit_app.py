@@ -131,7 +131,10 @@ if page == pages[2] :
     sns.violinplot(ax=axes[1,0],x=df['LATITUDE'])
     sns.violinplot(ax=axes[1, 1],x=df['LONGITUDE'])
     sns.violinplot(ax=axes[1, 2],x=df['AVG_TEMP [°C]'])
-    st.pyplot(fig)
+    #st.pyplot(fig)
+    joblib.dump(st.pyplot(fig), "violin.joblib")
+
+
   with col2 :
     st.divider()
 
@@ -159,7 +162,7 @@ if page == pages[2] :
       fig.update_layout(title_text="Répartition des feux par causes (1992 - 2015)", title_x = 0.2, title_y =0.99,paper_bgcolor='rgba(0,0,0,0)',
       plot_bgcolor='rgba(0,0,0,0)',legend=dict(x=0.0, y=0.95,orientation="h",font=dict(
             family="Arial",size=12,color="black")),margin=dict(l=10, r=10, t=2, b=0),titlefont=dict(size=15),width=900,height=350)
-      st.plotly_chart(fig)
+      joblib.dump(st.plotly_chart(fig),"répartition_feux_acres")
   #Pie Chart répartition par cause
     with col2 :
   #if st.checkbox("Afficher graphiques par cause") :   
@@ -185,7 +188,7 @@ if page == pages[2] :
       fig1.update_layout(title_text="Répartition des feux suivant leur taille (1992 - 2015)", title_x = 0.2, title_y = 1,paper_bgcolor='rgba(0,0,0,0)',
       plot_bgcolor='rgba(0,0,0,0)',legend=dict(x=0.2, y=0.95,orientation="h",font=dict(
             family="Arial",size=12,color="black")),margin=dict(l=10, r=10, t=2, b=0),titlefont=dict(size=15),width=900,height=350)
-      st.plotly_chart(fig1)
+      joblib.dump(st.plotly_chart(fig1),"répartition_feux_nb")
     with col2 :      
       st.write(":orange[Les feux de petite taille (A et B, <9,9 acres)] représentent :orange[62 % du nombre de départs] mais seulement :orange[2% des surfaces brûlées].  :orange[78 % des surfaces brûlées sont liées aux feux de la classe G] (avec des feux allant de 5000 à 600 000 acres).")
       
@@ -220,7 +223,7 @@ if page == pages[2] :
     fig3bis.update_layout(xaxis_title="",yaxis_title="",title_text="Répartition des feux par année et cause (en nombre)", title_x = 0.2, title_y = 0.99,paper_bgcolor='rgba(0,0,0,0)',
     plot_bgcolor='rgba(0,0,0,0)',width=700, height=350,legend=dict(title=None,x=0, y=1,orientation="v",font=dict(
             family="Arial",size=11,color="black")),margin=dict(l=0, r=0, t=20, b=00),titlefont=dict(size=15))
-    st.plotly_chart(fig3bis)
+    joblib.dump(st.plotly_chart(fig3bis),'répartition_feux_année')
 #Histogrammes mois
   st.write("Les mois de juin à août sont les plus dévastateurs ce qui qui peut sous-entendre 2 facteurs : un climat plus favorable aux départs de feux, des activités humaines à risque plus élevées pendant les périodes de vacances")
   #if st.checkbox("Afficher graphiques mois") :
@@ -233,7 +236,7 @@ if page == pages[2] :
       x=df['MONTH_DISCOVERY'],marker_color='blue'),1,2)
   fig3.update_layout(title_text="Départs de feux par mois",bargap=0.2,height=400, width=1100, coloraxis=dict(colorscale='Bluered_r'), showlegend=False,paper_bgcolor='rgba(0,0,0,0)',
   plot_bgcolor='rgba(0,0,0,0)')
-  st.plotly_chart(fig3)
+  joblib.dump(st.plotly_chart(fig3),'répartition_feux_mois')
 
 #Histogrammes jour semaine
   st.write("On observe également des départs de feux significativement plus élevés le week-end. Ce qui peut être mis en corrélation avec les feux d'origine humaine déclenchés par des activités à risque plus propices en périodes de week-end (feux de camps...)")
@@ -255,7 +258,7 @@ if page == pages[2] :
       x=Fires3.index,y=Fires3.values,marker_color='blue'),1,2)
   fig4.update_layout(title_text="Départs de feux en fonction du jour de la semaine",bargap=0.2,height=400, width=1000, coloraxis=dict(colorscale='Bluered_r'), showlegend=False,paper_bgcolor='rgba(0,0,0,0)',
   plot_bgcolor='rgba(0,0,0,0)')
-  st.plotly_chart(fig4)
+  joblib.dump(st.plotly_chart(fig4),'répartition_feux_jour')
 
   df3=df.groupby(['STAT_CAUSE_DESCR', 'DISCOVERY_DOY']).agg({"FIRE_SIZE":"sum"}).reset_index()
  
@@ -263,7 +266,7 @@ if page == pages[2] :
   fig4bis.update_layout(title_text="Répartition des feux jours de l'année et cause (en acres)", title_x = 0.3, title_y = 1,paper_bgcolor='rgba(0,0,0,0)',
   plot_bgcolor='rgba(0,0,0,0)',width=1000, height=400,legend=dict(x=0.5, y=0.93,orientation="h",xanchor="center",yanchor="bottom",font=dict(
             family="Arial",size=15,color="black")),margin=dict(l=100, r=100, t=25, b=50),titlefont=dict(size=20))
-  st.plotly_chart(fig4bis)
+  joblib.dump(st.plotly_chart(fig4bis),"répartion_feux_jours")
 # Durée moyenne
   st.write('L’analyse de la durée des feux par cause montre une certaine hétérogénéité de la durée des feux en fonction de la cause. Les feux liés à la foudre sont en moyenne deux fois plus longs à contenir que les autres types de feux')
   #if st.checkbox("Afficher graphiques par durée") :
@@ -285,7 +288,7 @@ if page == pages[2] :
       color_discrete_sequence=px.colors.sequential.Reds_r)
   fig5.update_layout(xaxis=dict(tickmode='linear', dtick=0.5),title_x = 0.3, title_y = 1,paper_bgcolor='rgba(0,0,0,0)',
   plot_bgcolor='rgba(0,0,0,0)',width=1000, height=400,showlegend=False,margin=dict(l=170, r=200, t=50, b=50),titlefont=dict(size=20))
-  st.plotly_chart(fig5)
+  joblib.dump(st.plotly_chart(fig5),'répartition_feux_durée')
   
   st.subheader("4 - Répartition géographique")
   #if st.checkbox("Afficher graphiques répartition géographique") :
@@ -346,7 +349,7 @@ if page == pages[2] :
     plot_bgcolor='rgba(0,0,0,0)',width=1000, height=700,legend=dict(x=0.5, y=0.87,orientation="h",xanchor="center",yanchor="bottom",font=dict(
             family="Arial",size=11,color="black")),margin=dict(l=50, r=50, t=50, b=250),titlefont=dict(size=18))   
     
-    st.plotly_chart(fig7)
+    joblib.dump(st.plotly_chart(fig7),"répartition_géo")
 
   with col2:
     fig7_ = px.scatter_geo(FiresClasse,
@@ -369,7 +372,7 @@ if page == pages[2] :
     plot_bgcolor='rgba(0,0,0,0)',width=1000, height=500,legend=dict(x=0.5, y=0.95,orientation="h",xanchor="center",yanchor="bottom",font=dict(
             family="Arial",size=11,color="black")),margin=dict(l=50, r=50, t=100, b=50),titlefont=dict(size=18))   
     
-    st.plotly_chart(fig7_)
+    joblib.dump(st.plotly_chart(fig7_),"répartition_géo_mois")
          
      
     
@@ -379,7 +382,7 @@ if page == pages[2] :
   
   #if st.checkbox("Afficher heatmap") :
   df_Fires_ML_num = df.select_dtypes(include=[np.number])
-  plt.subplots(figsize = (10,7))
+  plt.subplots(figsize = (7,7))
   sns.set_style(style='white')
   sns.set(rc={"axes.facecolor": "#F4E4AA", "figure.facecolor": "#F4E4AA"})
   df_Fires_ML_num = df.select_dtypes(include=[np.number])
@@ -388,7 +391,7 @@ if page == pages[2] :
   fig7b, ax = plt.subplots(figsize = (10,7))
   sns.heatmap(df_Fires_ML_num.corr(), cmap=sns.diverging_palette(20, 220, n=200), annot=True, center = 0, mask=mask, annot_kws={"size": 8})
   plt.title("Heatmap of all the selected features of data set", fontsize = 15)
-  st.write(fig7b)
+  joblib.dump(st.write(fig7b),"heatmap")
 
     #df_Fires_ML_num = df.select_dtypes(include=[np.number])
     #fig7b, ax = plt.subplots(figsize = (10,7))
@@ -803,6 +806,8 @@ if page == pages[4] :
                         colsample_bytree=0.96,
                         learning_rate=0.31,
                         tree_method='hist' ).fit(X_train,y_train)
+  joblib.dump(model, "model.joblib")
+  model = joblib.load("model.joblib")
   y_pred=model.predict(X_test)
   y_pred_input=model.predict(df_fires_encoded[:1])
   prediction=model.predict(df_fires_encoded[:1])
@@ -810,6 +815,9 @@ if page == pages[4] :
   df_prediction_proba=pd.DataFrame(prediction_proba)
   df_prediction_proba.columns=['Petite Classe','Grande Classe']
   df_prediction_proba.rename(columns={0:"Petite Classe",1:"Grande Classe"})  
+
+
+
     #Métriques
   accuracy=model.score(X_test,y_test)
     #precision=precision_score(y_test,y_pred).round(4)
