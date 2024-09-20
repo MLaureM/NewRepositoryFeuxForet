@@ -139,56 +139,52 @@ if page == pages[2] :
     st.divider()
 
   st.subheader("2 - Répartition des feux par cause et classe")
-  col1, col2 = st.columns([0.55, 0.45],gap="small",vertical_alignment="center")
-  with col1 :
-    #with st.container(height=400):
-    Fires_cause = df.groupby("STAT_CAUSE_DESCR").agg({"FPA_ID":"count", "FIRE_SIZE":"sum"}).reset_index()
-    Fires_cause = Fires_cause.rename({"FPA_ID":"COUNT_FIRE", "FIRE_SIZE":"FIRE_SIZE_SUM"}, axis = 1)
-    Indic = ["≈ Hawaii + Massachusetts", "≈ Hawaii + Massachusetts", "≈ Washington + Georgia", "≈ Maine", "≈ New Jersey + Massachusetts"]
-    Fires_cause["Text"] = Indic
-    fig = make_subplots(rows = 1, cols = 2,specs = [[{"type":"domain"}, {"type":"domain"}]])
-    fig.add_trace(go.Pie(labels = Fires_cause["STAT_CAUSE_DESCR"],values = Fires_cause["COUNT_FIRE"],hole = 0.6,
+  with st.container(height=360):
+    col1, col2 = st.columns([0.6, 0.4],gap="small",vertical_alignment="center")
+    with col1 :
+      Fires_cause = df.groupby("STAT_CAUSE_DESCR").agg({"FPA_ID":"count", "FIRE_SIZE":"sum"}).reset_index()
+      Fires_cause = Fires_cause.rename({"FPA_ID":"COUNT_FIRE", "FIRE_SIZE":"FIRE_SIZE_SUM"}, axis = 1)
+      Indic = ["≈ Hawaii + Massachusetts", "≈ Hawaii + Massachusetts", "≈ Washington + Georgia", "≈ Maine", "≈ New Jersey + Massachusetts"]
+      Fires_cause["Text"] = Indic
+      fig = make_subplots(rows = 1, cols = 2,specs = [[{"type":"domain"}, {"type":"domain"}]])
+      fig.add_trace(go.Pie(labels = Fires_cause["STAT_CAUSE_DESCR"],values = Fires_cause["COUNT_FIRE"],hole = 0.6,
         direction = "clockwise", title = dict(text = "Nombre", font=dict(size=20))),row = 1, col = 1,)
-    fig.add_trace(go.Pie(labels = Fires_cause["STAT_CAUSE_DESCR"],values = Fires_cause["FIRE_SIZE_SUM"],hovertext = Fires_cause["Text"],
+      fig.add_trace(go.Pie(labels = Fires_cause["STAT_CAUSE_DESCR"],values = Fires_cause["FIRE_SIZE_SUM"],hovertext = Fires_cause["Text"],
          hole = 0.6,direction = "clockwise",title = dict(text = "Surfaces (acres)", font=dict(size=20))),row = 1, col = 2)
-    fig.update_traces(textfont_size=15,sort=False,marker=dict(colors=['#F1C40F', '#F39C12', '#e74c3c','#E67E22','#d35400']))
-    fig.update_layout(title_text="Répartition des feux par causes (1992 - 2015)", title_x = 0.2, title_y = 0.95,paper_bgcolor='rgba(0,0,0,0)',
-    plot_bgcolor='rgba(0,0,0,0)',legend=dict(x=0.5, y=0.83,orientation="h",xanchor="center",yanchor="bottom",font=dict(
-            family="Arial",size=13,color="black")),margin=dict(l=0, r=0, t=0, b=0),titlefont=dict(size=15),width=900,height=500)
-    st.plotly_chart(fig)
+      fig.update_traces(textfont_size=15,sort=False,marker=dict(colors=['#F1C40F', '#F39C12', '#e74c3c','#E67E22','#d35400']))
+      fig.update_layout(title_text="Répartition des feux par causes (1992 - 2015)", title_x = 0.2, title_y =0.99,paper_bgcolor='rgba(0,0,0,0)',
+      plot_bgcolor='rgba(0,0,0,0)',legend=dict(x=0.0, y=0.95,orientation="h",font=dict(
+            family="Arial",size=12,color="black")),margin=dict(l=10, r=10, t=2, b=0),titlefont=dict(size=15),width=900,height=350)
+      st.plotly_chart(fig)
   #Pie Chart répartition par cause
-  with col2 :
-  #if st.checkbox("Afficher graphiques par cause") :
-    st.divider()
-
-    st.markdown(":orange[Les feux d’origine humaine] (volontaire et involontaire) représentent :orange[50% des départs].")
+    with col2 :
+  #if st.checkbox("Afficher graphiques par cause") :   
+      st.markdown(":orange[Les feux d’origine humaine] (volontaire et involontaire) représentent :orange[50% des départs].")
     
-    st.markdown(":orange[Les causes naturelles] (foudre) représentent :orange[62,1% des surfaces brûlées].")
-
-    st.divider()
-  
-  col1, col2 = st.columns([0.55, 0.45],gap="small",vertical_alignment="center")
-  with col1 :
+      st.markdown(":orange[Les causes naturelles] (foudre) représentent :orange[62,1% des surfaces brûlées].")
+   
+  with st.container(height=360):
+    col1, col2 = st.columns([0.6, 0.40],gap="small",vertical_alignment="center")
+    with col1 :
     #with st.container(height=400):
-    Fires_class = df.groupby("FIRE_SIZE_CLASS").agg({"FPA_ID":"count", "FIRE_SIZE":"sum"}).reset_index()
-    Fires_class = Fires_class.rename({"FPA_ID":"COUNT_FIRE", "FIRE_SIZE":"FIRE_SIZE_SUM"}, axis = 1)
-    Indic = ["≈ ", "≈ ","≈ Connecticut", "≈ New Jersey", "≈ Maryland", "≈ Virginie Occidentale + Delaware", "≈ Californie + Hawaii"]
-    Fires_class["Text"] = Indic
-    fig1= make_subplots(rows = 1, cols = 2, specs = [[{"type":"domain"}, {"type":"domain"}]])
-    fig1.add_trace(go.Pie(labels = Fires_class["FIRE_SIZE_CLASS"],values = Fires_class["COUNT_FIRE"],
+      Fires_class = df.groupby("FIRE_SIZE_CLASS").agg({"FPA_ID":"count", "FIRE_SIZE":"sum"}).reset_index()
+      Fires_class = Fires_class.rename({"FPA_ID":"COUNT_FIRE", "FIRE_SIZE":"FIRE_SIZE_SUM"}, axis = 1)
+      Indic = ["≈ ", "≈ ","≈ Connecticut", "≈ New Jersey", "≈ Maryland", "≈ Virginie Occidentale + Delaware", "≈ Californie + Hawaii"]
+      Fires_class["Text"] = Indic
+      fig1= make_subplots(rows = 1, cols = 2, specs = [[{"type":"domain"}, {"type":"domain"}]])
+      fig1.add_trace(go.Pie(labels = Fires_class["FIRE_SIZE_CLASS"],values = Fires_class["COUNT_FIRE"],
            hole = 0.6, rotation = 0,title = dict(text = "Nombre", font=dict(size=20))),row = 1, col = 1)
-    fig1.add_trace(go.Pie(labels = Fires_class["FIRE_SIZE_CLASS"],values = Fires_class["FIRE_SIZE_SUM"],
+      fig1.add_trace(go.Pie(labels = Fires_class["FIRE_SIZE_CLASS"],values = Fires_class["FIRE_SIZE_SUM"],
            hovertext = Fires_class["Text"],hole = 0.6, rotation = -120,title = dict(text = "Surfaces (acres)", font=dict(size=20))),
       row = 1, col = 2)
-    fig1.update_traces(textfont_size=15,sort=False,marker=dict(colors=['yellow','brown','#F1C40F', '#F39C12', '#e74c3c','#E67E22','#d35400']))
-    fig1.update_layout(title_text="Répartition des feux suivant leur taille (1992 - 2015)", title_x = 0.2, title_y = 0.95,paper_bgcolor='rgba(0,0,0,0)',
-    plot_bgcolor='rgba(0,0,0,0)',legend=dict(x=0.5, y=0.83,orientation="h",xanchor="center",yanchor="bottom",font=dict(
-            family="Arial",size=12,color="black")),margin=dict(l=0, r=0, t=0, b=0),titlefont=dict(size=15),width=900,height=500)
-    st.plotly_chart(fig1)
-  with col2 :
-    st.divider()
-    st.write(":orange[Les feux de petite taille (A et B, <9,9 acres)] représentent :orange[62 % du nombre de départs] mais seulement :orange[2% des surfaces brûlées].  :orange[78 % des surfaces brûlées sont liées aux feux de la classe G] (avec des feux allant de 5000 à 600 000 acres).")
-    st.divider()
+      fig1.update_traces(textfont_size=15,sort=False,marker=dict(colors=['yellow','brown','#F1C40F', '#F39C12', '#e74c3c','#E67E22','#d35400']))
+      fig1.update_layout(title_text="Répartition des feux suivant leur taille (1992 - 2015)", title_x = 0.2, title_y = 1,paper_bgcolor='rgba(0,0,0,0)',
+      plot_bgcolor='rgba(0,0,0,0)',legend=dict(x=0.2, y=0.95,orientation="h",font=dict(
+            family="Arial",size=12,color="black")),margin=dict(l=10, r=10, t=2, b=0),titlefont=dict(size=15),width=900,height=350)
+      st.plotly_chart(fig1)
+    with col2 :      
+      st.write(":orange[Les feux de petite taille (A et B, <9,9 acres)] représentent :orange[62 % du nombre de départs] mais seulement :orange[2% des surfaces brûlées].  :orange[78 % des surfaces brûlées sont liées aux feux de la classe G] (avec des feux allant de 5000 à 600 000 acres).")
+      
 
   st.subheader("3 - Répartition temporelle des feux")
   st.write("Cet axe révèle assez clairement des périodes à risque sur les départs et la gravité des feux")
@@ -211,72 +207,71 @@ if page == pages[2] :
   col1, col2 = st.columns([0.5, 0.5],gap="small",vertical_alignment="center")
   with col1 :
     fig2bis = px.area(df1, 'FIRE_YEAR' , "FIRE_SIZE", color="STAT_CAUSE_DESCR", line_group="STAT_CAUSE_DESCR")    
-    fig2bis.update_layout(title_text="Répartition des feux par année et cause (en acres)", title_x = 0.3, title_y = 1,paper_bgcolor='rgba(0,0,0,0)',
-    plot_bgcolor='rgba(0,0,0,0)',width=1000, height=350,legend=dict(x=0.0, y=0.93,orientation="h",xanchor="center",yanchor="bottom",font=dict(
-            family="Arial",size=11,color="black")),margin=dict(l=0, r=0, t=0, b=0),titlefont=dict(size=15))
+    fig2bis.update_layout(xaxis_title="",yaxis_title="",title_text="Répartition des feux par année et cause (en acres)", title_x = 0.2, title_y = 0.99,paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)',width=700, height=350,legend=dict(x=0, y=1,title=None,orientation="v",font=dict(
+            family="Arial",size=11,color="black")),margin=dict(l=0, r=0, t=20, b=50),titlefont=dict(size=15))
     st.plotly_chart(fig2bis)
   with col2 :
     fig3bis = px.area(df1bis, 'FIRE_YEAR' , "FPA_ID", color="STAT_CAUSE_DESCR", line_group="STAT_CAUSE_DESCR")
-    fig3bis.update_layout(title_text="Répartition des feux par année et cause (en nombre)", title_x = 0.3, title_y = 1,paper_bgcolor='rgba(0,0,0,0)',
-    plot_bgcolor='rgba(0,0,0,0)',width=1000, height=350,legend=dict(x=0.0, y=0.93,orientation="h",xanchor="center",yanchor="bottom",font=dict(
-            family="Arial",size=11,color="black")),margin=dict(l=0, r=0, t=0, b=00),titlefont=dict(size=15))
+    fig3bis.update_layout(xaxis_title="",yaxis_title="",title_text="Répartition des feux par année et cause (en nombre)", title_x = 0.2, title_y = 0.99,paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)',width=700, height=350,legend=dict(title=None,x=0, y=1,orientation="v",font=dict(
+            family="Arial",size=11,color="black")),margin=dict(l=0, r=0, t=20, b=00),titlefont=dict(size=15))
     st.plotly_chart(fig3bis)
 #Histogrammes mois
   st.write("Les mois de juin à août sont les plus dévastateurs ce qui qui peut sous-entendre 2 facteurs : un climat plus favorable aux départs de feux, des activités humaines à risque plus élevées pendant les périodes de vacances")
-  if st.checkbox("Afficher graphiques mois") :
-    fig3= make_subplots(rows=1, cols=2, shared_yaxes=False,subplot_titles=("En surfaces brûlées (acres)","En Nombre de départs"))
-    fig3.add_trace(go.Histogram(histfunc="sum",
+  #if st.checkbox("Afficher graphiques mois") :
+  fig3= make_subplots(rows=1, cols=2, shared_yaxes=False,subplot_titles=("En surfaces brûlées (acres)","En Nombre de départs"))
+  fig3.add_trace(go.Histogram(histfunc="sum",
       name="Surface brûlées (acres) ",
       x=df['MONTH_DISCOVERY'],y=df['FIRE_SIZE'], marker_color='red'),1,1)
-    fig3.add_trace(go.Histogram(histfunc="count",
+  fig3.add_trace(go.Histogram(histfunc="count",
       name="Nombre de feux",
       x=df['MONTH_DISCOVERY'],marker_color='blue'),1,2)
-    fig3.update_layout(title_text="Départs de feux par mois",bargap=0.2,height=400, width=1100, coloraxis=dict(colorscale='Bluered_r'), showlegend=False,paper_bgcolor='rgba(0,0,0,0)',
-    plot_bgcolor='rgba(0,0,0,0)')
-
-    st.plotly_chart(fig3)
+  fig3.update_layout(title_text="Départs de feux par mois",bargap=0.2,height=400, width=1100, coloraxis=dict(colorscale='Bluered_r'), showlegend=False,paper_bgcolor='rgba(0,0,0,0)',
+  plot_bgcolor='rgba(0,0,0,0)')
+  st.plotly_chart(fig3)
 
 #Histogrammes jour semaine
   st.write("On observe également des départs de feux significativement plus élevés le week-end. Ce qui peut être mis en corrélation avec les feux d'origine humaine déclenchés par des activités à risque plus propices en périodes de week-end (feux de camps...)")
-  if st.checkbox("Afficher graphiques jour de la semaine") :
-    df['DAY_OF_WEEK_DISCOVERYName'] = pd.to_datetime(df['DISCOVERY_DATE']).dt.day_name()
-    Fires2=df.loc[df['STAT_CAUSE_DESCR']!="Foudre"]
-    Fires3 = Fires2.groupby('DAY_OF_WEEK_DISCOVERYName')['FPA_ID'].value_counts().groupby('DAY_OF_WEEK_DISCOVERYName').sum()
-    week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-    Fires3 = Fires3.reindex(week)
-    Fires4 = Fires2.groupby('DAY_OF_WEEK_DISCOVERYName')['FIRE_SIZE'].sum()
-    week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-    Fires4 = Fires4.reindex(week)
-    fig4 = make_subplots(rows=1, cols=2, shared_yaxes=False,subplot_titles=("En surfaces brûlées (acres)","En Nombre de départs"))
-    fig4.add_trace(go.Histogram(histfunc="sum",
+  #if st.checkbox("Afficher graphiques jour de la semaine") :
+  df['DAY_OF_WEEK_DISCOVERYName'] = pd.to_datetime(df['DISCOVERY_DATE']).dt.day_name()
+  Fires2=df.loc[df['STAT_CAUSE_DESCR']!="Foudre"]
+  Fires3 = Fires2.groupby('DAY_OF_WEEK_DISCOVERYName')['FPA_ID'].value_counts().groupby('DAY_OF_WEEK_DISCOVERYName').sum()
+  week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+  Fires3 = Fires3.reindex(week)
+  Fires4 = Fires2.groupby('DAY_OF_WEEK_DISCOVERYName')['FIRE_SIZE'].sum()
+  week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+  Fires4 = Fires4.reindex(week)
+  fig4 = make_subplots(rows=1, cols=2, shared_yaxes=False,subplot_titles=("En surfaces brûlées (acres)","En Nombre de départs"))
+  fig4.add_trace(go.Histogram(histfunc="sum",
       name="Surface brûlées (acres) ",
       x=Fires4.index,y=Fires4.values, marker_color='red'),1,1)
-    fig4.add_trace(go.Histogram(histfunc="sum",
+  fig4.add_trace(go.Histogram(histfunc="sum",
       name="Nombre de feux",
       x=Fires3.index,y=Fires3.values,marker_color='blue'),1,2)
-    fig4.update_layout(title_text="Départs de feux en fonction du jour de la semaine",bargap=0.2,height=400, width=1000, coloraxis=dict(colorscale='Bluered_r'), showlegend=False,paper_bgcolor='rgba(0,0,0,0)',
-    plot_bgcolor='rgba(0,0,0,0)')
-    st.plotly_chart(fig4)
+  fig4.update_layout(title_text="Départs de feux en fonction du jour de la semaine",bargap=0.2,height=400, width=1000, coloraxis=dict(colorscale='Bluered_r'), showlegend=False,paper_bgcolor='rgba(0,0,0,0)',
+  plot_bgcolor='rgba(0,0,0,0)')
+  st.plotly_chart(fig4)
 
-    df3=df.groupby(['STAT_CAUSE_DESCR', 'DISCOVERY_DOY']).agg({"FIRE_SIZE":"sum"}).reset_index()
+  df3=df.groupby(['STAT_CAUSE_DESCR', 'DISCOVERY_DOY']).agg({"FIRE_SIZE":"sum"}).reset_index()
  
-    fig4bis = px.area(df3, 'DISCOVERY_DOY' , "FIRE_SIZE", color="STAT_CAUSE_DESCR", line_group="STAT_CAUSE_DESCR")
-    fig4bis.update_layout(title_text="Répartition des feux jours de l'année et cause (en acres)", title_x = 0.3, title_y = 1,paper_bgcolor='rgba(0,0,0,0)',
-    plot_bgcolor='rgba(0,0,0,0)',width=1000, height=400,legend=dict(x=0.5, y=0.93,orientation="h",xanchor="center",yanchor="bottom",font=dict(
+  fig4bis = px.area(df3, 'DISCOVERY_DOY' , "FIRE_SIZE", color="STAT_CAUSE_DESCR", line_group="STAT_CAUSE_DESCR")
+  fig4bis.update_layout(title_text="Répartition des feux jours de l'année et cause (en acres)", title_x = 0.3, title_y = 1,paper_bgcolor='rgba(0,0,0,0)',
+  plot_bgcolor='rgba(0,0,0,0)',width=1000, height=400,legend=dict(x=0.5, y=0.93,orientation="h",xanchor="center",yanchor="bottom",font=dict(
             family="Arial",size=15,color="black")),margin=dict(l=100, r=100, t=25, b=50),titlefont=dict(size=20))
-    st.plotly_chart(fig4bis)
+  st.plotly_chart(fig4bis)
 # Durée moyenne
   st.write('L’analyse de la durée des feux par cause montre une certaine hétérogénéité de la durée des feux en fonction de la cause. Les feux liés à la foudre sont en moyenne deux fois plus longs à contenir que les autres types de feux')
-  if st.checkbox("Afficher graphiques par durée") :
-    Fires_burn = df.dropna(subset=['CONT_DOY', 'DISCOVERY_DOY']).copy()
-    Fires_burn['CONT_DOY'] = Fires_burn['CONT_DOY'].astype(int)
-    Fires_burn['DISCOVERY_DOY'] = Fires_burn['DISCOVERY_DOY'].astype(int)
-    Fires_burn['BURN_TIME'] = Fires_burn['CONT_DOY'] - Fires_burn['DISCOVERY_DOY']
-    Fires_burn.loc[Fires_burn['BURN_TIME'] < 0, 'BURN_TIME'] += 365
-    cause_avg_burn_time = Fires_burn.groupby('STAT_CAUSE_DESCR', dropna=True)['BURN_TIME'].mean().reset_index()
-    cause_avg_burn_time.sort_values(by='BURN_TIME', ascending=False, inplace=True)
-    fig5 = px.bar(
-      cause_avg_burn_time,
+  #if st.checkbox("Afficher graphiques par durée") :
+  Fires_burn = df.dropna(subset=['CONT_DOY', 'DISCOVERY_DOY']).copy()
+  Fires_burn['CONT_DOY'] = Fires_burn['CONT_DOY'].astype(int)
+  Fires_burn['DISCOVERY_DOY'] = Fires_burn['DISCOVERY_DOY'].astype(int)
+  Fires_burn['BURN_TIME'] = Fires_burn['CONT_DOY'] - Fires_burn['DISCOVERY_DOY']
+  Fires_burn.loc[Fires_burn['BURN_TIME'] < 0, 'BURN_TIME'] += 365
+  cause_avg_burn_time = Fires_burn.groupby('STAT_CAUSE_DESCR', dropna=True)['BURN_TIME'].mean().reset_index()
+  cause_avg_burn_time.sort_values(by='BURN_TIME', ascending=False, inplace=True)
+  fig5 = px.bar(
+    cause_avg_burn_time,
       x='BURN_TIME',
       y='STAT_CAUSE_DESCR',
       labels={"STAT_CAUSE_DESCR": "Cause", "BURN_TIME": "Durée moyenne (jours)"},
@@ -284,9 +279,9 @@ if page == pages[2] :
       orientation='h',  # Horizontal orientation
       color='STAT_CAUSE_DESCR',
       color_discrete_sequence=px.colors.sequential.Reds_r)
-    fig5.update_layout(xaxis=dict(tickmode='linear', dtick=0.5),title_x = 0.3, title_y = 1,paper_bgcolor='rgba(0,0,0,0)',
-    plot_bgcolor='rgba(0,0,0,0)',width=1000, height=400,showlegend=False,margin=dict(l=170, r=200, t=50, b=50),titlefont=dict(size=20))
-    st.plotly_chart(fig5)
+  fig5.update_layout(xaxis=dict(tickmode='linear', dtick=0.5),title_x = 0.3, title_y = 1,paper_bgcolor='rgba(0,0,0,0)',
+  plot_bgcolor='rgba(0,0,0,0)',width=1000, height=400,showlegend=False,margin=dict(l=170, r=200, t=50, b=50),titlefont=dict(size=20))
+  st.plotly_chart(fig5)
   
   st.subheader("4 - Répartition géographique")
   #if st.checkbox("Afficher graphiques répartition géographique") :
@@ -323,11 +318,11 @@ if page == pages[2] :
     #        family="Arial",size=15,color="black")),margin=dict(l=50, r=50, t=100, b=50),titlefont=dict(size=20))      ,
     
     #st.plotly_chart(fig6)
-  if st.checkbox("Afficher graphiques répartition géographique et année") :
-    col1, col2 = st.columns(2)
+  #if st.checkbox("Afficher graphiques répartition géographique et année") :
+  col1, col2 = st.columns(2)
 
-    with col1:
-      fig7 = px.scatter_geo(FiresClasse,
+  with col1:
+    fig7 = px.scatter_geo(FiresClasse,
          lon = FiresClasse['LONGITUDE'],
           lat = FiresClasse['LATITUDE'],
           color="STAT_CAUSE_DESCR",
@@ -342,15 +337,15 @@ if page == pages[2] :
           width=800,
           height=500,
           title="Répartition géographique des feux par cause, taille",basemap_visible=True)
-      fig7.update_geos(resolution=50,lataxis_showgrid=True, lonaxis_showgrid=True,bgcolor='rgba(0,0,0,0)',framecolor='blue',showframe=True,showland=True,landcolor='#e0efe7',projection_type="albers usa")
-      fig7.update_layout(title_text="Répartition géographique des feux par cause et taille", title_x = 0.1, title_y = 0.95,paper_bgcolor='rgba(0,0,0,0)',
-      plot_bgcolor='rgba(0,0,0,0)',width=1000, height=700,legend=dict(x=0.5, y=0.95,orientation="h",xanchor="center",yanchor="bottom",font=dict(
-            family="Arial",size=11,color="black")),margin=dict(l=50, r=50, t=100, b=150),titlefont=dict(size=18))   
+    fig7.update_geos(resolution=50,lataxis_showgrid=True, lonaxis_showgrid=True,bgcolor='rgba(0,0,0,0)',framecolor='blue',showframe=True,showland=True,landcolor='#e0efe7',projection_type="albers usa")
+    fig7.update_layout(title_text="Répartition géographique des feux par cause et taille", title_x = 0.1, title_y = 0.95,paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)',width=1000, height=700,legend=dict(x=0.5, y=0.87,orientation="h",xanchor="center",yanchor="bottom",font=dict(
+            family="Arial",size=11,color="black")),margin=dict(l=50, r=50, t=50, b=250),titlefont=dict(size=18))   
     
-      st.plotly_chart(fig7)
+    st.plotly_chart(fig7)
 
-    with col2:
-      fig7_ = px.scatter_geo(FiresClasse,
+  with col2:
+    fig7_ = px.scatter_geo(FiresClasse,
          lon = FiresClasse['LONGITUDE'],
           lat = FiresClasse['LATITUDE'],
           color="STAT_CAUSE_DESCR",
@@ -365,12 +360,12 @@ if page == pages[2] :
           width=800,
           height=500,
           title="Focus par année",basemap_visible=True)
-      fig7_.update_geos(resolution=50,lataxis_showgrid=True, lonaxis_showgrid=True,bgcolor='rgba(0,0,0,0)',framecolor='blue',showframe=True,showland=True,landcolor='#e0efe7',projection_type="albers usa")
-      fig7_.update_layout(title_text="Focus par année", title_x = 0.4, title_y = 0.95,paper_bgcolor='rgba(0,0,0,0)',
-      plot_bgcolor='rgba(0,0,0,0)',width=1000, height=500,legend=dict(x=0.5, y=0.95,orientation="h",xanchor="center",yanchor="bottom",font=dict(
+    fig7_.update_geos(resolution=50,lataxis_showgrid=True, lonaxis_showgrid=True,bgcolor='rgba(0,0,0,0)',framecolor='blue',showframe=True,showland=True,landcolor='#e0efe7',projection_type="albers usa")
+    fig7_.update_layout(title_text="Focus par année", title_x = 0.4, title_y = 0.95,paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)',width=1000, height=500,legend=dict(x=0.5, y=0.95,orientation="h",xanchor="center",yanchor="bottom",font=dict(
             family="Arial",size=11,color="black")),margin=dict(l=50, r=50, t=100, b=50),titlefont=dict(size=18))   
     
-      st.plotly_chart(fig7_)
+    st.plotly_chart(fig7_)
          
      
     
@@ -378,18 +373,18 @@ if page == pages[2] :
 # Plot heatmap - correlation matrix for all numerical columns
 #style.use('ggplot')
   
-  if st.checkbox("Afficher heatmap") :
-    df_Fires_ML_num = df.select_dtypes(include=[np.number])
-    plt.subplots(figsize = (10,7))
-    sns.set_style(style='white')
-    sns.set(rc={"axes.facecolor": "#F4E4AA", "figure.facecolor": "#F4E4AA"})
-    df_Fires_ML_num = df.select_dtypes(include=[np.number])
-    mask = np.zeros_like(df_Fires_ML_num.corr(), dtype='bool')
-    mask[np.triu_indices_from(mask)] = True
-    fig7b, ax = plt.subplots(figsize = (10,7))
-    sns.heatmap(df_Fires_ML_num.corr(), cmap=sns.diverging_palette(20, 220, n=200), annot=True, center = 0, mask=mask, annot_kws={"size": 8})
-    plt.title("Heatmap of all the selected features of data set", fontsize = 15)
-    st.write(fig7b)
+  #if st.checkbox("Afficher heatmap") :
+  df_Fires_ML_num = df.select_dtypes(include=[np.number])
+  plt.subplots(figsize = (10,7))
+  sns.set_style(style='white')
+  sns.set(rc={"axes.facecolor": "#F4E4AA", "figure.facecolor": "#F4E4AA"})
+  df_Fires_ML_num = df.select_dtypes(include=[np.number])
+  mask = np.zeros_like(df_Fires_ML_num.corr(), dtype='bool')
+  mask[np.triu_indices_from(mask)] = True
+  fig7b, ax = plt.subplots(figsize = (10,7))
+  sns.heatmap(df_Fires_ML_num.corr(), cmap=sns.diverging_palette(20, 220, n=200), annot=True, center = 0, mask=mask, annot_kws={"size": 8})
+  plt.title("Heatmap of all the selected features of data set", fontsize = 15)
+  st.write(fig7b)
 
     #df_Fires_ML_num = df.select_dtypes(include=[np.number])
     #fig7b, ax = plt.subplots(figsize = (10,7))
