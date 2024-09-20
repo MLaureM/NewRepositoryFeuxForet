@@ -46,6 +46,7 @@ from sklearn.metrics import confusion_matrix
 import sklearn.metrics as metrics
 from sklearn.metrics import make_scorer, f1_score, confusion_matrix, classification_report, recall_score
 from sklearn.utils.class_weight import compute_class_weight
+from sklearn.utils.class_weight import compute_sample_weight
 import joblib
 
 # Mise en forme couleur du fond de l'application
