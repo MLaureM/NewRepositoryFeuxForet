@@ -36,7 +36,7 @@ from sklearn.metrics import roc_curve
 from sklearn.model_selection import GridSearchCV, train_test_split, StratifiedKFold, cross_val_score
 from sklearn import model_selection
 from sklearn import tree
-from sklearn.metrics import recall_sc, roc_auc_score
+from sklearn.metrics import roc_auc_score
 from sklearn.metrics import precision_recall_curve, auc
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.ensemble import GradientBoostingClassifier
