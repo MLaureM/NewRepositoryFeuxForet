@@ -645,14 +645,15 @@ if page == pages[3] :
 
     #Graphiques performances 
     graphes_perf = st.sidebar.multiselect("Choix graphiques",("Matrice confusion","Courbe ROC","Courbe Recall"))
-
-    class_weights = st.sidebar.radio("Voulez-vous rééquilibrer les classes ?", ["Oui", "Non"], horizontal=True)
+        
+    class_weights_option = st.sidebar.radio("Voulez-vous rééquilibrer les classes ?", ["Oui", "Non"], horizontal=True)
     if class_weights == "Oui":
-      classes_weights = class_weights.compute_class_weight(class_weight='balanced', y=y_train)
+      classes_weights = compute_class_weight(class_weight='balanced', classes=np.unique(y_train), y=y_train)
       st.write("Les classes sont ré-équilibrées")
-    elif class_weights == "Non":
+    elif class_weights_option == "Non":
       classes_weights = None
       st.write("Les classes ne sont pas ré-équilibrées.")
+
     # Réduction du modèle avec la méthode feature importances
     @st.cache_data(persist=True)
     def model_reduction(X_train, y_train):
