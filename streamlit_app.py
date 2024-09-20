@@ -647,7 +647,7 @@ if page == pages[3] :
     graphes_perf = st.sidebar.multiselect("Choix graphiques",("Matrice confusion","Courbe ROC","Courbe Recall"))
         
     class_weights_option = st.sidebar.radio("Voulez-vous rééquilibrer les classes ?", ["Oui", "Non"], horizontal=True)
-    if class_weights == "Oui":
+    if class_weights_option == "Oui":
       classes_weights = compute_class_weight(class_weight='balanced', classes=np.unique(y_train), y=y_train)
       st.write("Les classes sont ré-équilibrées")
     elif class_weights_option == "Non":
