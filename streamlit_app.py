@@ -33,18 +33,18 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.datasets import make_classification
 from sklearn.metrics import roc_curve
-from sklearn.model_selection import GridSearchCVassifiere
+from sklearn.model_selection import GridSearchCV, train_test_split, StratifiedKFold, cross_val_score
 from sklearn import model_selection
 from sklearn import tree
 from sklearn.metrics import recall_sc, roc_auc_score
 from sklearn.metrics import precision_recall_curve, auc
-from sklearn.preprocessing import MinMaxScaler, train_test_split, StratifiedKFold, cross_val_scor
-from sklearn.ensemble import GradientBoostingCl
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.ensemble import GradientBoostingClassifier
 import folium
 from streamlit_folium import st_folium
 from sklearn.metrics import confusion_matrix
 import sklearn.metrics as metrics
-from sklearn.metrics import make_scorer, f1_score, confusion_matrix, classification_report
+from sklearn.metrics import make_scorer, f1_score, confusion_matrix, classification_report, recall_score
 from sklearn.utils.class_weight import compute_class_weight
 import joblib
 
