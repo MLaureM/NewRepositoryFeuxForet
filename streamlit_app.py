@@ -118,35 +118,40 @@ if page == pages[1] :
 #Création de la page 2 Datavizualisation
 if page == pages[2] : 
   st.header("DataVizualisation")
-  st.write("Nous avons analysé le dataset sous différents angles afin d’en faire ressortir les principales caractéristiques.")
+  #st.write("Nous avons analysé le dataset sous différents angles afin d’en faire ressortir les principales caractéristiques.")
   st.subheader("1 - Analyse des outliers et de la répartitions des valeurs numériques")
  
   col1, col2 =st.columns([0.55, 0.45],gap="small",vertical_alignment="center")
   with col1 :
-    fig, axes = plt.subplots(2, 3,figsize=(12,7))
-    sns.set_theme()
-    sns.violinplot(ax=axes[0, 0], x=df['DURATION'])
-    sns.violinplot(ax=axes[0, 1],x=df['FIRE_SIZE'])
-    sns.violinplot(ax=axes[0, 2],x=df['AVG_PCP [mm]'])
-    sns.violinplot(ax=axes[1,0],x=df['LATITUDE'])
-    sns.violinplot(ax=axes[1, 1],x=df['LONGITUDE'])
-    sns.violinplot(ax=axes[1, 2],x=df['AVG_TEMP [°C]'])
-    #st.pyplot(fig)
-    joblib.dump(st.pyplot(fig), "violin.joblib")
-
+    @st.cache_data(persist=True)
+    def plot_violin():
+      fig, axes = plt.subplots(2, 3,figsize=(12,7))
+      sns.set_style(style='white')
+      sns.set(rc={"axes.facecolor": "#F4E4AA", "figure.facecolor": "#F4E4AA"})
+      sns.set_theme()
+      sns.violinplot(ax=axes[0, 0], x=df['DURATION'])
+      sns.violinplot(ax=axes[0, 1],x=df['FIRE_SIZE'])
+      sns.violinplot(ax=axes[0, 2],x=df['AVG_PCP [mm]'])
+      sns.violinplot(ax=axes[1,0],x=df['LATITUDE'])
+      sns.violinplot(ax=axes[1, 1],x=df['LONGITUDE'])
+      sns.violinplot(ax=axes[1, 2],x=df['AVG_TEMP [°C]'])
+      return fig
+    fig=plot_violin()
+    fig 
 
   with col2 :
-    st.divider()
+    #st.divider()
 
     st.markdown("Certaines variables comme les tailles de feux et les durées présentent des valeurs particulièrement extrêmes.")  
     st.markdown("Certaines valeurs extrêmes paraissent impossibles et devront être écartées des analyses (exemple feux de plus de 1 an). A l'inverse les feux de taille extrêmes restent des valeurs possibles (méga feux) et seront partie intégrante de nos analyses")
     
     st.markdown("Les autres variables numériques (précipitations, températures ou coordonnées géographiques) nous indiquent certaines tendances marquées sur la répartition des feux que nous allons analyser plus en détail.")
     
-    st.divider()
+    #st.divider()
 
   st.subheader("2 - Répartition des feux par cause et classe")
-  with st.container(height=360):
+  with st.container():
+  #with st.container(height=360):
     col1, col2 = st.columns([0.6, 0.4],gap="small",vertical_alignment="center")
     with col1 :
       Fires_cause = df.groupby("STAT_CAUSE_DESCR").agg({"FPA_ID":"count", "FIRE_SIZE":"sum"}).reset_index()
@@ -170,7 +175,7 @@ if page == pages[2] :
     
       st.markdown(":orange[Les causes naturelles] (foudre) représentent :orange[62,1% des surfaces brûlées].")
    
-  with st.container(height=360):
+  with st.container():
     col1, col2 = st.columns([0.6, 0.40],gap="small",vertical_alignment="center")
     with col1 :
     #with st.container(height=400):
@@ -211,73 +216,98 @@ if page == pages[2] :
 
   df1=df.groupby(['STAT_CAUSE_DESCR', 'FIRE_YEAR']).agg({"FIRE_SIZE":"sum"}).reset_index()
   df1bis=df.groupby(['STAT_CAUSE_DESCR', 'FIRE_YEAR']).agg({"FPA_ID":"count"}).reset_index()
-  col1, col2 = st.columns([0.5, 0.5],gap="small",vertical_alignment="center")
+  col1, col2 = st.columns([0.5, 0.5],gap="small",vertical_alignment="center")  
   with col1 :
-    fig2bis = px.area(df1, 'FIRE_YEAR' , "FIRE_SIZE", color="STAT_CAUSE_DESCR", line_group="STAT_CAUSE_DESCR")    
-    fig2bis.update_layout(xaxis_title="",yaxis_title="",title_text="Répartition des feux par année et cause (en acres)", title_x = 0.2, title_y = 0.99,paper_bgcolor='rgba(0,0,0,0)',
-    plot_bgcolor='rgba(0,0,0,0)',width=700, height=350,legend=dict(x=0, y=1,title=None,orientation="v",font=dict(
+    @st.cache_data(persist=True)
+    def graph_annee():
+      fig2bis = px.area(df1, 'FIRE_YEAR' , "FIRE_SIZE", color="STAT_CAUSE_DESCR", line_group="STAT_CAUSE_DESCR")    
+      fig2bis.update_layout(xaxis_title="",yaxis_title="",title_text="Répartition des feux par année et cause (en acres)", title_x = 0.2, title_y = 0.99,paper_bgcolor='rgba(0,0,0,0)',
+      plot_bgcolor='rgba(0,0,0,0)',width=700, height=350,legend=dict(x=0, y=1,title=None,orientation="v",font=dict(
             family="Arial",size=11,color="black")),margin=dict(l=0, r=0, t=20, b=50),titlefont=dict(size=15))
-    st.plotly_chart(fig2bis)
+      return fig2bis
+    fig2bis=graph_annee()
+    fig2bis
+
   with col2 :
-    fig3bis = px.area(df1bis, 'FIRE_YEAR' , "FPA_ID", color="STAT_CAUSE_DESCR", line_group="STAT_CAUSE_DESCR")
-    fig3bis.update_layout(xaxis_title="",yaxis_title="",title_text="Répartition des feux par année et cause (en nombre)", title_x = 0.2, title_y = 0.99,paper_bgcolor='rgba(0,0,0,0)',
-    plot_bgcolor='rgba(0,0,0,0)',width=700, height=350,legend=dict(title=None,x=0, y=1,orientation="v",font=dict(
+    @st.cache_data(persist=True)
+    def graph_annee_nombre():
+      fig3bis = px.area(df1bis, 'FIRE_YEAR' , "FPA_ID", color="STAT_CAUSE_DESCR", line_group="STAT_CAUSE_DESCR")
+      fig3bis.update_layout(xaxis_title="",yaxis_title="",title_text="Répartition des feux par année et cause (en nombre)", title_x = 0.2, title_y = 0.99,paper_bgcolor='rgba(0,0,0,0)',
+      plot_bgcolor='rgba(0,0,0,0)',width=700, height=350,legend=dict(title=None,x=0, y=1,orientation="v",font=dict(
             family="Arial",size=11,color="black")),margin=dict(l=0, r=0, t=20, b=00),titlefont=dict(size=15))
-    joblib.dump(st.plotly_chart(fig3bis),'répartition_feux_année')
+      return fig3bis
+    fig3bis=graph_annee_nombre()
+    fig3bis
 #Histogrammes mois
   st.write("Les mois de juin à août sont les plus dévastateurs ce qui qui peut sous-entendre 2 facteurs : un climat plus favorable aux départs de feux, des activités humaines à risque plus élevées pendant les périodes de vacances")
   #if st.checkbox("Afficher graphiques mois") :
-  fig3= make_subplots(rows=1, cols=2, shared_yaxes=False,subplot_titles=("En surfaces brûlées (acres)","En Nombre de départs"))
-  fig3.add_trace(go.Histogram(histfunc="sum",
+  @st.cache_data(persist=True)
+  def hist_mois_acres_nb():
+    fig3= make_subplots(rows=1, cols=2, shared_yaxes=False,subplot_titles=("En surfaces brûlées (acres)","En Nombre de départs"))
+    fig3.add_trace(go.Histogram(histfunc="sum",
       name="Surface brûlées (acres) ",
       x=df['MONTH_DISCOVERY'],y=df['FIRE_SIZE'], marker_color='red'),1,1)
-  fig3.add_trace(go.Histogram(histfunc="count",
+    fig3.add_trace(go.Histogram(histfunc="count",
       name="Nombre de feux",
       x=df['MONTH_DISCOVERY'],marker_color='blue'),1,2)
-  fig3.update_layout(title_text="Départs de feux par mois",bargap=0.2,height=400, width=1100, coloraxis=dict(colorscale='Bluered_r'), showlegend=False,paper_bgcolor='rgba(0,0,0,0)',
-  plot_bgcolor='rgba(0,0,0,0)')
-  joblib.dump(st.plotly_chart(fig3),'répartition_feux_mois')
+    fig3.update_layout(title_text="Départs de feux par mois",bargap=0.2,height=400, width=1100, coloraxis=dict(colorscale='Bluered_r'), showlegend=False,paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)')
+    return fig3
+  fig3=hist_mois_acres_nb()
+  fig3
+
 
 #Histogrammes jour semaine
   st.write("On observe également des départs de feux significativement plus élevés le week-end. Ce qui peut être mis en corrélation avec les feux d'origine humaine déclenchés par des activités à risque plus propices en périodes de week-end (feux de camps...)")
   #if st.checkbox("Afficher graphiques jour de la semaine") :
-  df['DAY_OF_WEEK_DISCOVERYName'] = pd.to_datetime(df['DISCOVERY_DATE']).dt.day_name()
-  Fires2=df.loc[df['STAT_CAUSE_DESCR']!="Foudre"]
-  Fires3 = Fires2.groupby('DAY_OF_WEEK_DISCOVERYName')['FPA_ID'].value_counts().groupby('DAY_OF_WEEK_DISCOVERYName').sum()
-  week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-  Fires3 = Fires3.reindex(week)
-  Fires4 = Fires2.groupby('DAY_OF_WEEK_DISCOVERYName')['FIRE_SIZE'].sum()
-  week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-  Fires4 = Fires4.reindex(week)
-  fig4 = make_subplots(rows=1, cols=2, shared_yaxes=False,subplot_titles=("En surfaces brûlées (acres)","En Nombre de départs"))
-  fig4.add_trace(go.Histogram(histfunc="sum",
+  @st.cache_data(persist=True)
+  def hist_jours_acres_nb():
+    df['DAY_OF_WEEK_DISCOVERYName'] = pd.to_datetime(df['DISCOVERY_DATE']).dt.day_name()
+    Fires2=df.loc[df['STAT_CAUSE_DESCR']!="Foudre"]
+    Fires3 = Fires2.groupby('DAY_OF_WEEK_DISCOVERYName')['FPA_ID'].value_counts().groupby('DAY_OF_WEEK_DISCOVERYName').sum()
+    week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    Fires3 = Fires3.reindex(week)
+    Fires4 = Fires2.groupby('DAY_OF_WEEK_DISCOVERYName')['FIRE_SIZE'].sum()
+    week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    Fires4 = Fires4.reindex(week)
+    fig4 = make_subplots(rows=1, cols=2, shared_yaxes=False,subplot_titles=("En surfaces brûlées (acres)","En Nombre de départs"))
+    fig4.add_trace(go.Histogram(histfunc="sum",
       name="Surface brûlées (acres) ",
       x=Fires4.index,y=Fires4.values, marker_color='red'),1,1)
-  fig4.add_trace(go.Histogram(histfunc="sum",
+    fig4.add_trace(go.Histogram(histfunc="sum",
       name="Nombre de feux",
       x=Fires3.index,y=Fires3.values,marker_color='blue'),1,2)
-  fig4.update_layout(title_text="Départs de feux en fonction du jour de la semaine",bargap=0.2,height=400, width=1000, coloraxis=dict(colorscale='Bluered_r'), showlegend=False,paper_bgcolor='rgba(0,0,0,0)',
-  plot_bgcolor='rgba(0,0,0,0)')
-  joblib.dump(st.plotly_chart(fig4),'répartition_feux_jour')
+    fig4.update_layout(title_text="Départs de feux en fonction du jour de la semaine",bargap=0.2,height=400, width=1000, coloraxis=dict(colorscale='Bluered_r'), showlegend=False,paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)')
+    return fig4
+  fig4=hist_jours_acres_nb()
+  fig4
 
   df3=df.groupby(['STAT_CAUSE_DESCR', 'DISCOVERY_DOY']).agg({"FIRE_SIZE":"sum"}).reset_index()
- 
-  fig4bis = px.area(df3, 'DISCOVERY_DOY' , "FIRE_SIZE", color="STAT_CAUSE_DESCR", line_group="STAT_CAUSE_DESCR")
-  fig4bis.update_layout(title_text="Répartition des feux jours de l'année et cause (en acres)", title_x = 0.3, title_y = 1,paper_bgcolor='rgba(0,0,0,0)',
-  plot_bgcolor='rgba(0,0,0,0)',width=1000, height=400,legend=dict(x=0.5, y=0.93,orientation="h",xanchor="center",yanchor="bottom",font=dict(
+
+  @st.cache_data(persist=True)
+  def jour_cause(): 
+    fig4bis = px.area(df3, 'DISCOVERY_DOY' , "FIRE_SIZE", color="STAT_CAUSE_DESCR", line_group="STAT_CAUSE_DESCR")
+    fig4bis.update_layout(title_text="Répartition des feux jours de l'année et cause (en acres)", title_x = 0.3, title_y = 1,paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)',width=1000, height=400,legend=dict(title=None,x=0.5, y=0.93,orientation="h",xanchor="center",yanchor="bottom",font=dict(
             family="Arial",size=15,color="black")),margin=dict(l=100, r=100, t=25, b=50),titlefont=dict(size=20))
-  joblib.dump(st.plotly_chart(fig4bis),"répartion_feux_jours")
+    return fig4bis
+  fig4bis=jour_cause()
+  fig4bis
+
 # Durée moyenne
   st.write('L’analyse de la durée des feux par cause montre une certaine hétérogénéité de la durée des feux en fonction de la cause. Les feux liés à la foudre sont en moyenne deux fois plus longs à contenir que les autres types de feux')
   #if st.checkbox("Afficher graphiques par durée") :
-  Fires_burn = df.dropna(subset=['CONT_DOY', 'DISCOVERY_DOY']).copy()
-  Fires_burn['CONT_DOY'] = Fires_burn['CONT_DOY'].astype(int)
-  Fires_burn['DISCOVERY_DOY'] = Fires_burn['DISCOVERY_DOY'].astype(int)
-  Fires_burn['BURN_TIME'] = Fires_burn['CONT_DOY'] - Fires_burn['DISCOVERY_DOY']
-  Fires_burn.loc[Fires_burn['BURN_TIME'] < 0, 'BURN_TIME'] += 365
-  cause_avg_burn_time = Fires_burn.groupby('STAT_CAUSE_DESCR', dropna=True)['BURN_TIME'].mean().reset_index()
-  cause_avg_burn_time.sort_values(by='BURN_TIME', ascending=False, inplace=True)
-  fig5 = px.bar(
+  @st.cache_data(persist=True)
+  def durée(): 
+    Fires_burn = df.dropna(subset=['CONT_DOY', 'DISCOVERY_DOY']).copy()
+    Fires_burn['CONT_DOY'] = Fires_burn['CONT_DOY'].astype(int)
+    Fires_burn['DISCOVERY_DOY'] = Fires_burn['DISCOVERY_DOY'].astype(int)
+    Fires_burn['BURN_TIME'] = Fires_burn['CONT_DOY'] - Fires_burn['DISCOVERY_DOY']
+    Fires_burn.loc[Fires_burn['BURN_TIME'] < 0, 'BURN_TIME'] += 365
+    cause_avg_burn_time = Fires_burn.groupby('STAT_CAUSE_DESCR', dropna=True)['BURN_TIME'].mean().reset_index()
+    cause_avg_burn_time.sort_values(by='BURN_TIME', ascending=False, inplace=True)
+    fig5 = px.bar(
     cause_avg_burn_time,
       x='BURN_TIME',
       y='STAT_CAUSE_DESCR',
@@ -286,23 +316,29 @@ if page == pages[2] :
       orientation='h',  # Horizontal orientation
       color='STAT_CAUSE_DESCR',
       color_discrete_sequence=px.colors.sequential.Reds_r)
-  fig5.update_layout(xaxis=dict(tickmode='linear', dtick=0.5),title_x = 0.3, title_y = 1,paper_bgcolor='rgba(0,0,0,0)',
-  plot_bgcolor='rgba(0,0,0,0)',width=1000, height=400,showlegend=False,margin=dict(l=170, r=200, t=50, b=50),titlefont=dict(size=20))
-  joblib.dump(st.plotly_chart(fig5),'répartition_feux_durée')
-  
+    fig5.update_layout(xaxis=dict(tickmode='linear', dtick=0.5),title_x = 0.3, title_y = 1,paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)',width=1000, height=400,showlegend=False,margin=dict(l=170, r=200, t=50, b=50),titlefont=dict(size=20))
+    return fig5
+  fig5=durée()
+  fig5
+ 
+ 
   st.subheader("4 - Répartition géographique")
-  #if st.checkbox("Afficher graphiques répartition géographique") :
-  #Réprésentation géographique des feux de classe E à G (> 300 acres) par taille (taille de la bulle) et par cause (couleur de la bulle)
-  Fires_bis = df
-  modif1 = ["Campfire", "Debris Burning", "Smoking", "Fireworks", "Children"]
-  modif2 = ["Powerline", "Railroad", "Structure", "Equipment Use"]
-  Fires_bis["STAT_CAUSE_DESCR"] = Fires_bis["STAT_CAUSE_DESCR"].replace("Missing/Undefined", "Miscellaneous")
-  Fires_bis["STAT_CAUSE_DESCR"] = Fires_bis["STAT_CAUSE_DESCR"].replace(modif1, "Origine humaine")
-  Fires_bis["STAT_CAUSE_DESCR"] = Fires_bis["STAT_CAUSE_DESCR"].replace(modif2, "Equipnt Infrastr")
-  Fires_bis["FIRE_SIZE_CLASS"] = Fires_bis["FIRE_SIZE_CLASS"].replace(["A", "B", "C"], "ABC")
-  Fires_bis["FIRE_SIZE_CLASS"] = Fires_bis["FIRE_SIZE_CLASS"].replace(["D", "E", "F"], "DEF")
-  FiresClasse = df[(Fires_bis['FIRE_SIZE_CLASS'] != "ABC")&(df['FIRE_SIZE_CLASS'] != "B")&(df['FIRE_SIZE_CLASS'] != "C")&(df['FIRE_SIZE_CLASS'] != "D")]
-  FiresClasse = df[(Fires_bis['FIRE_SIZE_CLASS'] != "ABC")]
+  st.markdown("On observe une densité plus élevée de surfaces brûlées à l’ouest des États-Unis, ce qui pourrait être attribué à divers facteurs tels que le climat, la végétation et les activités humaines. .")
+  @st.cache_data(persist=True)
+  def load_FiresClasse():
+    Fires_bis = df
+    modif1 = ["Campfire", "Debris Burning", "Smoking", "Fireworks", "Children"]
+    modif2 = ["Powerline", "Railroad", "Structure", "Equipment Use"]
+    Fires_bis["STAT_CAUSE_DESCR"] = Fires_bis["STAT_CAUSE_DESCR"].replace("Missing/Undefined", "Miscellaneous")
+    Fires_bis["STAT_CAUSE_DESCR"] = Fires_bis["STAT_CAUSE_DESCR"].replace(modif1, "Origine humaine")
+    Fires_bis["STAT_CAUSE_DESCR"] = Fires_bis["STAT_CAUSE_DESCR"].replace(modif2, "Equipnt Infrastr")
+    Fires_bis["FIRE_SIZE_CLASS"] = Fires_bis["FIRE_SIZE_CLASS"].replace(["A", "B", "C"], "ABC")
+    Fires_bis["FIRE_SIZE_CLASS"] = Fires_bis["FIRE_SIZE_CLASS"].replace(["D", "E", "F"], "DEF")
+    FiresClasse = df[(Fires_bis['FIRE_SIZE_CLASS'] != "ABC")&(df['FIRE_SIZE_CLASS'] != "B")&(df['FIRE_SIZE_CLASS'] != "C")&(df['FIRE_SIZE_CLASS'] != "D")]
+    FiresClasse = df[(Fires_bis['FIRE_SIZE_CLASS'] != "ABC")]
+    return FiresClasse
+  FiresClasse=load_FiresClasse()
     #fig6 = px.scatter_geo(FiresClasse,
     #      lon = FiresClasse['LONGITUDE'],
     #      lat = FiresClasse['LATITUDE'],
@@ -329,7 +365,9 @@ if page == pages[2] :
   col1, col2 = st.columns(2)
 
   with col1:
-    fig7 = px.scatter_geo(FiresClasse,
+    @st.cache_data(persist=True)
+    def scatter_geo_global():
+      fig7 = px.scatter_geo(FiresClasse,
          lon = FiresClasse['LONGITUDE'],
           lat = FiresClasse['LATITUDE'],
           color="STAT_CAUSE_DESCR",
@@ -344,15 +382,20 @@ if page == pages[2] :
           width=800,
           height=500,
           title="Répartition géographique des feux par cause, taille",basemap_visible=True)
-    fig7.update_geos(resolution=50,lataxis_showgrid=True, lonaxis_showgrid=True,bgcolor='rgba(0,0,0,0)',framecolor='blue',showframe=True,showland=True,landcolor='#e0efe7',projection_type="albers usa")
-    fig7.update_layout(title_text="Répartition géographique des feux par cause et taille", title_x = 0.1, title_y = 0.95,paper_bgcolor='rgba(0,0,0,0)',
-    plot_bgcolor='rgba(0,0,0,0)',width=1000, height=700,legend=dict(x=0.5, y=0.87,orientation="h",xanchor="center",yanchor="bottom",font=dict(
-            family="Arial",size=11,color="black")),margin=dict(l=50, r=50, t=50, b=250),titlefont=dict(size=18))   
-    
-    joblib.dump(st.plotly_chart(fig7),"répartition_géo")
+      fig7.update_geos(resolution=50,lataxis_showgrid=True, lonaxis_showgrid=True,bgcolor='rgba(0,0,0,0)',framecolor='blue',showframe=True,showland=True,landcolor='#e0efe7',projection_type="albers usa")
+      fig7.update_layout(title_text="Répartition géographique des feux par cause et taille", title_x = 0.1, title_y = 0.95,paper_bgcolor='rgba(0,0,0,0)',
+      plot_bgcolor='rgba(0,0,0,0)',width=1000, height=700,legend=dict(title=None,x=0.5, y=0.85,orientation="h",xanchor="center",yanchor="bottom",font=dict(
+            family="Arial",size=11,color="black")),margin=dict(l=0, r=0, t=50, b=290),titlefont=dict(size=18))   
+      return fig7
+    fig7=scatter_geo_global()
+    fig7
+    #joblib.dump(st.plotly_chart(fig7),"répartition_géo")
 
   with col2:
-    fig7_ = px.scatter_geo(FiresClasse,
+
+    @st.cache_data(persist=True)
+    def scatter_geo():
+      fig7_ = px.scatter_geo(FiresClasse,
          lon = FiresClasse['LONGITUDE'],
           lat = FiresClasse['LATITUDE'],
           color="STAT_CAUSE_DESCR",
@@ -367,12 +410,14 @@ if page == pages[2] :
           width=800,
           height=500,
           title="Focus par année",basemap_visible=True)
-    fig7_.update_geos(resolution=50,lataxis_showgrid=True, lonaxis_showgrid=True,bgcolor='rgba(0,0,0,0)',framecolor='blue',showframe=True,showland=True,landcolor='#e0efe7',projection_type="albers usa")
-    fig7_.update_layout(title_text="Focus par année", title_x = 0.4, title_y = 0.95,paper_bgcolor='rgba(0,0,0,0)',
-    plot_bgcolor='rgba(0,0,0,0)',width=1000, height=500,legend=dict(x=0.5, y=0.95,orientation="h",xanchor="center",yanchor="bottom",font=dict(
-            family="Arial",size=11,color="black")),margin=dict(l=50, r=50, t=100, b=50),titlefont=dict(size=18))   
-    
-    joblib.dump(st.plotly_chart(fig7_),"répartition_géo_mois")
+      fig7_.update_geos(resolution=50,lataxis_showgrid=True, lonaxis_showgrid=True,bgcolor='rgba(0,0,0,0)',framecolor='blue',showframe=True,showland=True,landcolor='#e0efe7',projection_type="albers usa")
+      fig7_.update_layout(title_text="Focus par année", title_x = 0.4, title_y = 0.95,paper_bgcolor='rgba(0,0,0,0)',
+      plot_bgcolor='rgba(0,0,0,0)',width=1000, height=500,legend=dict(title=None,x=0.5, y=0.95,orientation="h",xanchor="center",yanchor="bottom",font=dict(
+            family="Arial",size=11,color="black")),margin=dict(l=0, r=0, t=100, b=50),titlefont=dict(size=18))   
+      return fig7_
+    fig7_=scatter_geo()
+    fig7_
+    #joblib.dump(st.plotly_chart(fig7_),"répartition_géo_mois")
          
      
     
@@ -381,27 +426,22 @@ if page == pages[2] :
 #style.use('ggplot')
   
   #if st.checkbox("Afficher heatmap") :
-  df_Fires_ML_num = df.select_dtypes(include=[np.number])
-  plt.subplots(figsize = (7,7))
-  sns.set_style(style='white')
-  sns.set(rc={"axes.facecolor": "#F4E4AA", "figure.facecolor": "#F4E4AA"})
-  df_Fires_ML_num = df.select_dtypes(include=[np.number])
-  mask = np.zeros_like(df_Fires_ML_num.corr(), dtype='bool')
-  mask[np.triu_indices_from(mask)] = True
-  fig7b, ax = plt.subplots(figsize = (10,7))
-  sns.heatmap(df_Fires_ML_num.corr(), cmap=sns.diverging_palette(20, 220, n=200), annot=True, center = 0, mask=mask, annot_kws={"size": 8})
-  plt.title("Heatmap of all the selected features of data set", fontsize = 15)
-  joblib.dump(st.write(fig7b),"heatmap")
-
-    #df_Fires_ML_num = df.select_dtypes(include=[np.number])
-    #fig7b, ax = plt.subplots(figsize = (10,7))
-    #sns.heatmap(df_Fires_ML_num.corr(), ax=ax)
-    #st.write(fig7b)
-
-    #df_Fires_ML_num = df.select_dtypes(include=[np.number])
-    #fig7b = px.imshow(df_Fires_ML_num)
-    #st.plotly_chart(fig7b)
-
+  @st.cache_data(persist=True)
+  def heat_map():
+    df_Fires_ML_num = df.select_dtypes(include=[np.number])
+    plt.subplots(figsize = (7,7))
+    sns.set_style(style='white')
+    sns.set(rc={"axes.facecolor": "#F4E4AA", "figure.facecolor": "#F4E4AA"})
+    df_Fires_ML_num = df.select_dtypes(include=[np.number])
+    mask = np.zeros_like(df_Fires_ML_num.corr(), dtype='bool')
+    mask[np.triu_indices_from(mask)] = True
+    fig7b, ax = plt.subplots(figsize = (10,7))
+    sns.heatmap(df_Fires_ML_num.corr(), cmap=sns.diverging_palette(20, 220, n=200), annot=True, center = 0, mask=mask, annot_kws={"size": 8})
+    plt.title("Heatmap of all the selected features of data set", fontsize = 15)
+    return fig7b
+  fig7b=heat_map()
+  fig7b 
+  
 
 if page == pages[3] : 
   st.write("### Prédiction causes de feux")
@@ -722,54 +762,76 @@ if page == pages[3] :
 
 
 if page == pages[4] : 
-  #st.write("### Prédiction classes de feux")
 
-  Fires34=df.dropna()
-  FiresML2= Fires34.loc[:,['MONTH_DISCOVERY','FIRE_SIZE_CLASS','STAT_CAUSE_DESCR','AVG_TEMP [°C]','AVG_PCP [mm]','LONGITUDE','LATITUDE']]
-  #FiresML2= Fires34.loc[:,['MONTH_DISCOVERY','FIRE_SIZE_CLASS','STAT_CAUSE_DESCR','AVG_TEMP [°C]','AVG_PCP [mm]','LONGITUDE','LATITUDE','STATE']]
+ @st.cache_data(persist=True)
+ def load_FiresML2():
+  FiresML2= df.loc[:,['MONTH_DISCOVERY','FIRE_SIZE_CLASS','STAT_CAUSE_DESCR','AVG_TEMP [°C]','AVG_PCP [mm]','LONGITUDE','LATITUDE']]  
   FiresML2['FIRE_SIZE_CLASS'] = FiresML2['FIRE_SIZE_CLASS'].replace({"A":0,"B":0,"C":0,"D":1,"E":1,"F":1,"G":1})
-  feats = FiresML2.drop('FIRE_SIZE_CLASS', axis=1)
-  target = FiresML2['FIRE_SIZE_CLASS'].astype('int')
+  FiresML2=FiresML2.dropna() 
+  return FiresML2
+ FiresML2=load_FiresML2()
+
+ #st.dataframe(FiresML2.describe()) 
+
+ @st.cache_data(persist=True)
+ def feats_target():
+   feats = FiresML2.drop('FIRE_SIZE_CLASS', axis=1)
+   target = FiresML2['FIRE_SIZE_CLASS'].astype('int')
+   return feats, target
+ feats,target=feats_target()
+ 
+ @st.cache_data(persist=True)
+ def data_split(X, y):
   X_train, X_test, y_train, y_test = train_test_split(feats, target, test_size=0.25, random_state = 42,stratify=target)
-  num_train=X_train.drop(['STAT_CAUSE_DESCR','MONTH_DISCOVERY'],axis=1)
-  num_test=X_test.drop(['STAT_CAUSE_DESCR','MONTH_DISCOVERY'],axis=1)
-  sc = StandardScaler()
-  num_train= sc.fit_transform(num_train)
-  num_test= sc.transform(num_test)
-  oneh = OneHotEncoder(drop = 'first', sparse_output=False)
-  cat_train=X_train.drop(['AVG_TEMP [°C]','AVG_PCP [mm]','MONTH_DISCOVERY','LONGITUDE','LATITUDE'],axis=1)
-  cat_test=X_test.drop(['AVG_TEMP [°C]','AVG_PCP [mm]','MONTH_DISCOVERY','LONGITUDE','LATITUDE'],axis=1)
-  cat_train=oneh.fit_transform(cat_train)
-  cat_test= oneh.transform(cat_test)
-  circular_cols = ['MONTH_DISCOVERY']
-  circular_train = X_train[circular_cols]
-  circular_test = X_test[circular_cols]
-  circular_train['MONTH_DISCOVERY'] = circular_train['MONTH_DISCOVERY'].apply(lambda h : np.sin(2 * np.pi * h / 12))
-  circular_train['MONTH_DISCOVERY'] = circular_train['MONTH_DISCOVERY'].apply(lambda h : np.cos(2 * np.pi * h / 12))
-  circular_test['MONTH_DISCOVERY'] = circular_test['MONTH_DISCOVERY'].apply(lambda h : np.sin(2 * np.pi * h /12))
-  circular_test['MONTH_DISCOVERY'] = circular_test['MONTH_DISCOVERY'].apply(lambda h : np.cos(2 * np.pi * h / 12))
-  X_train=np.concatenate((num_train,cat_train,circular_train),axis=1)
-  X_test=np.concatenate((num_test,cat_test,circular_test), axis=1)
-  le = LabelEncoder()
-  y_train = le.fit_transform(y_train)
-  y_test = le.transform(y_test)
+  return X_train, X_test, y_train, y_test
+ X_train, X_test, y_train, y_test = data_split(feats, target)
+
+
+ num_train=X_train.drop(['STAT_CAUSE_DESCR','MONTH_DISCOVERY'],axis=1)
+ num_test=X_test.drop(['STAT_CAUSE_DESCR','MONTH_DISCOVERY'],axis=1)
+ sc = StandardScaler()
+ num_train= sc.fit_transform(num_train)
+ num_test= sc.transform(num_test)
+ #   return num_train, num_test
+ #num_train, num_test = label_num(X_train, X_test)
+
+ oneh = OneHotEncoder(drop = 'first', sparse_output=False)
+ cat_train=X_train.drop(['AVG_TEMP [°C]','AVG_PCP [mm]','MONTH_DISCOVERY','LONGITUDE','LATITUDE'],axis=1)
+ cat_test=X_test.drop(['AVG_TEMP [°C]','AVG_PCP [mm]','MONTH_DISCOVERY','LONGITUDE','LATITUDE'],axis=1)
+ cat_train=oneh.fit_transform(cat_train)
+ cat_test= oneh.transform(cat_test)
+
+
+ @st.cache_data(persist=True)
+ def label_circ(X_train, X_test):
+   circular_cols = ['MONTH_DISCOVERY']
+   circular_train = X_train[circular_cols]
+   circular_test = X_test[circular_cols]
+   circular_train['MONTH_DISCOVERY'] = circular_train['MONTH_DISCOVERY'].apply(lambda h : np.sin(2 * np.pi * h / 12))
+   circular_train['MONTH_DISCOVERY'] = circular_train['MONTH_DISCOVERY'].apply(lambda h : np.cos(2 * np.pi * h / 12))
+   circular_test['MONTH_DISCOVERY'] = circular_test['MONTH_DISCOVERY'].apply(lambda h : np.sin(2 * np.pi * h /12))
+   circular_test['MONTH_DISCOVERY'] = circular_test['MONTH_DISCOVERY'].apply(lambda h : np.cos(2 * np.pi * h / 12))
+   return circular_train,circular_test
+ circular_train,circular_test=label_circ(X_train,X_test)
+
+ @st.cache_data(persist=True)
+ def X_train_X_test(X_train, X_test):
+   X_train=np.concatenate((num_train,cat_train,circular_train),axis=1)
+   X_test=np.concatenate((num_test,cat_test,circular_test), axis=1)
+   return X_train,X_test
+ X_train,X_test=X_train_X_test(X_train, X_test)
+
+ @st.cache_data(persist=True)
+ def y_train_ytest(y_train,y_test):
+   le = LabelEncoder()
+   y_train = le.fit_transform(y_train)
+   y_test = le.transform(y_test)
+   return y_train,y_test
+ y_train,y_test=y_train_ytest(y_train,y_test)
 
 
 
-  
-  #if st.checkbox("Afficher jeu données pour Machine learning") :
-  #  st.dataframe(FiresML2.head(5))
-  
-  classifier=st.selectbox("Sélection du modèle",("XGBoost","BalancedRandomForest"))
-
-
-  if classifier == "XGBoost":
-    st.sidebar.subheader("Hyperparamètres XGBoost")
-    max_bin_test = st.sidebar.slider("Max_Bin selection",100, 700, 400)
-    scale_pos_weight_test = st.sidebar.slider("scale_pos_weight selection",0, 50, 29)
-
-  
-    with st.sidebar :
+ with st.sidebar :
       st.header("Paramètres d'entrée")
       mois=st.slider('mois',1,12,6)
       Cause=st.selectbox("Cause",('Non défini', 'Origine humaine', 'Équipements', 'Criminel', 'Foudre'))
@@ -778,164 +840,246 @@ if page == pages[4] :
       Longitude=st.slider('Longitude',-178.00,-65.00,-96.00)
       Latitude=st.slider('Latitude',17.00,71.00,37.00)
          
-    data={'MONTH_DISCOVERY':mois,'STAT_CAUSE_DESCR':Cause,'AVG_TEMP [°C]':Température,'AVG_PCP [mm]':Précipitations,"LONGITUDE":Longitude,"LATITUDE":Latitude}
-    input_df=pd.DataFrame(data,index=[0])
-    input_array=np.array(input_df)
-    input_fires=pd.concat([input_df,feats],axis=0)
-    
-    #Data Prep
-    #encode x
-    num_input_fires=input_fires.drop(['STAT_CAUSE_DESCR','MONTH_DISCOVERY'],axis=1)
-    #num_input_fires=input_fires.drop(['STAT_CAUSE_DESCR','MONTH_DISCOVERY','STATE'],axis=1)
-    num_input_fires= sc.fit_transform(num_input_fires)    
-    oneh = OneHotEncoder(drop = 'first', sparse_output=False)
-    cat_input_fires=input_fires.drop(['AVG_TEMP [°C]','AVG_PCP [mm]','MONTH_DISCOVERY','LONGITUDE','LATITUDE'],axis=1)
-    cat_input_fires=oneh.fit_transform(cat_input_fires)
-    circular_cols = ['MONTH_DISCOVERY']
-    circular_input_fires = input_fires[circular_cols]
-    circular_input_fires['MONTH_DISCOVERY'] = circular_input_fires['MONTH_DISCOVERY'].apply(lambda h : np.sin(2 * np.pi * h / 12))
-    circular_input_fires['MONTH_DISCOVERY'] = circular_input_fires['MONTH_DISCOVERY'].apply(lambda h : np.cos(2 * np.pi * h / 12))
-    df_fires_encoded=np.concatenate((num_input_fires,cat_input_fires,circular_input_fires),axis=1)
-    x=df_fires_encoded[1:]
+ data={'MONTH_DISCOVERY':mois,'STAT_CAUSE_DESCR':Cause,'AVG_TEMP [°C]':Température,'AVG_PCP [mm]':Précipitations,"LONGITUDE":Longitude,"LATITUDE":Latitude}
+ input_df=pd.DataFrame(data,index=[0])
+ input_array=np.array(input_df)
+ input_fires=pd.concat([input_df,feats],axis=0)    
+ num_input_fires=input_fires.drop(['STAT_CAUSE_DESCR','MONTH_DISCOVERY'],axis=1)
+ num_input_fires= sc.transform(num_input_fires)    
+#oneh = OneHotEncoder(drop = 'first', sparse_output=False)
+ cat_input_fires=input_fires.drop(['AVG_TEMP [°C]','AVG_PCP [mm]','MONTH_DISCOVERY','LONGITUDE','LATITUDE'],axis=1)
+ cat_input_fires=oneh.transform(cat_input_fires)
+ circular_cols = ['MONTH_DISCOVERY']
+ circular_input_fires = input_fires[circular_cols]
+ circular_input_fires['MONTH_DISCOVERY'] = circular_input_fires['MONTH_DISCOVERY'].apply(lambda h : np.sin(2 * np.pi * h / 12))
+ circular_input_fires['MONTH_DISCOVERY'] = circular_input_fires['MONTH_DISCOVERY'].apply(lambda h : np.cos(2 * np.pi * h / 12))
+ df_fires_encoded=np.concatenate((num_input_fires,cat_input_fires,circular_input_fires),axis=1)
+ #x=df_fires_encoded[1:]
+ #model_=XGBClassifier(max_bin=400,
+ #                       scale_pos_weight=29,
+  #                     subsample=0.92,
+  #                    colsample_bytree=0.96,
+  #                     learning_rate=0.31,
+  #                     tree_method='hist' ).fit(x,target)
+ #joblib.dump(model_, "model_.joblib")
+ LAT=input_df[:1].LATITUDE.to_numpy()
+ LONG=input_df[:1].LONGITUDE.to_numpy()
+ classifier=st.selectbox("Sélection du modèle",("XGBoost","BalancedRandomForest"))
+ if classifier == "XGBoost":   
+  if st.sidebar.button("Execution modèle XGB",key="classify"):
+      st.subheader("XGBoost Results")
+   #model=XGBClassifier(max_bin=400,
+   #                     scale_pos_weight=29,
+    #                    subsample=0.92,
+    #                    colsample_bytree=0.96,
+    #                    learning_rate=0.31,
+    #                    tree_method='hist' ).fit(X_train,y_train)
+   #joblib.dump(model, "model.joblib")
 
-  if st.sidebar.button("Execution",key="classify"):
-    st.subheader("XGBoost Results")
-  model=XGBClassifier(max_bin=max_bin_test,
-                        scale_pos_weight=scale_pos_weight_test,
-                        subsample=0.92,
-                        colsample_bytree=0.96,
-                        learning_rate=0.31,
-                        tree_method='hist' ).fit(X_train,y_train)
-  joblib.dump(model, "model.joblib")
   model = joblib.load("model.joblib")
+  #model_ = joblib.load("model_.joblib")
   y_pred=model.predict(X_test)
-  y_pred_input=model.predict(df_fires_encoded[:1])
+  #y_pred_bis=model.predict(df_fires_encoded)
+  #y_pred_input=model.predict(df_fires_encoded[:1])
   prediction=model.predict(df_fires_encoded[:1])
   prediction_proba=model.predict_proba(df_fires_encoded[:1])
   df_prediction_proba=pd.DataFrame(prediction_proba)
   df_prediction_proba.columns=['Petite Classe','Grande Classe']
   df_prediction_proba.rename(columns={0:"Petite Classe",1:"Grande Classe"})  
-
-
-
-    #Métriques
   accuracy=model.score(X_test,y_test)
-    #precision=precision_score(y_test,y_pred).round(4)
   recall=recall_score(y_test,y_pred)
-  LAT=input_df[:1].LATITUDE.to_numpy()
-  LONG=input_df[:1].LONGITUDE.to_numpy()
 
   st.subheader("Prédiction classe de feux en fonction des paramètres d'entrée", divider="blue") 
   col1, col2 = st.columns([0.5,0.5],gap="small",vertical_alignment="center")
   with col1 :
-    with st.container(height=350):
-        m = folium.Map(location=[36.966428, -95.844032],zoom_start=3.49)
-        folium.Marker([LAT, LONG],icon=folium.Icon(color='orange', icon='fire', prefix='fa')).add_to(m)
-        #folium.Marker([LAT, LONG], popup=input_df[:1].STATE, tooltip=input_df[:1].STATE,icon=folium.Icon(color='orange', icon='fire', prefix='fa')).add_to(m)
-        st_data = st_folium(m, width=1200)
-    
+   with st.container(height=350):
+     m = folium.Map(location=[30, -75.844032],zoom_start=3)
+     #tiles='http://services.arcgisonline.com/arcgis/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}',attr="Sources: National Geographic, Esri, Garmin, HERE, UNEP-WCMC, USGS, NASA, ESA, METI, NRCAN, GEBCO, NOAA, INCREMENT P"
+     folium.Marker([LAT, LONG],icon=folium.Icon(color='orange', icon='fire', prefix='fa')).add_to(m)
+      #folium.Marker([LAT, LONG], popup=input_df[:1].STATE, tooltip=input_df[:1].STATE,icon=folium.Icon(color='orange', icon='fire', prefix='fa')).add_to(m)
+     st_data = st_folium(m, width=800)   
   with col2 :
     st.write("Paramètres d'entrée")
     input_df=pd.DataFrame(input_df)
     input_df.columns=['Mois','Cause','Température','Précipitation','Longitude','Latitude']
     input_df.rename(columns={'MONTH_DISCOVERY':'Mois','STAT_CAUSE_DESCR':'Cause','AVG_TEMP [°C]':"Température",'AVG_PCP [mm]':"Précipitation",'LONGITUDE':'Longitude','LATITUDE':"Latitude"})  
     input_df[:1]
+    #df_fires_encoded[:1]
+    #df_fires_encoded[1:]
+    #feats
     st.write("Probabilité de classe")
     st.dataframe(df_prediction_proba,
-                 column_config={
-                'Petite Classe':st.column_config.ProgressColumn('Petite Classe',format='%.2f',width='medium',min_value=0,max_value=1),
-                'Grande Classe':st.column_config.ProgressColumn('Grande Classe',format='%.2f',width='medium',min_value=0,max_value=1)},hide_index=True)
+              column_config={
+             'Petite Classe':st.column_config.ProgressColumn('Petite Classe',format='%.2f',width='medium',min_value=0,max_value=1),
+             'Grande Classe':st.column_config.ProgressColumn('Grande Classe',format='%.2f',width='medium',min_value=0,max_value=1)},hide_index=True)
     Fires_class_pred=np.array(['Petite Classe','Grande Classe'])
+    #st.write("X_train")
+    #X_train
+    #st.write("X_input")
+    #df_fires_encoded
+    #st.write("input_fire")
+    #input_fires
+    #st.write("feats")
+    #feats
+
     st.success(str(Fires_class_pred[prediction][0]))
-
-
-  #with st.container(height=160,border=None):   
-  st.subheader("Scores de performance du modèle optimisé XGBoost", divider="blue")   
-    #Afficher
-  st.write("Accuracy",round(model.score(X_test,y_test),4))
-    #st.write("precision",precision.round(4))
-  st.write("Recall",round(recall,4))   
     
+  st.subheader("Scores de performance du modèle optimisé XGBoost", divider="blue")   
+  st.write("Accuracy",round(model.score(X_test,y_test),4))
+  st.write("Recall",round(recall,4))  
+  col1, col2,col3 = st.columns(3,gap="small",vertical_alignment="center")
+  with col1:
+   with st.container(height=350):      
+    precision, recall, thresholds = precision_recall_curve(y_test, y_pred)
+    fpr, tpr, thresholds = roc_curve(y_test, y_pred)
+    roc_auc = auc(fpr, tpr)
+    figML2 = px.area(x=fpr, y=tpr,title=f'Courbe ROC (AUC={auc(fpr, tpr):.4f})',labels=dict(x='Taux faux positifs', y='Taux vrais positifs'))
+    figML2.add_shape(type='line', line=dict(dash='dash'),x0=0, x1=1, y0=0, y1=1)
+    figML2.update_yaxes(scaleanchor="x", scaleratio=1)
+    figML2.update_xaxes(constrain='domain')
+    figML2.update_layout(title_x = 0.2, title_y =0.98,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=900, height=320,margin=dict(l=0, r=0, t=20, b=0))
+    st.plotly_chart(figML2)
+  with col2:
+    with st.container(height=350):
+  #st.subheader('Matrice de confusion') 
+     cm = confusion_matrix(y_test, y_pred)
+     figML1 = px.imshow(cm,labels={"x": "Predicted Label", "y": "True Label"},width=800,height=800,text_auto=True)#color_continuous_scale='hot'
+  #layout = go.Layout(title='Matrice de confusion',paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)')
+     figML1.update_layout(title='Matrice de confusion',title_x = 0.35, title_y =0.98,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=900, height=320,legend=dict(x=0.5, y=1,orientation="h",xanchor="center",yanchor="bottom",font=dict(
+     family="Arial",size=15,color="black")),margin=dict(l=0, r=0, t=2, b=0))
+     figML1.update_traces(dict(showscale=False,coloraxis=None), selector={'type':'heatmap'})
+  #titlefont=dict(size=20)
+     st.plotly_chart(figML1)
+  with col3 : 
+    with st.container(height=350):     
+     feats1 = {}
+     for feature, importance in zip(feats.columns,model.feature_importances_):
+      feats1[feature] = importance
+     importances= pd.DataFrame.from_dict(feats1, orient='index').rename(columns={0: 'Importance'})
+     importances.sort_values(by='Importance', ascending=False).head(8)
+   
+     fig = px.bar(importances, x='Importance', y=importances.index)
+     fig.update_layout(title='Feature Importance',title_x = 0.4, title_y = 0.98,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=900, height=320,legend=dict(x=0.5, y=0.93,orientation="h",xanchor="center",yanchor="bottom",font=dict(
+     family="Arial",size=15,color="black")),margin=dict(l=0, r=0, t=50, b=0),titlefont=dict(size=15))
+     st.plotly_chart(fig)
+ if classifier == "BalancedRandomForest":
+  #st.sidebar.subheader("Hyperparamètres BalancedRandomForest")
+  #min_samples_split_test = st.sidebar.slider("Min_samples_split selection",2, 10,7)
+  #max_depth_test = st.sidebar.slider("max_depth selection",1, 100, 70)
+  #sampling_strategy_test = st.sidebar.radio("sampling_strategy selection",("not minority","not majority"))
+  #replacement_test= st.sidebar.radio("replacement selection",(True,False))
+  #Bootstrap_test= st.sidebar.radio("bootstrap selection",(True,False))
+  #random_state_test=st.sidebar.slider("random_state selection",200,200, 200)
+  #n_estimator_test=st.sidebar.slider("n_estimator selection",100,1000, 600)
+  #criterion_test=st.sidebar.radio("criterion selection",("entropy","giny"))
+  #class_weight_test=st.sidebar.radio("class_weight selection",("balanced_subsample","None"))
+  #max_features_test=st.sidebar.slider("max_features selection",100,200,180)
+   
+  if st.sidebar.button("Execution Balanced Random Forest",key="classify2"):
+    st.subheader("BalancedRandomForest Results")
+  #model2=BalancedRandomForestClassifier(min_samples_split=7,
+  #                      max_depth=70,
+  #                      sampling_strategy='not minority',
+  #                      replacement=True,
+  #                      bootstrap=True,
+  #                      random_state=200,
+  #                      n_estimators=600,
+  #                      criterion='entropy',
+  #                      class_weight='balanced_subsample',
+  #                      max_features=180).fit(X_train,y_train)
+  #joblib.dump(model2, "model2.joblib")
+  #dict_weights = {0:1, 1: 1.2933}
+  #model3=BalancedRandomForestClassifier(sampling_strategy="not minority", replacement=True,random_state=200,n_estimators=400,class_weight=dict_weights).fit(X_train,y_train)
+  #joblib.dump(model3, "model3.joblib")
+  model3 = joblib.load("model3.joblib")
+  y_pred2=model3.predict(X_test)
+  #y_pred2_input=model2.predict(df_fires_encoded)
+  prediction2=model3.predict(df_fires_encoded[:1])
+  prediction_proba2=model3.predict_proba(df_fires_encoded[:1])
+  df_prediction_proba=pd.DataFrame(prediction_proba2)
+  df_prediction_proba.columns=['Petite Classe','Grande Classe']
+  df_prediction_proba.rename(columns={0:"Petite Classe",1:"Grande Classe"})  
+
+  st.subheader("Prédiction classe de feux en fonction des paramètres d'entrée", divider="blue") 
+  col1, col2 = st.columns([0.5,0.5],gap="small",vertical_alignment="center")
+  with col1 :
+   with st.container(height=350):
+    m = folium.Map(location=[36.966428, -95.844032],zoom_start=3.4988)
+    folium.Marker([LAT, LONG],icon=folium.Icon(color='orange', icon='fire', prefix='fa')).add_to(m)
+    st_data = st_folium(m, width=800)
+    
+  with col2 :
+   st.write("Paramètres d'entrée")    
+   input_df[:1]
+   st.write("Probabilité de classe")
+     #st.dataframe(df_prediction_proba2,
+     #            column_config={
+      #          'Petite Classe':st.column_config.ProgressColumn('Petite Classe',format='%.2f',width='medium',min_value=0,max_value=1),
+       #         'Grande Classe':st.column_config.ProgressColumn('Grande Classe',format='%.2f',width='medium',min_value=0,max_value=1)},hide_index=True)
+   Fires_class_pred2=np.array(['Petite Classe','Grande Classe'])
+   st.dataframe(df_prediction_proba)     
+   st.success(str(Fires_class_pred2[prediction2][0]))     
+
+  st.subheader("Scores de performance du modèle optimisé BalancedRandomClassifier", divider="blue")   
+  @st.cache_data(persist=True)
+  def Accuracy_BRF():
+    AccuracyBRF=model3.score(X_test,y_test)
+    return AccuracyBRF
+  AccruracyBRF=Accuracy_BRF()
+  st.write("Accuracy",round(AccruracyBRF,4))
+  @st.cache_data(persist=True)
+  def recall2():
+    recall2=recall_score(y_test,y_pred2)
+    return recall2
+  recall2=recall2()  
+  st.write("Recall",round(recall2,4))      
 
   col1, col2,col3 = st.columns(3,gap="small",vertical_alignment="center")
   with col1:
     with st.container(height=350):
-      precision, recall, thresholds = precision_recall_curve(y_test, y_pred)
-      fpr, tpr, thresholds = roc_curve(y_test, y_pred)
-      roc_auc = auc(fpr, tpr)
-      figML2 = px.area(x=fpr, y=tpr,title=f'Courbe ROC (AUC={auc(fpr, tpr):.4f})',labels=dict(x='Taux faux positifs', y='Taux vrais positifs'))
-      figML2.add_shape(type='line', line=dict(dash='dash'),x0=0, x1=1, y0=0, y1=1)
-      figML2.update_yaxes(scaleanchor="x", scaleratio=1)
-      figML2.update_xaxes(constrain='domain')
-      figML2.update_layout(title_x = 0.2, title_y =0.98,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=900, height=320,margin=dict(l=0, r=0, t=20, b=0))
-      st.plotly_chart(figML2)
-
+        @st.cache_data(persist=True)
+        def ROCAUC():
+         precision, recall, thresholds = precision_recall_curve(y_test, y_pred2)
+         fpr, tpr, thresholds = roc_curve(y_test, y_pred2)
+         roc_auc = auc(fpr, tpr)
+         figML2 = px.area(x=fpr, y=tpr,title=f'Courbe ROC (AUC={auc(fpr, tpr):.4f})',labels=dict(x='Taux faux positifs', y='Taux vrais positifs'))
+         figML2.add_shape(type='line', line=dict(dash='dash'),x0=0, x1=1, y0=0, y1=1)
+         figML2.update_yaxes(scaleanchor="x", scaleratio=1)
+         figML2.update_xaxes(constrain='domain')
+         figML2.update_layout(title_x = 0.2, title_y =0.98,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=900, height=320,margin=dict(l=0, r=0, t=20, b=0))
+         return figML2
+        figML2=ROCAUC()
+        figML2
   with col2:
     with st.container(height=350):
-      #st.subheader('Matrice de confusion') 
-      cm = confusion_matrix(y_test, y_pred)
-      figML1 = px.imshow(cm,labels={"x": "Predicted Label", "y": "True Label"},width=800,height=800,text_auto=True)#color_continuous_scale='hot'
-      #layout = go.Layout(title='Matrice de confusion',paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)')
-      figML1.update_layout(title='Matrice de confusion',title_x = 0.35, title_y =0.98,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=900, height=320,legend=dict(x=0.5, y=1,orientation="h",xanchor="center",yanchor="bottom",font=dict(
-      family="Arial",size=15,color="black")),margin=dict(l=0, r=0, t=2, b=0))
-      figML1.update_traces(dict(showscale=False,coloraxis=None), selector={'type':'heatmap'})
-      #titlefont=dict(size=20)
-      st.plotly_chart(figML1)
+        @st.cache_data(persist=True)
+        def MatriceConfusion():
+          cm = confusion_matrix(y_test, y_pred2)
+          figML1 = px.imshow(cm,labels={"x": "Predicted Label", "y": "True Label"},width=800,height=800,text_auto=True)#color_continuous_scale='hot'
+          figML1.update_layout(title='Matrice de confusion',title_x = 0.35, title_y =0.98,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=900, height=320,legend=dict(x=0.5, y=1,orientation="h",xanchor="center",yanchor="bottom",font=dict(
+          family="Arial",size=15,color="black")),margin=dict(l=0, r=0, t=2, b=0))
+          figML1.update_traces(dict(showscale=False,coloraxis=None), selector={'type':'heatmap'})
+          return figML1
+        figML1=MatriceConfusion()
+        figML1
 
   with col3 : 
-    with st.container(height=350):     
-      feats1 = {}
-      for feature, importance in zip(feats.columns,model.feature_importances_):
-        feats1[feature] = importance
-      importances= pd.DataFrame.from_dict(feats1, orient='index').rename(columns={0: 'Importance'})
-      importances.sort_values(by='Importance', ascending=False).head(8)
+    with st.container(height=350):
+      @st.cache_data(persist=True)
+      def FeatureImportance():    
+        feats2 = {}
+        for feature, importance in zip(feats.columns,model3.feature_importances_):
+            feats2[feature] = importance
+        importances2= pd.DataFrame.from_dict(feats2, orient='index').rename(columns={0: 'Importance'})
+        importances2.sort_values(by='Importance', ascending=False).head(8)
       
-      fig = px.bar(importances, x='Importance', y=importances.index)
-      fig.update_layout(title='Feature Importance',title_x = 0.4, title_y = 0.98,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=900, height=320,legend=dict(x=0.5, y=0.93,orientation="h",xanchor="center",yanchor="bottom",font=dict(
-      family="Arial",size=15,color="black")),margin=dict(l=0, r=0, t=50, b=0),titlefont=dict(size=15))
-      st.plotly_chart(fig)
-
-
- 
-
-
-  if classifier == "BalancedRandomForest":
-    st.sidebar.subheader("Hyperparamètres BalancedRandomForest")
-    min_samples_split_test = st.sidebar.number_input("Min_samples_split selection",2, 10, step=1)
-    max_depth_test = st.sidebar.number_input("max_depth selection",1, 100, step=1)
-    sampling_strategy_test = st.sidebar.radio("sampling_strategy selection",("not minority","not majority"))
-    replacement_test= st.sidebar.radio("replacement selection",(True,False))
-    Bootstrap_test= st.sidebar.radio("bootstrap selection",(True,False))
-    random_state_test=st.sidebar.number_input("random_state selection",200,200, step=1)
-    n_estimator_test=st.sidebar.number_input("n_estimator selection",100,1000, step=10)
-    criterion_test=st.sidebar.radio("criterion selection",("entropy","giny"))
-    class_weight_test=st.sidebar.radio("class_weight selection",("balanced_subsample","None"))
-    max_features_test=st.sidebar.number_input("max_features selection",100,200, step=10)
-    if st.sidebar.button("Execution",key="classify2"):
-      st.subheader("BalancedRandomForest Results")
-      model=BalancedRandomForestClassifier(min_samples_split=min_samples_split_test,
-                        max_depth=max_depth_test,
-                        sampling_strategy=sampling_strategy_test,
-                        replacement=replacement_test,
-                        bootstrap=Bootstrap_test,
-                        random_state=random_state_test,
-                        n_estimators=n_estimator_test,
-                        criterion=criterion_test,
-                        class_weight=class_weight_test,
-                        max_features=max_features_test).fit(X_train,y_train)
-      y_pred=model.predict(X_test)
-    #Métriques
-      accuracy=model.score(X_test,y_test).round(4)
-    #precision=precision_score(y_test,y_pred).round(4)
-      recall=recall_score(y_test,y_pred).round(4)
-
-    #Afficher
-    st.write("Accuracy",accuracy.round(4))
-    #st.write("precision",precision.round(4))
-    st.write("recall",recall.round(4))
-
-
-
+        figML3 = px.bar(importances2, x='Importance', y=importances2.index)
+        figML3.update_layout(title='Feature Importance',title_x = 0.4, title_y = 0.98,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=900, height=320,legend=dict(x=0.5, y=0.93,orientation="h",xanchor="center",yanchor="bottom",font=dict(
+        family="Arial",size=15,color="black")),margin=dict(l=0, r=0, t=50, b=0),titlefont=dict(size=15))
+        return figML3
+      figML3=FeatureImportance()
+      figML3   
+    
 if page == pages[5] : 
   #  st.write("### Conclusion")
   st.write("### Conclusion et propositions d’optimisation")
