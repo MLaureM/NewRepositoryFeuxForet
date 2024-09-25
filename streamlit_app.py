@@ -106,6 +106,54 @@ if page == pages[0] :
 #Création de la page 1 avec explication du préprocessing     
 if page == pages[1] : 
   st.write("### Preprocessing")
+  # Nettoyage des données
+  st.write("### Explication de nettoyage des données")
+  st.write("""
+    Le jeu de données original contenait 38 colonnes et 1 880 465 lignes. Après une révision détaillée, 
+    il a été décidé de ne conserver que 14 colonnes en raison de la présence de données incomplètes ou répétées dans les autres colonnes.
+    Voici les colonnes originales et celles conservées :
+    """)
+
+    # Afficher les colonnes originales et celles conservées
+  st.write("#### Colonnes Originales")
+  st.write("""
+    FOD_ID, FPA_ID, SOURCE_SYSTEM_TYPE, SOURCE_SYSTEM, NWCG_REPORTING_AGENCY, 
+    NWCG_REPORTING_UNIT_ID, NWCG_REPORTING_UNIT_NAME, SOURCE_REPORTING_UNIT, 
+    SOURCE_REPORTING_UNIT_NAME, LOCAL_FIRE_REPORT_ID, LOCAL_INCIDENT_ID, FIRE_CODE, 
+    FIRE_NAME, ICS_209_INCIDENT_NUMBER, ICS_209_NAME, MTBS_ID, MTBS_FIRE_NAME, 
+    COMPLEX_NAME, FIRE_YEAR, DISCOVERY_DATE, DISCOVERY_DOY, DISCOVERY_TIME, 
+    STAT_CAUSE_CODE, STAT_CAUSE_DESCR, CONT_DATE, CONT_DOY, CONT_TIME, FIRE_SIZE, 
+    FIRE_SIZE_CLASS, LATITUDE, LONGITUDE, OWNER_CODE, OWNER_DESCR, STATE, COUNTY, 
+    FIPS_CODE, FIPS_NAME, Shape
+    """)
+
+  st.write("#### Colonnes Conservées")
+  st.write("""
+    FOD_ID, FPA_ID, NWCG_REPORTING_UNIT_NAME, FIRE_YEAR, DISCOVERY_DATE, 
+    DISCOVERY_DOY, STAT_CAUSE_DESCR, CONT_DOY, FIRE_SIZE, FIRE_SIZE_CLASS, 
+    LATITUDE, LONGITUDE, STATE, FIPS_NAME
+    """)
+
+    # Explication du nettoyage des données
+  st.write("""
+    Les colonnes conservées ont été sélectionnées car elles contiennent des informations pertinentes et complètes 
+    pour l'analyse des incendies de forêt. Les colonnes supprimées avaient des données incomplètes 
+    ou répétées qui n'apportaient pas de valeur significative à l'analyse.
+    """)
+
+  st.write("#### Colonnes Ajoutées")
+  st.write("""
+    En plus des colonnes conservées, nous avons ajouté les colonnes month discovery et day of week discovery à partir des transformations de la colonne DISCOVERY_DATE en format de date avec pd.to_datetime.:
+    - `MONTH_DISCOVERY` : Le mois de la découverte de l'incendie.
+    - `DAY_OF_WEEK_DISCOVERY` : Le jour de la semaine de la découverte de l'incendie.
+    """)
+  st.write("""
+    Nous avons aussi ajouté les colonnes avg temp et avg pcp à partir de la base de données.:
+    - `AVG_TEMP [°C]` : Le mois de la découverte de l'incendie.
+    - `AVG_PCP [mm]` : Le jour de la semaine de la découverte de l'incendie.
+    """)
+
+
   if st.checkbox("Afficher jeu données") :
     st.write("### Jeu de données et statistiques")
     st.dataframe(df.head(5))
@@ -115,7 +163,7 @@ if page == pages[1] :
      st.write(f"La dimension : {df.shape}")
   if st.checkbox("Afficher les na") :
     st.dataframe(df.isna().sum(), width=300, height=640)
-
+      
 #Création de la page 2 Datavizualisation
 if page == pages[2] : 
   st.header("DataVizualisation")
