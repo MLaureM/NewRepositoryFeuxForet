@@ -148,9 +148,9 @@ if page == pages[1] :
     - `DAY_OF_WEEK_DISCOVERY` : Le jour de la semaine de la découverte de l'incendie.
     """)
   st.write("""
-    Nous avons aussi ajouté les colonnes avg temp et avg pcp à partir de la base de données.:
-    - `AVG_TEMP [°C]` : Le mois de la découverte de l'incendie.
-    - `AVG_PCP [mm]` : Le jour de la semaine de la découverte de l'incendie.
+    Nous avons aussi ajouté les colonnes avg temp et avg pcp à partir de la base de données du National Interagency Fire Center:
+    - `AVG_TEMP [°C]` : Température moyenne en degrés Celsius
+    - `AVG_PCP [mm]` : Précipitations moyennes, utilisé pour mesurer la quantité moyenne de précipitations (pluie ou neige) qui tombe dans une région spécifique sur une période de temps donnée.
     """)
 
 
