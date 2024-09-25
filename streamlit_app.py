@@ -107,7 +107,7 @@ if page == pages[0] :
 if page == pages[1] : 
   st.write("### Preprocessing")
   # Nettoyage des données
-  st.write("### Explication de nettoyage des données")
+  st.write("#### Explication de nettoyage des données")
   st.write("""
     Le jeu de données original contenait 38 colonnes et 1 880 465 lignes. Après une révision détaillée, 
     il a été décidé de ne conserver que 14 colonnes en raison de la présence de données incomplètes ou répétées dans les autres colonnes.
@@ -155,9 +155,9 @@ if page == pages[1] :
 
 
   if st.checkbox("Afficher jeu données") :
-    st.write("### Jeu de données et statistiques")
+    st.write("#### Jeu de données et statistiques")
     st.dataframe(df.head(5))
-    st.write("### statistiques")
+    st.write("#### Statistiques")
     st.dataframe(df.describe(), use_container_width=True)
   if st.checkbox("Afficher la dimension") :
      st.write(f"La dimension : {df.shape}")
