@@ -83,7 +83,8 @@ page=st.sidebar.radio("Aller vers", pages)
 # Création contenu de la première page (page 0) avec le contexte et présentation du projet
 if page == pages[0] : 
   st.write("### Contexte et présentation du projet")
-  #st.image("ImageFeu.jpg")  
+  #st.image("ImageFeu.jpg")
+  st.image("C:/Users/amilc/Documents/NewRepositoryFeuxForet/feu_foret.jpg", caption="Feu de forêt en Californie du Nord", width=500)
   st.write("Nous sommes en réorientation professionnelle et cherchons à approfondir nos compétences en data analysis. Ce projet nous permet de mettre en pratique les méthodes et outils appris durant notre formation, de l’exploration des données à la modélisation et la data visualisation.")
   st.markdown("""
     ### Étapes du projet :
@@ -99,10 +100,6 @@ if page == pages[0] :
     - Détection précoce des incendies pour cibler les interventions
     - Prévention des incendies criminels et anticipation des feux dus à la foudre.
     """)
-
-#if st.checkbox("Afficher jeu donnée") :
-#    st.dataframe(df.head(5))
-#st.write("### Preprocessing")
 
 #Création de la page 1 avec explication du préprocessing     
 if page == pages[1] : 
