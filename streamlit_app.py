@@ -102,6 +102,7 @@ if page == pages[0] :
 
 #if st.checkbox("Afficher jeu donnée") :
 #    st.dataframe(df.head(5))
+#st.write("### Preprocessing")
 
 #Création de la page 1 avec explication du préprocessing     
 if page == pages[1] : 
