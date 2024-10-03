@@ -142,10 +142,10 @@ if page == pages[1] :
 
   st.write("#### Colonnes Ajoutées")
   st.write("""
-    En plus des colonnes conservées, nous avons ajouté les colonnes month discovery et day of week discovery à partir des transformations de la colonne DISCOVERY_DATE en format de date avec pd.to_datetime.:
+    En plus des colonnes conservées, nous avons ajouté les colonnes MONTH_DISCOVERY, DAY_OF_WEEK_DISCOVERY et DISCOVERY_WEEK à partir des transformations de la colonne DISCOVERY_DATE en format de date avec pd.to_datetime :
     - `MONTH_DISCOVERY` : Le mois de la découverte de l'incendie.
     - `DAY_OF_WEEK_DISCOVERY` : Le jour de la semaine de la découverte de l'incendie.
-    - `DISCOVERY_WEEK` : Nombre de la semaine de la découverte de l'incendie.
+    - `DISCOVERY_WEEK` : Numéro de la semaine de la découverte de l’incendie.
     - `DURATION` : La durée de l'incendie en jours.
     """)
   st.write("""
