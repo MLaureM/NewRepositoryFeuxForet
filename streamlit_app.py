@@ -144,6 +144,7 @@ if page == pages[1] :
     En plus des colonnes conservées, nous avons ajouté les colonnes month discovery et day of week discovery à partir des transformations de la colonne DISCOVERY_DATE en format de date avec pd.to_datetime.:
     - `MONTH_DISCOVERY` : Le mois de la découverte de l'incendie.
     - `DAY_OF_WEEK_DISCOVERY` : Le jour de la semaine de la découverte de l'incendie.
+    - `DURATION` : La durée de l'incendie.
     """)
   st.write("""
     Nous avons aussi ajouté les colonnes avg temp et avg pcp à partir de la base de données du National Interagency Fire Center:
