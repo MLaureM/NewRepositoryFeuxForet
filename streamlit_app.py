@@ -49,6 +49,8 @@ from sklearn.utils.class_weight import compute_class_weight
 from sklearn.utils.class_weight import compute_sample_weight
 import joblib
 from itertools import cycle
+import json
+
 
 # Mise en forme couleur du fond de l'application
 page_bg_img="""<style>
@@ -1051,23 +1053,24 @@ if page == pages[4] :
 st.subheader("Objectif", divider="blue") 
 #col1, col2 = st.columns([0.5,0.5],gap="small",vertical_alignment="center")
 #with col1 :
-st.markdown("L'objectif du modèle est de définir la probabilité qu'un feu se transorme en feu de grande classe. Pour la modélisation les classes ont été regroupées de la façon suivante : la classe 0 (petite classe) regroupe les feux de classes A à C (0 à 100 acres), la classe 1 (grande classe) regroupe les feux des classes D à G (100 à plus de 5000 acres).")  
+st.markdown("L'objectif du modèle est de définir la probabilité qu'un feu se transorme en feu de grande classe. Les classes ont été regroupées de la façon suivante : la classe 0 (petite classe) regroupe les feux de classes A à C (0 à 100 acres), la classe 1 (grande classe) regroupe les feux des classes D à G (100 à plus de 5000 acres).")  
 #Une des principales difficulté de la prédiction réside dans le fort déséquilibre des classes représentées.Plusieurs modèles ont été testés et associés à des méthodes d'under et over sampling. Nous avons retenu les 2 modèles les plus performants, qui intégrent directement des hyperparamètres permettant de rééquilibrer les classes
-with st.container(height=250):
- @st.cache_data(persist=True)
- def Rep_Class():
+#with st.container(height=300):
+@st.cache_data(persist=True)
+def Rep_Class():
     fig30= make_subplots(rows=1, cols=2, shared_yaxes=False,subplot_titles=("Répartition avant regroupement","Répartition après regroupement"))
     fig30.add_trace(go.Histogram(histfunc="count",
       name="Répartition des classes avant regroupement",
-      x=df['FIRE_SIZE_CLASS'], marker_color='red'),1,1)
+      x=df['FIRE_SIZE_CLASS'], marker_color='red'),1,1)    
+    fig30.update_xaxes(categoryorder='array', categoryarray= ['A', 'B', 'C', 'D', 'E', 'F', 'G'])
     fig30.add_trace(go.Histogram(histfunc="count",
       name="Répartition Classe",
       x=FiresML2['FIRE_SIZE_CLASS'],marker_color='blue'),1,2)
-    fig30.update_layout(bargap=0.2,height=300, width=1100, coloraxis=dict(colorscale='Bluered_r'), showlegend=False,paper_bgcolor='rgba(0,0,0,0)',
+    fig30.update_layout(bargap=0.2,height=360, width=900, coloraxis=dict(colorscale='Bluered_r'), showlegend=False,paper_bgcolor='rgba(0,0,0,0)',
     plot_bgcolor='rgba(0,0,0,0)')
     return fig30
- fig30=Rep_Class()
- fig30
+fig30=Rep_Class()
+fig30
  
 #with col2 :
 
@@ -1109,14 +1112,12 @@ classifier=st.selectbox("Sélection du modèle",("XGBoost","BalancedRandomForest
 if classifier == "XGBoost":   
   if st.sidebar.button("Execution modèle XGB",key="classify"):
       st.subheader("XGBoost Results")
-   #model=XGBClassifier(max_bin=400,
-   #                     scale_pos_weight=29,
-    #                    subsample=0.92,
-    #                    colsample_bytree=0.96,
-    #                    learning_rate=0.31,
-    #                    tree_method='hist' ).fit(X_train,y_train)
-   #joblib.dump(model, "model.joblib")
-
+  #model=XGBClassifier(max_bin=410,
+  #                      scale_pos_weight=29.3333,
+  #                     subsample=0.91,
+  #                     colsample_bytree=0.65,
+  #                     learning_rate=0.31).fit(X_train,y_train)
+  #joblib.dump(model, "model.joblib")  
   model = joblib.load("model.joblib")
   #model_ = joblib.load("model_.joblib")
   y_pred=model.predict(X_test)
@@ -1129,47 +1130,13 @@ if classifier == "XGBoost":
   df_prediction_proba.rename(columns={0:"Petite Classe",1:"Grande Classe"})  
   accuracy=model.score(X_test,y_test)
   recall=recall_score(y_test,y_pred)
-
-  st.subheader("Prédiction classe de feux en fonction des paramètres d'entrée", divider="blue") 
-  col1, col2 = st.columns([0.5,0.5],gap="small",vertical_alignment="center")
-  with col1 :
-   with st.container(height=350):
+  Fires_class_pred=np.array(['Petite Classe','Grande Classe'])
   
-    m = folium.Map(location=[30, -75.844032],zoom_start=3)
-     #tiles='http://services.arcgisonline.com/arcgis/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}',attr="Sources: National Geographic, Esri, Garmin, HERE, UNEP-WCMC, USGS, NASA, ESA, METI, NRCAN, GEBCO, NOAA, INCREMENT P"
-    folium.Marker([LAT, LONG],icon=folium.Icon(color='orange', icon='fire', prefix='fa')).add_to(m)
-     #folium.Marker([LAT, LONG],icon=folium.Icon(color=colors[df_prediction_proba.columns], icon='fire', prefix='fa')).add_to(m)
-      #folium.Marker([LAT, LONG], popup=input_df[:1].STATE, tooltip=input_df[:1].STATE,icon=folium.Icon(color='orange', icon='fire', prefix='fa')).add_to(m)
-    st_data = st_folium(m, width=800)   
-  with col2 :
-    st.write("Paramètres d'entrée")
-    input_df=pd.DataFrame(input_df)
-    input_df.columns=['Mois','Cause','Température','Précipitation','Longitude','Latitude']
-    input_df.rename(columns={'MONTH_DISCOVERY':'Mois','STAT_CAUSE_DESCR':'Cause','AVG_TEMP [°C]':"Température",'AVG_PCP [mm]':"Précipitation",'LONGITUDE':'Longitude','LATITUDE':"Latitude"})  
-    input_df[:1]
-    #df_fires_encoded[:1]
-    #df_fires_encoded[1:]
-    #feats
-    st.write("Probabilité de classe")
-    st.dataframe(df_prediction_proba,
-              column_config={
-             'Petite Classe':st.column_config.ProgressColumn('Petite Classe',format='%.2f',width='medium',min_value=0,max_value=1),
-             'Grande Classe':st.column_config.ProgressColumn('Grande Classe',format='%.2f',width='medium',min_value=0,max_value=1)},hide_index=True)
-    Fires_class_pred=np.array(['Petite Classe','Grande Classe'])
-    #st.write("X_train")
-    #X_train
-    #st.write("X_input")
-    #df_fires_encoded
-    #st.write("input_fire")
-    #input_fires
-    #st.write("feats")
-    #feats
-
-    st.success(str(Fires_class_pred[prediction][0]))
-    
-  st.subheader("Scores de performance du modèle optimisé XGBoost", divider="blue")   
+  st.subheader("Importance features et performance du modèle XGBoost optimisé", divider="blue")
   st.write("Accuracy",round(model.score(X_test,y_test),4))
   st.write("Recall",round(recall,4))  
+  #st.write("Accuracy",round(model.score(X_test,y_test),4))
+  #st.write("Recall",round(recall,4))  
   col1, col2,col3 = st.columns(3,gap="small",vertical_alignment="center")
   with col3:
    with st.container(height=350):      
@@ -1203,9 +1170,40 @@ if classifier == "XGBoost":
      importances.sort_values(by='Importance', ascending=False).head(8)
    
      fig = px.bar(importances, x='Importance', y=importances.index)
-     fig.update_layout(title='Feature Importance',title_x = 0.4, title_y = 0.98,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=900, height=320,legend=dict(x=0.5, y=0.93,orientation="h",xanchor="center",yanchor="bottom",font=dict(
+     fig.update_layout(title='Features Importance',title_x = 0.4, title_y = 0.98,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=900, height=320,legend=dict(x=0.5, y=0.93,orientation="h",xanchor="center",yanchor="bottom",font=dict(
      family="Arial",size=15,color="black")),margin=dict(l=0, r=0, t=50, b=0),titlefont=dict(size=15))
      st.plotly_chart(fig)
+
+
+  st.subheader("Prédiction de la classe de feux selon les paramètres choisis", divider="blue") 
+  col1, col2 = st.columns([0.65,0.35],gap="small",vertical_alignment="center")
+  with col1 :
+   with st.container(height=350):
+    for i in range(0,len(Fires_class_pred)):    
+      if Fires_class_pred[prediction][0] == 'Petite Classe':
+        color = 'darkblue'
+      elif Fires_class_pred[prediction][0] == 'Grande Classe':
+        color = 'red'
+      else:
+        color = 'gray'
+    #labels=Fires_class_pred[prediction][0] #Create a lable that is the name of the institution
+    #popup = folium.Popup(labels)
+    html = df_prediction_proba.to_html(classes="table table-striped table-hover table-condensed table-responsive")
+    popup2 = folium.Popup(html)
+    m = folium.Map(location=[30, -65.844032],zoom_start=3)  
+    folium.Marker([LAT, LONG],popup=popup2,icon=folium.Icon(color=color, icon='fire', prefix='fa')).add_to(m)
+    st_data = st_folium(m,width=800)
+  with col2 :
+    st.write("Cliquer sur le point localisé sur la carte pour afficher les probabilités de classe")
+    
+    
+    #st.dataframe(df_prediction_proba,
+    #          column_config={
+    #         'Petite Classe':st.column_config.ProgressColumn('Petite Classe',format='%.2f',width='medium',min_value=0,max_value=1),
+    #         'Grande Classe':st.column_config.ProgressColumn('Grande Classe',format='%.2f',width='medium',min_value=0,max_value=1)},hide_index=True)
+    #Fires_class_pred=np.array(['Petite Classe','Grande Classe'])
+
+
 if classifier == "BalancedRandomForest":
   #st.sidebar.subheader("Hyperparamètres BalancedRandomForest")
   #min_samples_split_test = st.sidebar.slider("Min_samples_split selection",2, 10,7)
