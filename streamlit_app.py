@@ -95,12 +95,13 @@ if page == pages[0] :
     - **Construction de modèles de Machine Learning**
     - **Restitution via Streamlit**
     ### Objectif :
-    Le projet vise à prédire les incendies de forêt pour améliorer la prévention et l’intervention. Il s’inscrit dans un contexte de préservation de l’environnement et de sécurité publique, avec des impacts économiques significatifs.
+    Le projet vise à prédire les incendies de forêt pour améliorer la prévention et l’intervention, ainsi que la détection précoce des départs de feu et l’évaluation des risques de grande envergure, dans un contexte de préservation de l’environnement, de sécurité publique et d’impacts économiques significatifs.
     ### Données utilisées :
     Nous utilisons des données provenant du **US Forest Service**, qui centralise les informations sur les incendies de forêt aux États-Unis. Ces données incluent les causes des incendies, les surfaces touchées, et leurs localisations. Nous intégrons également des données météorologiques (vent, température, humidité) provenant du **National Interagency Fire Center** pour évaluer les risques de départ et de propagation des feux.
     ### Applications :
     - Détection précoce des incendies pour cibler les interventions
     - Prévention des incendies criminels et anticipation des feux dus à la foudre.
+    - Évaluation des risques de grande taille.
     """)
 
 #Création de la page 1 avec explication du préprocessing     
@@ -143,9 +144,10 @@ if page == pages[1] :
 
   st.write("#### Colonnes Ajoutées")
   st.write("""
-    En plus des colonnes conservées, nous avons ajouté les colonnes month discovery et day of week discovery à partir des transformations de la colonne DISCOVERY_DATE en format de date avec pd.to_datetime.:
+    En plus des colonnes conservées, nous avons ajouté les colonnes MONTH_DISCOVERY, DAY_OF_WEEK_DISCOVERY et DISCOVERY_WEEK à partir des transformations de la colonne DISCOVERY_DATE en format de date avec pd.to_datetime :
     - `MONTH_DISCOVERY` : Le mois de la découverte de l'incendie.
     - `DAY_OF_WEEK_DISCOVERY` : Le jour de la semaine de la découverte de l'incendie.
+    - `DISCOVERY_WEEK` : Numéro de la semaine de la découverte de l’incendie.
     - `DURATION` : La durée de l'incendie en jours.
     """)
   st.write("""
