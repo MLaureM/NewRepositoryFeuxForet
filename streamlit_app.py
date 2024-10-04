@@ -1023,7 +1023,6 @@ if page == pages[4] :
  cat_train=oneh.fit_transform(cat_train)
  cat_test= oneh.transform(cat_test)
 
-
  @st.cache_data(persist=True)
  def label_circ(X_train, X_test):
    circular_cols = ['MONTH_DISCOVERY']
@@ -1055,21 +1054,22 @@ if page == pages[4] :
 
  st.markdown("L'objectif du modèle est de définir la probabilité qu'un feu se transorme en feu de grande classe. Les classes ont été regroupées de la façon suivante : la classe 0 (petite classe) regroupe les feux de classes A à C (0 à 100 acres), la classe 1 (grande classe) regroupe les feux des classes D à G (100 à plus de 5000 acres).")  
 
- @st.cache_data(persist=True)
- def Rep_Class():
-    fig30= make_subplots(rows=1, cols=2, shared_yaxes=False,subplot_titles=("Répartition avant regroupement","Répartition après regroupement"))
-    fig30.add_trace(go.Histogram(histfunc="count",
-      name="Répartition des classes avant regroupement",
-      x=df['FIRE_SIZE_CLASS'], marker_color='red'),1,1)    
-    fig30.update_xaxes(categoryorder='array', categoryarray= ['A', 'B', 'C', 'D', 'E', 'F', 'G'])
-    fig30.add_trace(go.Histogram(histfunc="count",
+ #@st.cache_data(persist=True)
+ #def Rep_Class():
+ fig30= make_subplots(rows=1, cols=2, shared_yaxes=False,subplot_titles=("Répartition avant regroupement","Répartition après regroupement"))
+ fig30.add_trace(go.Histogram(histfunc="count",
+  name="Répartition des classes avant regroupement",
+     x=df['FIRE_SIZE_CLASS'], marker_color='red'),1,1)    
+ fig30.update_xaxes(categoryorder='array', categoryarray= ['A', 'B', 'C', 'D', 'E', 'F', 'G'])
+ fig30.add_trace(go.Histogram(histfunc="count",
       name="Répartition Classe",
       x=FiresML2['FIRE_SIZE_CLASS'],marker_color='blue'),1,2)
-    fig30.update_layout(bargap=0.2,height=360, width=900, coloraxis=dict(colorscale='Bluered_r'), showlegend=False,paper_bgcolor='rgba(0,0,0,0)',
-    plot_bgcolor='rgba(0,0,0,0)')
-    return fig30
- fig30=Rep_Class()
- fig30
+ fig30.update_layout(bargap=0.2,height=360, width=900, coloraxis=dict(colorscale='Bluered_r'), showlegend=False,paper_bgcolor='rgba(0,0,0,0)',
+ plot_bgcolor='rgba(0,0,0,0)')
+#    return fig30
+ #fig30=Rep_Class()
+ #fig30
+ joblib.dump(st.plotly_chart(fig30),"Répartition Classe")
 
  with st.sidebar :      
       st.header("Paramètres d'entrée")
@@ -1077,26 +1077,36 @@ if page == pages[4] :
       Cause=st.selectbox("Cause",('Non défini','Origine humaine', 'Équipements', 'Criminel', 'Foudre','Non défini'),index=1)
       Température=st.slider('Température',-25.00,40.00,1.00)
       Précipitations=st.slider('Précipitation',0.00,917.00,800.00)
-      Longitude=st.slider('Longitude',-178.00,-65.00,-96.00)
-      Latitude=st.slider('Latitude',17.00,71.00,37.00)
-         
- data={'MONTH_DISCOVERY':mois,'STAT_CAUSE_DESCR':Cause,'AVG_TEMP [°C]':Température,'AVG_PCP [mm]':Précipitations,"LONGITUDE":Longitude,"LATITUDE":Latitude}
- input_df=pd.DataFrame(data,index=[0])
- input_array=np.array(input_df)
- input_fires=pd.concat([input_df,feats],axis=0)    
- num_input_fires=input_fires.drop(['STAT_CAUSE_DESCR','MONTH_DISCOVERY'],axis=1)
- num_input_fires= sc.transform(num_input_fires)    
- cat_input_fires=input_fires.drop(['AVG_TEMP [°C]','AVG_PCP [mm]','MONTH_DISCOVERY','LONGITUDE','LATITUDE'],axis=1)
- cat_input_fires=oneh.transform(cat_input_fires)
- circular_cols = ['MONTH_DISCOVERY']
- circular_input_fires = input_fires[circular_cols]
- circular_input_fires['MONTH_DISCOVERY'] = circular_input_fires['MONTH_DISCOVERY'].apply(lambda h : np.sin(2 * np.pi * h / 12))
- circular_input_fires['MONTH_DISCOVERY'] = circular_input_fires['MONTH_DISCOVERY'].apply(lambda h : np.cos(2 * np.pi * h / 12))
- df_fires_encoded=np.concatenate((num_input_fires,cat_input_fires,circular_input_fires),axis=1)
- LAT=input_df[:1].LATITUDE.to_numpy()
- LONG=input_df[:1].LONGITUDE.to_numpy()
- classifier=st.selectbox("Sélection du modèle",("XGBoost","BalancedRandomForest"))
- if classifier == "XGBoost":   
+      Longitude=st.slider('Longitude',-178.00,-65.00,-119.00)
+      Latitude=st.slider('Latitude',17.00,71.00,36.77)
+ classifier=st.selectbox("Sélection du modèle",("BalancedRandomForest","XGBoost"))
+ if classifier == "XGBoost":
+  model = joblib.load("model.joblib")       
+  data={'MONTH_DISCOVERY':mois,'STAT_CAUSE_DESCR':Cause,'AVG_TEMP [°C]':Température,'AVG_PCP [mm]':Précipitations,"LONGITUDE":Longitude,"LATITUDE":Latitude}
+  input_df=pd.DataFrame(data,index=[0])
+  input_array=np.array(input_df)
+  input_fires=pd.concat([input_df,feats],axis=0)    
+  num_input_fires=input_fires.drop(['STAT_CAUSE_DESCR','MONTH_DISCOVERY'],axis=1)
+  num_input_fires= sc.transform(num_input_fires)    
+  cat_input_fires=input_fires.drop(['AVG_TEMP [°C]','AVG_PCP [mm]','MONTH_DISCOVERY','LONGITUDE','LATITUDE'],axis=1)
+  cat_input_fires=oneh.transform(cat_input_fires)
+  circular_cols = ['MONTH_DISCOVERY']
+  circular_input_fires = input_fires[circular_cols]
+  circular_input_fires['MONTH_DISCOVERY'] = circular_input_fires['MONTH_DISCOVERY'].apply(lambda h : np.sin(2 * np.pi * h / 12))
+  circular_input_fires['MONTH_DISCOVERY'] = circular_input_fires['MONTH_DISCOVERY'].apply(lambda h : np.cos(2 * np.pi * h / 12))
+  df_fires_encoded=np.concatenate((num_input_fires,cat_input_fires,circular_input_fires),axis=1)
+  y_pred=model.predict(X_test)
+  prediction=model.predict(df_fires_encoded[:1])
+  prediction_proba=model.predict_proba(df_fires_encoded[:1])
+  df_prediction_proba=pd.DataFrame(prediction_proba)
+  df_prediction_proba.columns=['Petite Classe','Grande Classe']
+  df_prediction_proba.rename(columns={0:"Petite Classe",1:"Grande Classe"})    
+  accuracy=model.score(X_test,y_test)  
+  recall=recall_score(y_test,y_pred)
+  Fires_class_pred=np.array(['Petite Classe','Grande Classe'])
+ #classifier=st.selectbox("Sélection du modèle",("XGBoost","BalancedRandomForest"))
+ #if classifier == "XGBoost":
+  #model = joblib.load("model.joblib")   
   if st.sidebar.button("Execution modèle XGB",key="classify"):
       st.subheader("XGBoost Results")
   #model=XGBClassifier(max_bin=410,
@@ -1105,64 +1115,62 @@ if page == pages[4] :
   #                     colsample_bytree=0.65,
   #                     learning_rate=0.31).fit(X_train,y_train)
   #joblib.dump(model, "model.joblib")  
-  model = joblib.load("model.joblib")
-  #model_ = joblib.load("model_.joblib")
-  y_pred=model.predict(X_test)
-  prediction=model.predict(df_fires_encoded[:1])
-  prediction_proba=model.predict_proba(df_fires_encoded[:1])
-  df_prediction_proba=pd.DataFrame(prediction_proba)
-  df_prediction_proba.columns=['Petite Classe','Grande Classe']
-  df_prediction_proba.rename(columns={0:"Petite Classe",1:"Grande Classe"})  
-  accuracy=model.score(X_test,y_test)
-  recall=recall_score(y_test,y_pred)
-  Fires_class_pred=np.array(['Petite Classe','Grande Classe'])
-  
+  #model = joblib.load("model.joblib")
+   
   st.subheader("Importance features et performance du modèle XGBoost optimisé", divider="blue")
-  st.write("Accuracy",round(model.score(X_test,y_test),4))
+  st.write("Accuracy",round(accuracy,4))
   st.write("Recall",round(recall,4))  
   #st.write("Accuracy",round(model.score(X_test,y_test),4))
   #st.write("Recall",round(recall,4))  
   col1, col2,col3 = st.columns(3,gap="small",vertical_alignment="center")
   with col3:
-   with st.container(height=350):      
-    precision, recall, thresholds = precision_recall_curve(y_test, y_pred)
-    fpr, tpr, thresholds = roc_curve(y_test, y_pred)
-    roc_auc = auc(fpr, tpr)
-    figML2 = px.area(x=fpr, y=tpr,title=f'Courbe ROC (AUC={auc(fpr, tpr):.4f})',labels=dict(x='Taux faux positifs', y='Taux vrais positifs'))
-    figML2.add_shape(type='line', line=dict(dash='dash'),x0=0, x1=1, y0=0, y1=1)
-    figML2.update_yaxes(scaleanchor="x", scaleratio=1)
-    figML2.update_xaxes(constrain='domain')
-    figML2.update_layout(title_x = 0.2, title_y =0.98,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=900, height=320,margin=dict(l=0, r=0, t=20, b=0))
-    st.plotly_chart(figML2)
+   with st.container(height=350):
+    @st.cache_data(persist=True)
+    def AUC():      
+     precision, recall, thresholds = precision_recall_curve(y_test, y_pred)
+     fpr, tpr, thresholds = roc_curve(y_test, y_pred)
+     roc_auc = auc(fpr, tpr)
+     figML2 = px.area(x=fpr, y=tpr,title=f'Courbe ROC (AUC={auc(fpr, tpr):.4f})',labels=dict(x='Taux faux positifs', y='Taux vrais positifs'))
+     figML2.add_shape(type='line', line=dict(dash='dash'),x0=0, x1=1, y0=0, y1=1)
+     figML2.update_yaxes(scaleanchor="x", scaleratio=1)
+     figML2.update_xaxes(constrain='domain')
+     figML2.update_layout(title_x = 0.2, title_y =0.98,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=900, height=320,margin=dict(l=0, r=0, t=20, b=0))
+     return figML2
+    figML2=AUC()
+    figML2
   with col2:
     with st.container(height=350):
-  #st.subheader('Matrice de confusion') 
-     cm = confusion_matrix(y_test, y_pred)
-     figML1 = px.imshow(cm,labels={"x": "Predicted Label", "y": "True Label"},width=800,height=800,text_auto=True)#color_continuous_scale='hot'
+  #st.subheader('Matrice de confusion')
+     @st.cache_data(persist=True)
+     def cm():
+      cm = confusion_matrix(y_test, y_pred)
+      figML1 = px.imshow(cm,labels={"x": "Predicted Label", "y": "True Label"},width=800,height=800,text_auto=True)#color_continuous_scale='hot'
   #layout = go.Layout(title='Matrice de confusion',paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)')
-     figML1.update_layout(title='Matrice de confusion',title_x = 0.35, title_y =0.98,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=900, height=320,legend=dict(x=0.5, y=1,orientation="h",xanchor="center",yanchor="bottom",font=dict(
-     family="Arial",size=15,color="black")),margin=dict(l=0, r=0, t=2, b=0))
-     figML1.update_traces(dict(showscale=False,coloraxis=None), selector={'type':'heatmap'})
-  #titlefont=dict(size=20)
-     st.plotly_chart(figML1)
+      figML1.update_layout(title='Matrice de confusion',title_x = 0.35, title_y =0.98,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=900, height=320,legend=dict(x=0.5, y=1,orientation="h",xanchor="center",yanchor="bottom",font=dict(
+      family="Arial",size=15,color="black")),margin=dict(l=0, r=0, t=2, b=0))
+      figML1.update_traces(dict(showscale=False,coloraxis=None), selector={'type':'heatmap'})
+      return figML1
+     figML1=cm()
+     figML1
 
   with col1 : 
-    with st.container(height=350):     
-     feats1 = {}
-     for feature, importance in zip(feats.columns,model.feature_importances_):
-      feats1[feature] = importance
-     importances= pd.DataFrame.from_dict(feats1, orient='index').rename(columns={0: 'Importance'})
-     importances.sort_values(by='Importance', ascending=False).head(8)
-   
-     fig = px.bar(importances, x='Importance', y=importances.index)
-     fig.update_layout(title='Features Importance',title_x = 0.4, title_y = 0.98,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=900, height=320,legend=dict(x=0.5, y=0.93,orientation="h",xanchor="center",yanchor="bottom",font=dict(
-     family="Arial",size=15,color="black")),margin=dict(l=0, r=0, t=50, b=0),titlefont=dict(size=15))
-     st.plotly_chart(fig)
-
+    with st.container(height=350):
+      feats1 = {}
+      for feature, importance in zip(feats.columns,model.feature_importances_):
+       feats1[feature] = importance
+      importances= pd.DataFrame.from_dict(feats1, orient='index').rename(columns={0: 'Importance'})
+      importances.sort_values(by='Importance', ascending=False).head(8)
+      fig = px.bar(importances, x='Importance', y=importances.index)
+      fig.update_layout(title='Features Importance',title_x = 0.4, title_y = 0.98,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=900, height=320,legend=dict(x=0.5, y=0.93,orientation="h",xanchor="center",yanchor="bottom",font=dict(
+      family="Arial",size=15,color="black")),margin=dict(l=0, r=0, t=50, b=0),titlefont=dict(size=15))
+      st.plotly_chart(fig)
+     
   st.subheader("Prédiction de la classe de feux selon les paramètres choisis", divider="blue") 
   col1, col2 = st.columns([0.65,0.35],gap="small",vertical_alignment="center")
   with col1 :
    with st.container(height=350):
+    LAT=input_df[:1].LATITUDE.to_numpy()
+    LONG=input_df[:1].LONGITUDE.to_numpy()
     for i in range(0,len(Fires_class_pred)):    
       if Fires_class_pred[prediction][0] == 'Petite Classe':
         color = 'darkblue'
@@ -1172,40 +1180,28 @@ if page == pages[4] :
         color = 'gray'
     html = df_prediction_proba.to_html(classes="table table-striped table-hover table-condensed table-responsive")
     popup2 = folium.Popup(html)
-    m = folium.Map(location=[30, -65.844032],zoom_start=3)  
+    m = folium.Map(location=[30, -65.844032],zoom_start=3)
     folium.Marker([LAT, LONG],popup=popup2,icon=folium.Icon(color=color, icon='fire', prefix='fa')).add_to(m)
     st_data = st_folium(m,width=800)
   with col2 :
-    st.info('Cliquer sur le point localisé sur la carte pour afficher les probabilités de classe',icon="ℹ️",)
+    st.info('Cliquer sur le point localisé sur la carte pour afficher les probabilités de chaque classe',icon="ℹ️",)
     st.markdown("")
     st.markdown("Légende :")
     col1, col2 = st.columns([0.15,0.85],gap="small",vertical_alignment="center")
     with col1:
      st.image("feu_bleu.jpg",width=40)
     with col2:
-     st.markdown('Probabilité classe 1 < 50%')
+     st.markdown(":blue[Probabilité classe 1 < 50%]")
     col1, col2 = st.columns([0.15,0.85],gap="small",vertical_alignment="center")
     with col1:
      st.image("feu_rouge.jpg",width=40)
     with col2:
-     st.markdown('Probabilité classe 1 > 50%')
-    
-  
- if classifier == "BalancedRandomForest":
-  #st.sidebar.subheader("Hyperparamètres BalancedRandomForest")
-  #min_samples_split_test = st.sidebar.slider("Min_samples_split selection",2, 10,7)
-  #max_depth_test = st.sidebar.slider("max_depth selection",1, 100, 70)
-  #sampling_strategy_test = st.sidebar.radio("sampling_strategy selection",("not minority","not majority"))
-  #replacement_test= st.sidebar.radio("replacement selection",(True,False))
-  #Bootstrap_test= st.sidebar.radio("bootstrap selection",(True,False))
-  #random_state_test=st.sidebar.slider("random_state selection",200,200, 200)
-  #n_estimator_test=st.sidebar.slider("n_estimator selection",100,1000, 600)
-  #criterion_test=st.sidebar.radio("criterion selection",("entropy","giny"))
-  #class_weight_test=st.sidebar.radio("class_weight selection",("balanced_subsample","None"))
-  #max_features_test=st.sidebar.slider("max_features selection",100,200,180)
-   
+     st.markdown(":red[Probabilité classe 1 > 50%]")  
+ elif classifier == "BalancedRandomForest":
+  model3 = joblib.load("model3.joblib")
   if st.sidebar.button("Execution Balanced Random Forest",key="classify2"):
-    st.subheader("BalancedRandomForest Results")
+  #model3 = joblib.load("model3.joblib")
+   st.subheader("BalancedRandomForest Results")
   #model2=BalancedRandomForestClassifier(min_samples_split=7,
   #                      max_depth=70,
   #                      sampling_strategy='not minority',
@@ -1220,30 +1216,43 @@ if page == pages[4] :
   #dict_weights = {0:1, 1: 1.2933}
   #model3=BalancedRandomForestClassifier(sampling_strategy="not minority", replacement=True,random_state=200,n_estimators=400,class_weight=dict_weights).fit(X_train,y_train)
   #joblib.dump(model3, "model3.joblib")
-  model3 = joblib.load("model3.joblib")
+  data={'MONTH_DISCOVERY':mois,'STAT_CAUSE_DESCR':Cause,'AVG_TEMP [°C]':Température,'AVG_PCP [mm]':Précipitations,"LONGITUDE":Longitude,"LATITUDE":Latitude}
+  input_df=pd.DataFrame(data,index=[0])
+  input_array=np.array(input_df)
+  input_fires=pd.concat([input_df,feats],axis=0)    
+  num_input_fires=input_fires.drop(['STAT_CAUSE_DESCR','MONTH_DISCOVERY'],axis=1)
+  num_input_fires= sc.transform(num_input_fires)    
+  cat_input_fires=input_fires.drop(['AVG_TEMP [°C]','AVG_PCP [mm]','MONTH_DISCOVERY','LONGITUDE','LATITUDE'],axis=1)
+  cat_input_fires=oneh.transform(cat_input_fires)
+  circular_cols = ['MONTH_DISCOVERY']
+  circular_input_fires = input_fires[circular_cols]
+  circular_input_fires['MONTH_DISCOVERY'] = circular_input_fires['MONTH_DISCOVERY'].apply(lambda h : np.sin(2 * np.pi * h / 12))
+  circular_input_fires['MONTH_DISCOVERY'] = circular_input_fires['MONTH_DISCOVERY'].apply(lambda h : np.cos(2 * np.pi * h / 12))
+  df_fires_encoded=np.concatenate((num_input_fires,cat_input_fires,circular_input_fires),axis=1)
+  LAT=input_df[:1].LATITUDE.to_numpy()
+  LONG=input_df[:1].LONGITUDE.to_numpy()
   y_pred=model3.predict(X_test)  
-  #y_pred2_input=model2.predict(df_fires_encoded)
+ #y_pred2_input=model2.predict(df_fires_encoded)
   prediction=model3.predict(df_fires_encoded[:1])
   prediction_proba=model3.predict_proba(df_fires_encoded[:1])
   df_prediction_proba=pd.DataFrame(prediction_proba)
   df_prediction_proba.columns=['Petite Classe','Grande Classe']
   df_prediction_proba.rename(columns={0:"Petite Classe",1:"Grande Classe"})
   Fires_class_pred=np.array(['Petite Classe','Grande Classe'])
-
   st.subheader("Importance features et performance du modèle Balanced Random Forest", divider="blue")
   @st.cache_data(persist=True)
   def Accuracy_BRF():
-    AccuracyBRF=model3.score(X_test,y_test)
-    return AccuracyBRF
+   AccuracyBRF=model3.score(X_test,y_test)
+   return AccuracyBRF
   AccruracyBRF=Accuracy_BRF()
   st.write("Accuracy",round(AccruracyBRF,4))
+  #joblib.dump(AccuracyBRF,"AccuracyBRF")
   @st.cache_data(persist=True)
   def recall2():
     recall2=recall_score(y_test,y_pred)
     return recall2
   recall2=recall2()  
   st.write("Recall",round(recall2,4))      
-
   col1, col2,col3 = st.columns(3,gap="small",vertical_alignment="center")
   with col3:
     with st.container(height=350):
@@ -1272,7 +1281,6 @@ if page == pages[4] :
           return figML1
         figML1=MatriceConfusion()
         figML1
-
   with col1 : 
     with st.container(height=350):
       @st.cache_data(persist=True)
@@ -1281,30 +1289,13 @@ if page == pages[4] :
         for feature, importance in zip(feats.columns,model3.feature_importances_):
             feats2[feature] = importance
         importances2= pd.DataFrame.from_dict(feats2, orient='index').rename(columns={0: 'Importance'})
-        importances2.sort_values(by='Importance', ascending=False).head(8)
-      
+        importances2.sort_values(by='Importance', ascending=False).head(8)    
         figML3 = px.bar(importances2, x='Importance', y=importances2.index)
         figML3.update_layout(title='Feature Importance',title_x = 0.4, title_y = 0.98,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=900, height=320,legend=dict(x=0.5, y=0.93,orientation="h",xanchor="center",yanchor="bottom",font=dict(
         family="Arial",size=15,color="black")),margin=dict(l=0, r=0, t=50, b=0),titlefont=dict(size=15))
         return figML3
       figML3=FeatureImportance()
       figML3   
-
-  #st.subheader("Prédiction de la classe de feux selon les paramètres choisis", divider="blue") 
-  #col1, col2 = st.columns([0.6,0.4],gap="small",vertical_alignment="center")
-    
-  #with col1 :
-  #st.write("Paramètres d'entrée")    
-  #input_df[:1]
-  # st.write("Probabilité de classe")
-     #st.dataframe(df_prediction_proba2,
-     #            column_config={
-      #          'Petite Classe':st.column_config.ProgressColumn('Petite Classe',format='%.2f',width='medium',min_value=0,max_value=1),
-       #         'Grande Classe':st.column_config.ProgressColumn('Grande Classe',format='%.2f',width='medium',min_value=0,max_value=1)},hide_index=True)
-   #Fires_class_pred2=np.array(['Petite Classe','Grande Classe'])
-   #st.dataframe(df_prediction_proba)     
-   #st.success(str(Fires_class_pred2[prediction2][0]))     
-
   st.subheader("Scores de performance du modèle optimisé BalancedRandomClassifier", divider="blue")
   col1, col2 = st.columns([0.65,0.35],gap="small",vertical_alignment="center")
   with col1 :
@@ -1322,21 +1313,20 @@ if page == pages[4] :
     folium.Marker([LAT, LONG],popup=popup2,icon=folium.Icon(color=color, icon='fire', prefix='fa')).add_to(m)
     st_data = st_folium(m,width=800)
   with col2 :
-    st.info('Cliquer sur le point localisé sur la carte pour afficher les probabilités de classe',icon="ℹ️",)
+    st.info('Cliquer sur le point localisé sur la carte pour afficher les probabilités de chaque classe',icon="ℹ️",)
     st.markdown("")
     st.markdown("Légende :")
     col1, col2 = st.columns([0.15,0.85],gap="small",vertical_alignment="center")
     with col1:
      st.image("feu_bleu.jpg",width=40)
     with col2:
-     st.markdown('Probabilité classe 1 < 50%')
+     st.markdown(":blue[Probabilité classe 1 < 50%]")
     col1, col2 = st.columns([0.15,0.85],gap="small",vertical_alignment="center")
     with col1:
      st.image("feu_rouge.jpg",width=40)
     with col2:
-     st.markdown('Probabilité classe 1 > 50%')
-  
-    
+     st.markdown(":red[Probabilité classe 1 > 50%]")
+ else : st.markdown("")
 if page == pages[5] : 
   #  st.write("### Conclusion")
   st.write("### Conclusion et propositions d’optimisation")
