@@ -1,5 +1,5 @@
 import streamlit as st
-st.set_page_config(layout="wide",)
+st.set_page_config(page_title="Projet Feux de Forêt",layout="wide",)
 import pandas as pd
 import requests
 import seaborn as sns
@@ -74,7 +74,7 @@ st.markdown("""<style>.block-container {padding-top: 3rem;padding-bottom: 2rem;p
 #Chargement dataframe sous alias df
 @st.cache_data(persist=True)
 def load_data():
-  data=pd.read_csv('Firesclean.csv',index_col=0)
+  data=pd.read_csv('Firesclean.csv', index_col=0)
   return data
 df=load_data()
 
@@ -95,7 +95,7 @@ if page == pages[0] :
     - **Construction de modèles de Machine Learning**
     - **Restitution via Streamlit**
     ### Objectif :
-    Le projet vise à prédire les incendies de forêt pour améliorer la prévention et l’intervention, ainsi que la détection précoce des départs de feu et l’évaluation des risques de grande envergure, dans un contexte de préservation de l’environnement, de sécurité publique et d’impacts économiques significatifs.
+    Le projet vise à prédire les incendies de forêt pour améliorer la prévention et l’intervention, ainsi que la détection précoce des départs de feu et l’évaluation des risques de grande taille, dans un contexte de préservation de l’environnement, de sécurité publique et d’impacts économiques significatifs.
     ### Données utilisées :
     Nous utilisons des données provenant du **US Forest Service**, qui centralise les informations sur les incendies de forêt aux États-Unis. Ces données incluent les causes des incendies, les surfaces touchées, et leurs localisations. Nous intégrons également des données météorologiques (vent, température, humidité) provenant du **National Interagency Fire Center** pour évaluer les risques de départ et de propagation des feux.
     ### Applications :
@@ -105,7 +105,10 @@ if page == pages[0] :
     """)
 
 #Création de la page 1 avec explication du préprocessing     
-if page == pages[1] : 
+#if page == pages[1] : 
+
+if page == "Preprocessing":
+
   st.write("### Preprocessing")
   # Nettoyage des données
   st.write("#### Explication de nettoyage des données")
@@ -115,25 +118,26 @@ if page == pages[1] :
     Voici les colonnes originales et celles conservées :
     """)
 
+  
     # Afficher les colonnes originales et celles conservées
+  
   st.write("#### Colonnes Originales")
-  st.write("""
-    FOD_ID, FPA_ID, SOURCE_SYSTEM_TYPE, SOURCE_SYSTEM, NWCG_REPORTING_AGENCY, 
-    NWCG_REPORTING_UNIT_ID, NWCG_REPORTING_UNIT_NAME, SOURCE_REPORTING_UNIT, 
-    SOURCE_REPORTING_UNIT_NAME, LOCAL_FIRE_REPORT_ID, LOCAL_INCIDENT_ID, FIRE_CODE, 
-    FIRE_NAME, ICS_209_INCIDENT_NUMBER, ICS_209_NAME, MTBS_ID, MTBS_FIRE_NAME, 
-    COMPLEX_NAME, FIRE_YEAR, DISCOVERY_DATE, DISCOVERY_DOY, DISCOVERY_TIME, 
-    STAT_CAUSE_CODE, STAT_CAUSE_DESCR, CONT_DATE, CONT_DOY, CONT_TIME, FIRE_SIZE, 
-    FIRE_SIZE_CLASS, LATITUDE, LONGITUDE, OWNER_CODE, OWNER_DESCR, STATE, COUNTY, 
-    FIPS_CODE, FIPS_NAME, Shape
-    """)
+  if st.checkbox("Afficher jeu données ") :
+    st.write("#### Jeu de données et statistiques")
+    st.dataframe(df.head())
+    st.write("#### Statistiques")
+    st.dataframe(df.describe(), use_container_width=True)
+
 
   st.write("#### Colonnes Conservées")
-  st.write("""
-    FOD_ID, FPA_ID, NWCG_REPORTING_UNIT_NAME, FIRE_YEAR, DISCOVERY_DATE, 
-    DISCOVERY_DOY, STAT_CAUSE_DESCR, CONT_DOY, FIRE_SIZE, FIRE_SIZE_CLASS, 
-    LATITUDE, LONGITUDE, STATE, FIPS_NAME
-    """)
+  conserved_columns = [
+        "FPA_ID", "NWCG_REPORTING_UNIT_NAME", "FIRE_YEAR", "DISCOVERY_DATE", 
+        "DISCOVERY_DOY", "STAT_CAUSE_DESCR", "CONT_DOY", "FIRE_SIZE", "FIRE_SIZE_CLASS", 
+        "LATITUDE", "LONGITUDE", "STATE", "FIPS_NAME"
+    ]
+  if st.checkbox("Afficher les colonnes conservées "):
+        st.dataframe(df[conserved_columns].head())
+  
 
     # Explication du nettoyage des données
   st.write("""
@@ -157,13 +161,10 @@ if page == pages[1] :
     """)
 
 
-  if st.checkbox("Afficher jeu données") :
-    st.write("#### Jeu de données et statistiques")
-    st.dataframe(df.head(5))
-    st.write("#### Statistiques")
-    st.dataframe(df.describe(), use_container_width=True)
-  if st.checkbox("Afficher la dimension") :
-     st.write(f"La dimension : {df.shape}")
+  #if st.checkbox("Afficher la dimension") :
+  #   st.write(f"La dimension : {df.shape}")
+  st.write("""
+    Nous avons éliminé les colonnes non pertinentes ou avec trop de valeurs manquantes, notamment celles liées aux codes d’identification des agences, car elles n’étaient pas utiles pour notre analyse:""")
   if st.checkbox("Afficher les na") :
     st.dataframe(df.isna().sum(), width=300, height=640)
       
@@ -536,7 +537,7 @@ if page == pages[3] :
       st.write("""On observe un grand déséquilibre du jeu de données. Ce qui va rendre complexe la prédiction de l'analyse.
                Les feux Missing/Undefined et Miscellaneous représentent environ le quart des données. 
                Compte tenu de leur caractère inerte par rapport à l'objectif de l'étude, nous les supprimerons.
-               Pour les diverses qui peuvent se ressembler, nous procéderons à leur regroupement dans une cause parente""")
+               Pour les diverses qui peuvent se ressembler, nous procéderons à leur regroupement dans une cause parente.""")
     with col2:
       st.write("### Distribution des causes après regroupement")
       count2 = Fires_ML["STAT_CAUSE_CODE"].value_counts()
@@ -1353,4 +1354,12 @@ Ce projet a démontré l'importance de la data analysis et du machine learning d
 En termes d'expertise, ce projet nous a permis de développer nos compétences en Python et en modélisation via le Machine Learning, des domaines nouveaux pour la plupart d'entre nous. Nous avons également appris à utiliser des outils interactifs comme Streamlit pour la restitution de nos résultats.
 Pour aller plus loin, il serait bénéfique de collaborer avec des spécialistes en lutte contre les incendies de forêt pour affiner nos modèles et mieux comprendre les enjeux opérationnels. De plus, l'intégration de données météorologiques plus précises pourrait améliorer encore davantage les performances de nos modèles.
 En conclusion, ce projet nous a permis de mettre en pratique les compétences acquises durant notre formation et de contribuer à un enjeu crucial de préservation de l'environnement et de sécurité publique.
+""")
+# Ajout des informations en bas de la barre latérale
+st.sidebar.write("""
+### Promotion Data Analyst - Février 2024
+- Marie-Laure MAILLET
+- Gigi DECORMON
+- Adoté Sitou BLIVI
+- Amilcar LOPEZ TELLEZ
 """)
