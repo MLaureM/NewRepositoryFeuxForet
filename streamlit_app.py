@@ -106,6 +106,7 @@ if page == pages[0] :
 #if page == pages[1] : 
 
 if page == "Preprocessing":
+
   st.write("### Preprocessing")
   # Nettoyage des données
   st.write("#### Explication de nettoyage des données")
@@ -114,10 +115,12 @@ if page == "Preprocessing":
     il a été décidé de ne conserver que 14 colonnes en raison de la présence de données incomplètes ou répétées dans les autres colonnes.
     Voici les colonnes originales et celles conservées :
     """)
+
   
     # Afficher les colonnes originales et celles conservées
+  
   st.write("#### Colonnes Originales")
-  if st.checkbox("Afficher jeu données 🔎") :
+  if st.checkbox("Afficher jeu données ") :
     st.write("#### Jeu de données et statistiques")
     st.dataframe(df.head())
     st.write("#### Statistiques")
@@ -125,11 +128,14 @@ if page == "Preprocessing":
 
 
   st.write("#### Colonnes Conservées")
-  st.write("""
-    FOD_ID, FPA_ID, NWCG_REPORTING_UNIT_NAME, FIRE_YEAR, DISCOVERY_DATE, 
-    DISCOVERY_DOY, STAT_CAUSE_DESCR, CONT_DOY, FIRE_SIZE, FIRE_SIZE_CLASS, 
-    LATITUDE, LONGITUDE, STATE, FIPS_NAME
-    """)
+  conserved_columns = [
+        "FPA_ID", "NWCG_REPORTING_UNIT_NAME", "FIRE_YEAR", "DISCOVERY_DATE", 
+        "DISCOVERY_DOY", "STAT_CAUSE_DESCR", "CONT_DOY", "FIRE_SIZE", "FIRE_SIZE_CLASS", 
+        "LATITUDE", "LONGITUDE", "STATE", "FIPS_NAME"
+    ]
+  if st.checkbox("Afficher les colonnes conservées "):
+        st.dataframe(df[conserved_columns].head())
+  
 
     # Explication du nettoyage des données
   st.write("""
@@ -153,8 +159,10 @@ if page == "Preprocessing":
     """)
 
 
-  if st.checkbox("Afficher la dimension") :
-     st.write(f"La dimension : {df.shape}")
+  #if st.checkbox("Afficher la dimension") :
+  #   st.write(f"La dimension : {df.shape}")
+  st.write("""
+    Nous avons éliminé les colonnes non pertinentes ou avec trop de valeurs manquantes, notamment celles liées aux codes d’identification des agences, car elles n’étaient pas utiles pour notre analyse:
   if st.checkbox("Afficher les na") :
     st.dataframe(df.isna().sum(), width=300, height=640)
       
@@ -527,7 +535,8 @@ if page == pages[3] :
       st.write("""On observe un grand déséquilibre du jeu de données. Ce qui va rendre complexe la prédiction de l'analyse.
                Les feux Missing/Undefined et Miscellaneous représentent environ le quart des données. 
                Compte tenu de leur caractère inerte par rapport à l'objectif de l'étude, nous les supprimerons.
-               Pour les diverses qui peuvent se ressembler, nous procéderons à leur regroupement dans une cause parente""")
+               Pour les diverses qui peuvent se ressembler, nous procéderons à leur regroupement dans une cause parente.""")
+
     with col2:
       st.write("### Distribution des causes après regroupement")
       count2 = Fires_ML["STAT_CAUSE_CODE"].value_counts()
