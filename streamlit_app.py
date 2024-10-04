@@ -554,8 +554,8 @@ if page == pages[3] :
       st.write("Suppresion des causses non-définies : Missing/Undefined, Miscellaneous, Others")
       st.write("""
                Regroupement des feux en 3 principales causes :
-               - **Humaine (0)** : Debris burning, Campfire, Children, Smoking, Equipment Use, Railroad, Powerline, Structure, Fireworks"
-               - **Criminelle (1)** : Arson"
+               - **Humaine (0)** : Debris burning, Campfire, Children, Smoking, Equipment Use, Railroad, Powerline, Structure, Fireworks
+               - **Criminelle (1)** : Arson
                - **Naturelle (2)** : Ligthning
                """)
 
