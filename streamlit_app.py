@@ -532,9 +532,9 @@ if page == pages[3] :
       # ax.set_yticklabels(count.values, fontsize=40)
       ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
       st.pyplot(fig)
-      st.write("""On observe un grand déséquilibre du jeu de données. Ce qui va rendre complexe la prédiction de l'analyse.
+      st.write("""On observe un grand déséquilibre du jeu de données. Ce qui va rendre complexe la prédiction de l analyse.
                Les feux Missing/Undefined et Miscellaneous représentent environ le quart des données. 
-               Compte tenu de leur caractère inerte par rapport à l'objectif de l'étude, nous les supprimerons.
+               Compte tenu de leur caractère inerte par rapport à l objectif de létude, nous les supprimerons.
                Pour les diverses qui peuvent se ressembler, nous procéderons à leur regroupement dans une cause parente.""")
 
     with col2:
