@@ -1220,10 +1220,7 @@ if page == pages[4] :
   #model3=BalancedRandomForestClassifier(sampling_strategy="not minority", replacement=True,random_state=200,n_estimators=400,class_weight=dict_weights).fit(X_train,y_train)
   #joblib.dump(model3, "model3.joblib")
   model3 = joblib.load("model3.joblib")
-  @st.cache_data(persist=True)
-  def y_pred_BRF():
-   y_pred=model3.predict(X_test)
-   return y_pred
+  y_pred=model3.predict(X_test)  
   #y_pred2_input=model2.predict(df_fires_encoded)
   prediction=model3.predict(df_fires_encoded[:1])
   prediction_proba=model3.predict_proba(df_fires_encoded[:1])
@@ -1266,7 +1263,7 @@ if page == pages[4] :
     with st.container(height=350):
         @st.cache_data(persist=True)
         def MatriceConfusion():
-          cm = confusion_matrix(y_test, y_pred2)
+          cm = confusion_matrix(y_test, y_pred)
           figML1 = px.imshow(cm,labels={"x": "Predicted Label", "y": "True Label"},width=800,height=800,text_auto=True)#color_continuous_scale='hot'
           figML1.update_layout(title='Matrice de confusion',title_x = 0.35, title_y =0.98,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=900, height=320,legend=dict(x=0.5, y=1,orientation="h",xanchor="center",yanchor="bottom",font=dict(
           family="Arial",size=15,color="black")),margin=dict(l=0, r=0, t=2, b=0))
