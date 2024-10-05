@@ -71,7 +71,7 @@ div[class^='block-container'] { padding-side: 2rem; }
 st.markdown(page_bg_img,unsafe_allow_html=True)
 st.markdown("""<style>.block-container {padding-top: 3rem;padding-bottom: 2rem;padding-left: 5rem;padding-right: 5rem;}</style>""", unsafe_allow_html=True)
 #Chargement dataframe sous alias df
-@st.cache_data(persist=True)
+@st.cache_data(persist="disk")
 def load_data():
   data=pd.read_csv('Firesclean.csv', index_col=0)
   return data
@@ -85,7 +85,7 @@ page=st.sidebar.radio("Aller vers", pages)
 if page == pages[0] : 
   st.write("### Contexte et présentation du projet")
   #st.image("ImageFeu.jpg")
-  st.image("C:/Users/amilc/Documents/NewRepositoryFeuxForet/feu_foret.jpg", caption="Feu de forêt en Californie du Nord", width=500)
+  st.image("feu_foret.jpg", caption="Feu de forêt en Californie du Nord", width=500)
   st.write("Nous sommes en réorientation professionnelle et cherchons à approfondir nos compétences en data analysis. Ce projet nous permet de mettre en pratique les méthodes et outils appris durant notre formation, de l’exploration des données à la modélisation et la data visualisation.")
   st.markdown("""
     ### Étapes du projet :
@@ -569,7 +569,7 @@ if page == pages[3] :
 
   # Séparation des variables du target
   Fires_ML = Fires_ML.drop("STAT_CAUSE_DESCR_1", axis = 1)
-  @st.cache_data(persist=True)
+  @st.cache_data(persist="disk")
   def data_labeling(data):
     # Remplacement des jours de la semaine par 1 à 7 au lieu de 0 à 6
     data["DAY_OF_WEEK_DISCOVERY"] = data["DAY_OF_WEEK_DISCOVERY"].replace({0:1, 1:2, 2:3, 3:4, 4:5, 5:6, 6:7})
@@ -583,7 +583,7 @@ if page == pages[3] :
   feats, target = data_labeling(Fires_ML)
 
   # Séparation du jeu en train et test
-  @st.cache_data(persist=True)
+  @st.cache_data(persist="disk")
   def data_split(X, y):
     # Data split of features and target
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.25, shuffle = False)
@@ -593,7 +593,7 @@ if page == pages[3] :
 
 
   # Traitement des variables cycliques
-  @st.cache_data(persist=True)
+  @st.cache_data(persist="disk")
   def cyclic_transform(X):
     # Séparation des variables suivant leur type
     circular_cols_init = ["MONTH_DISCOVERY", "DISCOVERY_WEEK", "DAY_OF_WEEK_DISCOVERY"]
@@ -613,7 +613,7 @@ if page == pages[3] :
   circular_train, circular_test = cyclic_transform(X_train), cyclic_transform(X_test)
 
   # TRaitement des variables numériques
-  @st.cache_data(persist=True)
+  @st.cache_data(persist="disk")
   def num_imputer(X):
     circular_cols_init = ["MONTH_DISCOVERY", "DISCOVERY_WEEK", "DAY_OF_WEEK_DISCOVERY"]
     num_cols = feats.drop(circular_cols_init, axis = 1).columns
@@ -636,7 +636,7 @@ if page == pages[3] :
   num_train_imputed, num_test_imputed = num_imputer(X_train), num_imputer(X_test)
 
   # Reconstitution du jeu de données après traitement
-  @st.cache_data(persist=True)
+  @st.cache_data(persist="disk")
   def X_concat(X_train_num, X_test_num, circular_train, circular_test):
     X_train_final = pd.concat([X_train_num, circular_train], axis = 1)
     X_test_final = pd.concat([X_test_num, circular_test], axis = 1)
@@ -652,7 +652,7 @@ if page == pages[3] :
 
 
   # Réduction du modèle avec la méthode feature importances
-  @st.cache_data(persist=True)
+  @st.cache_data(persist="disk")
   def model_reduction(classifier, X_train, y_train):
     if classifier == "XGBoost":
        clf = XGBClassifier(tree_meethod = "approx",
@@ -671,6 +671,7 @@ if page == pages[3] :
        avg_importance = np.mean(np.abs(coefficients), axis = 0)
        feat_imp_data = pd.DataFrame({"feature":X_train.columns, "importance":avg_importance}).sort_values('importance', ascending=True)
        feat_imp = list(feat_imp_data["feature"][-11:])
+      #  st.write(feat_imp)
     return feat_imp
     
 
@@ -679,7 +680,7 @@ if page == pages[3] :
   ######################################################################################################################################################################  
   
   # Tracé des courbes Precision_Recall  
-  @st.cache_data(persist=True) 
+  @st.cache_data(persist="disk") 
   def multiclass_PR_curve(_classifier, X_test, y_test):
     y_test= label_binarize(y_test, classes=np.unique(y_test))
     n_classes = y_test.shape[1]
@@ -714,7 +715,7 @@ if page == pages[3] :
 
   # Enregistrement des meilleurs modèles
   # Best xgb raw model
-  @st.cache_data(persist=True)
+  @st.cache_data(persist="disk")
   def best_xgb_raw_model(X, y):
       xgb_best_params = {"learning_rate": 0.015,
                         "max_depth": 3, 
@@ -726,7 +727,7 @@ if page == pages[3] :
       model = joblib.load("best_xgb_raw_model.joblib")
       return model
   # Best xgb raw model
-  @st.cache_data(persist=True)
+  @st.cache_data(persist="disk")
   def best_rf_raw_model(X, y):
      rf_best_params = {"n_estimators": 50,
                       "max_depth": 100,
@@ -738,7 +739,7 @@ if page == pages[3] :
      model = joblib.load("best_rf_raw_model.joblib")
      return model
   # Best LogReg raw model
-  @st.cache_data(persist=True)
+  @st.cache_data(persist="disk")
   def best_lr_raw_model(X, y):
      lr_best_params = {"C": 0.1,
                       "solver": "sag",
@@ -834,10 +835,10 @@ if page == pages[3] :
       else:
           classes_weights = None
           st.write("Les classes ne sont pas ré-équilibrées.")
-      n_estimators = st.sidebar.slider("Veuillez choisir le nombre d'estimateurs", 5, 10, 30, 5)
+      n_estimators = st.sidebar.slider("Veuillez choisir le nombre d'estimateurs", 5, 30, 10, 5)
       max_depth = st.sidebar.slider("Veuillez choisir la profondeur de l'arbre", 3, 10)
-      min_samples_leaf = st.sidebar.slider("Veuillez choisir min_samples_leaf", 20, 40, 60, 5)
-      min_samples_split = st.sidebar.slider("Veuillez choisir min_samples_split", 30, 50, 100, 5)      
+      min_samples_leaf = st.sidebar.slider("Veuillez choisir min_samples_leaf", 20, 60, 40, 5)
+      min_samples_split = st.sidebar.slider("Veuillez choisir min_samples_split", 30, 100, 100, 5)      
       max_features = st.sidebar.radio("Veuillez choisir le nombre de features", ("sqrt", "log2"), horizontal=True)
     ####################################
     ### Modèle Regression Logistique ###
@@ -919,7 +920,7 @@ if page == pages[3] :
       
       # Tracé des graphes (Feature Importances, Matrice de confusion, Precision-Recall)
       col1, col2, col3 = st.columns(3, gap="small", vertical_alignment="center") #
-      with col1:
+      with col3:
           with st.container(height=500):
               #st.subheader("Courbe Precision Recall")
               fig= multiclass_PR_curve(model, X_test_final[feat_imp], y_test) 
@@ -932,18 +933,32 @@ if page == pages[3] :
       with col2:
           with st.container(height=500):
               #st.subheader("Matrice de Confusion")
-              cm = confusion_matrix(y_test, y_pred, normalize = "true")
+              cm = np.round(confusion_matrix(y_test, y_pred, normalize = "true"), 4)
               figML = px.imshow(cm, labels={"x": "Classes Prédites", "y": "Classes réelles"}, width=400, height=400, text_auto=True)  
               figML.update_layout(title='Confusion Matrix', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', width=1000, height=500, legend=dict(
                   x=0.5, y=1.05, orientation="h", xanchor="center", yanchor="bottom", font=dict(family="Arial", size=15, color="black")),
                 margin=dict(l=100, r=100, t=100, b=100), titlefont=dict(size=20))
               st.plotly_chart(figML)
 
-      with col3:
+      with col1:
           with st.container(height=500):
               #st.subheader("Feature Importance")
               if hasattr(model, 'feature_importances_'):
                   feat_imp = pd.Series(model.feature_importances_, index=X_test_final.columns).sort_values(ascending=True)
+                  fig = px.bar(feat_imp, x=feat_imp.values, y=feat_imp.index, orientation='h')
+                  fig.update_layout(title='Feature Importance',
+                                    xaxis_title='Importance',
+                                    yaxis_title='Features',
+                                    paper_bgcolor='rgba(0,0,0,0)',  
+                                    plot_bgcolor='rgba(0,0,0,0)',  
+                                    width=1000, height=500,
+                                    legend=dict(x=0.5, y=0.93, orientation="h", xanchor="center", yanchor="bottom",
+                                                font=dict(family="Arial", size=15, color="black")),
+                                    margin=dict(l=100, r=100, t=100, b=100),
+                                    titlefont=dict(size=15))
+              elif hasattr(model, "coef_"):
+                  avg_importance_values = np.mean(np.abs(model.coef_), axis = 0)
+                  feat_imp = pd.Series(avg_importance_values, index=X_test_final.columns).sort_values(ascending=True)
                   fig = px.bar(feat_imp, x=feat_imp.values, y=feat_imp.index, orientation='h')
                   fig.update_layout(title='Feature Importance',
                                     xaxis_title='Importance',
@@ -984,7 +999,7 @@ if page == pages[3] :
       
       # Tracé des graphes
       col1, col2, col3 = st.columns(3, gap="small", vertical_alignment="center") #
-      with col1:
+      with col3:
           with st.container(height=500):
               #st.subheader("Courbe Precision Recall")
               fig= multiclass_PR_curve(model, X_test_final, y_test) 
@@ -997,7 +1012,7 @@ if page == pages[3] :
       with col2:
           with st.container(height=500):
               #st.subheader("Matrice de Confusion")
-              cm = confusion_matrix(y_test, y_pred, normalize = "true")
+              cm = np.round(confusion_matrix(y_test, y_pred, normalize = "true"), 4)
               figML = px.imshow(cm, labels={"x": "Classes Prédites", "y": "Classes réelles"}, width=400, height=400, text_auto=True)
               #layout = go.Layout(title='Confusion Matrix', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')  
               figML.update_layout(title='Confusion Matrix', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', width=1000, height=500, legend=dict(
@@ -1005,11 +1020,25 @@ if page == pages[3] :
                 margin=dict(l=100, r=100, t=100, b=100), titlefont=dict(size=20))
               st.plotly_chart(figML)
 
-      with col3:
+      with col1:
           with st.container(height=500):
               #st.subheader("Feature Importance")
               if hasattr(model, 'feature_importances_'):
                   feat_imp = pd.Series(model.feature_importances_, index=X_test_final.columns).sort_values(ascending=True)
+                  fig = px.bar(feat_imp, x=feat_imp.values, y=feat_imp.index, orientation='h')
+                  fig.update_layout(title='Feature Importance',
+                                    xaxis_title='Importance',
+                                    yaxis_title='Features',
+                                    paper_bgcolor='rgba(0,0,0,0)',  
+                                    plot_bgcolor='rgba(0,0,0,0)',  
+                                    width=1000, height=500,
+                                    legend=dict(x=0.5, y=0.93, orientation="h", xanchor="center", yanchor="bottom",
+                                                font=dict(family="Arial", size=15, color="black")),
+                                    margin=dict(l=100, r=100, t=100, b=100),
+                                    titlefont=dict(size=15))
+              elif hasattr(model, "coef_"):
+                  avg_importance_values = np.mean(np.abs(model.coef_), axis = 0)
+                  feat_imp = pd.Series(avg_importance_values, index=X_test_final.columns).sort_values(ascending=True)
                   fig = px.bar(feat_imp, x=feat_imp.values, y=feat_imp.index, orientation='h')
                   fig.update_layout(title='Feature Importance',
                                     xaxis_title='Importance',
@@ -1028,9 +1057,9 @@ if page == pages[3] :
   ### Déploiement en production (prédiction basée sur de nouvelles données) ###
   #############################################################################
 
-  # Affichage des données de validation (interactivité)
-  if st.checkbox("Affichage d'exemples de données à utiliser pour la validation"):
-    st.dataframe(Fires_test2)
+  # # Affichage des données de validation (interactivité)
+  # if st.checkbox("Affichage d'exemples de données à utiliser pour la validation"):
+  #   st.dataframe(Fires_test2)
 
   # Saisie des nouvelles données et prédiction des causes
   if st.checkbox("Nouvelle prédiction"):
