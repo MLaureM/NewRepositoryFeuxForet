@@ -540,7 +540,7 @@ if page == pages[3] :
       st.write("""On observe un grand déséquilibre du jeu de données. Ce qui va rendre complexe la prédiction de l'analyse.
                Les feux Missing/Undefined et Miscellaneous représentent environ le quart des données. 
                Compte tenu de leur caractère inerte par rapport à l'objectif de l'étude, nous les supprimerons.
-               Pour les diverses qui peuvent se ressembler, nous procéderons à leur regroupement dans une cause parente.""")
+               Pour les diverses qui peuvent se ressembler, nous procéderons à leur regroupement dans une cause parente""")
     with col2:
       st.write("### Distribution des causes après regroupement")
       count2 = Fires_ML["STAT_CAUSE_CODE"].value_counts()
@@ -671,7 +671,11 @@ if page == pages[3] :
        avg_importance = np.mean(np.abs(coefficients), axis = 0)
        feat_imp_data = pd.DataFrame({"feature":X_train.columns, "importance":avg_importance}).sort_values('importance', ascending=True)
        feat_imp = list(feat_imp_data["feature"][-11:])
-      #  st.write(feat_imp)
+    elif classifier == "Arbre de Décision":
+       clf = DecisionTreeClassifier(criterion = "gini", random_state = 42).fit(X_train, y_train)
+       feat_imp_data = pd.DataFrame(clf.feature_importances_,
+                                    index=X_train.columns, columns=["importance"]).sort_values('importance', ascending=True)
+       feat_imp = list(feat_imp_data.index[-11:])
     return feat_imp
     
 
@@ -740,13 +744,21 @@ if page == pages[3] :
      return model
   # Best LogReg raw model
   @st.cache_data(persist="disk")
-  def best_lr_raw_model(X, y):
-     lr_best_params = {"C": 0.1,
+  def best_LogReg_raw_model(X, y):
+     LogReg_best_params = {"C": 0.1,
                       "solver": "sag",
                       "max_iter":1000}
-     clf_lr = LogisticRegression(**lr_best_params, random_state = 42).fit(X, y)
-     joblib.dump(clf_lr, "best_lr_raw_model.joblib")
+     clf_LogReg = LogisticRegression(**LogReg_best_params, random_state = 42).fit(X, y)
+     joblib.dump(clf_LogReg, "best_lr_raw_model.joblib")
      model = joblib.load("best_lr_raw_model.joblib")
+     return model
+  # Best Decision Tree raw model
+  @st.cache_data(persist="disk")
+  def best_DecTree_raw_model(X, y):
+     DecTree_best_params = {"criterion": "gini"}
+     clf_DecTree = DecisionTreeClassifier(**DecTree_best_params, random_state = 42).fit(X, y)
+     joblib.dump(clf_DecTree, "best_DecTree_raw_model.joblib")
+     model = joblib.load("best_DecTree_raw_model.joblib")
      return model
 
   ######################################################################################################################################################################
@@ -784,16 +796,116 @@ if page == pages[3] :
     return X
   
   
+
+    # FIPS CODE par STATE
+  def ETAT(nom_etat):
+    if nom_etat == "Alabama":
+      alabama_fips_code = X_train_final.loc[X_train_final["STATE_Alabama"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Alaska":
+      Alaska_fips_code = X_train_final.loc[X_train_final["STATE_Alaska"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Arizona":
+      Arizona_fips_code = X_train_final.loc[X_train_final["STATE_Arizona"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Arkansas":
+      Arkansas_fips_code = X_train_final.loc[X_train_final["STATE_Arkansas"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "California":
+      California_fips_code = X_train_final.loc[X_train_final["STATE_California"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Colorado":
+      Colorado_fips_code = X_train_final.loc[X_train_final["STATE_Colorado"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Delaware":
+      Delaware_fips_code = X_train_final.loc[X_train_final["STATE_Delaware"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Florida":
+      Florida_fips_code = X_train_final.loc[X_train_final["STATE_Florida"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Georgia":
+      Georgia_fips_code = X_train_final.loc[X_train_final["STATE_Georgia"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Idaho":
+      Idaho_fips_code = X_train_final.loc[X_train_final["STATE_Idaho"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Illinois":
+      Illinois_fips_code = X_train_final.loc[X_train_final["STATE_Illinois"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Indiana":
+      Indiana_fips_code = X_train_final.loc[X_train_final["STATE_Indiana"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Iowa":
+      Iowa_fips_code = X_train_final.loc[X_train_final["STATE_Iowa"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Kansas":
+      Kansas_fips_code = X_train_final.loc[X_train_final["STATE_Kansas"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Kentucky":
+      Kentucky_fips_code = X_train_final.loc[X_train_final["STATE_Kentucky"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Louisiana":
+      Louisiana_fips_code = X_train_final.loc[X_train_final["STATE_Louisiana"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Maine":
+      Maine_fips_code = X_train_final.loc[X_train_final["STATE_Maine"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Maryland":
+      Maryland_fips_code = X_train_final.loc[X_train_final["STATE_Maryland"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Massachusetts":
+      Massachusetts_fips_code = X_train_final.loc[X_train_final["STATE_Massachusetts"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Michigan":
+      Michigan_fips_code = X_train_final.loc[X_train_final["STATE_Michigan"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Minnesota":
+      Minnesota_fips_code = X_train_final.loc[X_train_final["STATE_Minnesota"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Mississippi":
+      Mississippi_fips_code = X_train_final.loc[X_train_final["STATE_Mississippi"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Missouri":
+      Missouri_fips_code = X_train_final.loc[X_train_final["STATE_Missouri"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Montana":
+      Montana_fips_code = X_train_final.loc[X_train_final["STATE_Montana"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Nebraska":
+      Nebraska_fips_code = X_train_final.loc[X_train_final["STATE_Nebraska"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Nevada":
+      Nevada_fips_code = X_train_final.loc[X_train_final["STATE_Nevada"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "New Hampshire":
+      New_Hampshire_fips_code = X_train_final.loc[X_train_final["STATE_New Hampshire"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "New Jersey":
+      New_Jersey_fips_code = X_train_final.loc[X_train_final["STATE_New Jersey"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "New Mexico":
+      New_Mexico_fips_code = X_train_final.loc[X_train_final["STATE_New Mexico"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "New York":
+      New_York_fips_code = X_train_final.loc[X_train_final["STATE_New York"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "North Carolina":
+      North_Carolina_fips_code = X_train_final.loc[X_train_final["STATE_North Carolina"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "North Dakota":
+      North_Dakota_fips_code = X_train_final.loc[X_train_final["STATE_North Dakota"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Ohio":
+      Ohio_fips_code = X_train_final.loc[X_train_final["STATE_Ohio"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Oklahoma":
+      Oklahoma_fips_code = X_train_final.loc[X_train_final["STATE_Oklahoma"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Oregon":
+      Oregon_fips_code = X_train_final.loc[X_train_final["STATE_Oregon"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Pennsylvania":
+      Pennsylvania_fips_code = X_train_final.loc[X_train_final["STATE_Pennsylvania"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Rhode Island":
+      Rhode_Island_fips_code = X_train_final.loc[X_train_final["STATE_Rhode Island"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "South Carolina":
+      South_Carolina_fips_code = X_train_final.loc[X_train_final["STATE_South Carolina"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "South Dakota":
+      South_Dakota_fips_code = X_train_final.loc[X_train_final["STATE_South Dakota"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Tennessee":
+      Tennessee_fips_code = X_train_final.loc[X_train_final["STATE_Tennessee"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Texas":
+      Texas_fips_code = X_train_final.loc[X_train_final["STATE_Texas"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Utah":
+      Utah_fips_code = X_train_final.loc[X_train_final["STATE_Utah"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Vermont":
+      Vermont_fips_code = X_train_final.loc[X_train_final["STATE_Vermont"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Virginia":
+      Virginia_fips_code = X_train_final.loc[X_train_final["STATE_Virginia"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Washington":
+      Washington_fips_code = X_train_final.loc[X_train_final["STATE_Washington"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "West Virginia":
+      West_Virginia_fips_code = X_train_final.loc[X_train_final["STATE_West Virginia"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Wisconsin":
+      Wisconsin_fips_code = X_train_final.loc[X_train_final["STATE_Wisconsin"] == 1, "FIPS_CODE"].unique()
+    elif STATE == "Wyoming":
+      Wyoming_fips_code = X_train_final.loc[X_train_final["STATE_Wyoming"] == 1, "FIPS_CODE"].unique()
   ######################################################################################################################################################################
   ### Code pour l'interface streamlit ##################################################################################################################################
   ######################################################################################################################################################################  
 
-  classifier = st.selectbox("Sélection du modèle",("XGBoost", "Random Forest", "Regression Logistique","Arbre de Décision", "KNN", "Gradient Boosting"),key="model_selector")
+  classifier = st.selectbox("Veuillez sélectionner un modèle",("XGBoost", "Random Forest", "Regression Logistique","Arbre de Décision"),key="model_selector")
+  # st.sidebar.subheader("Veuillez sélectionner les paramètres")
 
   ###################################
   ### Test des différents modèles ###
   ###################################
-  if st.checkbox("Voulez-vous tester les différents modèles ?"):
+  if st.checkbox("METIER : Voulez-vous tester les différents modèles ?"):
     Feature_importances = st.sidebar.radio("Voulez-vous réduire la dimension du jeu ?", ("Oui", "Non"), horizontal=True)
     if Feature_importances == "Oui":
       feat_imp = model_reduction(classifier, X_train_final, y_train)
@@ -803,12 +915,11 @@ if page == pages[3] :
       X_train_final, X_test_final = X_train_final, X_test_final
       st.write("Les variables ne sont pas réduites")
     
-    # Définition des paramètres des modèles
+    # Définition des paramètres des modèles sur l'interface streamlit
     ####################################
     ###        Modèle XGBoost        ###
     ####################################
     if classifier == "XGBoost": 
-      st.sidebar.subheader("Veuillez sélectionner les paramètres")
       # Ré-équilibrage ou non des données 
       class_weights_option = st.sidebar.radio("Voulez-vous rééquilibrer les classes ?", ["Oui", "Non"], horizontal=True)
       if class_weights_option == "Oui":
@@ -826,7 +937,6 @@ if page == pages[3] :
     ###     Modèle Random Forest     ###
     ####################################
     elif classifier == "Random Forest":
-      st.sidebar.subheader("Veuillez sélectionner les paramètres")
       class_weights_option = st.sidebar.radio("Voulez-vous rééquilibrer les classes ?", ["Oui", "Non"], horizontal=True)
       if class_weights_option == "Oui":
           class_weights_array = compute_class_weight(class_weight='balanced', classes=np.unique(y_train), y=y_train)
@@ -844,19 +954,27 @@ if page == pages[3] :
     ### Modèle Regression Logistique ###
     ####################################
     elif classifier == "Regression Logistique":
-      st.sidebar.subheader("Veuillez sélectionner les paramètres")
       class_weights_option = st.sidebar.radio("Voulez-vous rééquilibrer les classes ?", ["Oui", "Non"], horizontal=True)
       if class_weights_option == "Oui":
-         class_weight = 'balanced'
+         classes_weights = 'balanced'
       else:
-         class_weight = None
+         classes_weights = None
       max_iter = st.sidebar.slider("Veuillez choisir le nombre d'itérations", 100, 2000, 1000, 50)
       solver = st.sidebar.radio("Veuillez choisir le solveur", ("lbfgs", "newton-cg", "sag", "saga"), horizontal=True)
     ####################################
     ###   Modèle Arbre de Décision   ###
     ####################################
     elif classifier == "Arbre de Décision":
-      st.write("Arbre de Décision")
+      class_weights_option = st.sidebar.radio("Voulez-vous rééquilibrer les classes ?", ["Oui", "Non"], horizontal=True)
+      if class_weights_option == "Oui":
+         classes_weights = 'balanced'
+      else:
+         classes_weights = None
+      criterion = st.sidebar.radio("Veuillez choisir le critère", ["gini", "entropy"], horizontal=True)
+      max_features = st.sidebar.radio("Veuillez choisir le critère", ["log2", "sqrt"], horizontal=True)
+      max_depth = st.sidebar.slider("Veuillez choisir la profondeur de l'arbre", 10, 200, 10, 10)
+      min_samples_split = st.sidebar.slider("Veuillez choisir la profondeur de l'arbre", 10, 50, 20, 5)
+      min_samples_leaf = st.sidebar.slider("Veuillez choisir la profondeur de l'arbre", 10, 100, 50, 5)
     ####################################
     ###  Modèle K-Nearest Neighbors  ###
     ####################################
@@ -910,10 +1028,12 @@ if page == pages[3] :
         model = joblib.load("clf_LogReg_best_model.joblib")
       elif classifier == "Arbre de Décision":
         st.subheader("Decision Tree Result")
-      elif classifier == "KNN":
-        st.subheader("KNN Result")
-      elif classifier == "Gradient Boost":
-        st.subheader("Gradient Boost Result")
+        best_params = {"criterion":"gini"}
+        feat_imp = model_reduction(classifier, X_train_final, y_train)
+        X_train_final, X_test_final = X_train_final[feat_imp], X_test_final[feat_imp]
+        clf_DecTree_best = DecisionTreeClassifier(**best_params, class_weight = "balanced", random_state = 42).fit(X_train_final, y_train)
+        joblib.dump(clf_DecTree_best, "clf_DecTree_best_model.joblib")
+        model = joblib.load("clf_DecTree_best_model.joblib")
       y_pred = model.predict(X_test_final[feat_imp])
       accuracy = model.score(X_test_final[feat_imp], y_test)
       st.write("Accuracy", round(accuracy, 4))
@@ -945,32 +1065,21 @@ if page == pages[3] :
               #st.subheader("Feature Importance")
               if hasattr(model, 'feature_importances_'):
                   feat_imp = pd.Series(model.feature_importances_, index=X_test_final.columns).sort_values(ascending=True)
-                  fig = px.bar(feat_imp, x=feat_imp.values, y=feat_imp.index, orientation='h')
-                  fig.update_layout(title='Feature Importance',
-                                    xaxis_title='Importance',
-                                    yaxis_title='Features',
-                                    paper_bgcolor='rgba(0,0,0,0)',  
-                                    plot_bgcolor='rgba(0,0,0,0)',  
-                                    width=1000, height=500,
-                                    legend=dict(x=0.5, y=0.93, orientation="h", xanchor="center", yanchor="bottom",
-                                                font=dict(family="Arial", size=15, color="black")),
-                                    margin=dict(l=100, r=100, t=100, b=100),
-                                    titlefont=dict(size=15))
               elif hasattr(model, "coef_"):
                   avg_importance_values = np.mean(np.abs(model.coef_), axis = 0)
                   feat_imp = pd.Series(avg_importance_values, index=X_test_final.columns).sort_values(ascending=True)
-                  fig = px.bar(feat_imp, x=feat_imp.values, y=feat_imp.index, orientation='h')
-                  fig.update_layout(title='Feature Importance',
-                                    xaxis_title='Importance',
-                                    yaxis_title='Features',
-                                    paper_bgcolor='rgba(0,0,0,0)',  
-                                    plot_bgcolor='rgba(0,0,0,0)',  
-                                    width=1000, height=500,
-                                    legend=dict(x=0.5, y=0.93, orientation="h", xanchor="center", yanchor="bottom",
-                                                font=dict(family="Arial", size=15, color="black")),
-                                    margin=dict(l=100, r=100, t=100, b=100),
-                                    titlefont=dict(size=15))
-                  st.plotly_chart(fig)
+              fig = px.bar(feat_imp, x=feat_imp.values, y=feat_imp.index, orientation='h')
+              fig.update_layout(title='Feature Importance',
+                                xaxis_title='Importance',
+                                yaxis_title='Features',
+                                paper_bgcolor='rgba(0,0,0,0)',  
+                                plot_bgcolor='rgba(0,0,0,0)',  
+                                width=1000, height=500,
+                                legend=dict(x=0.5, y=0.93, orientation="h", xanchor="center", yanchor="bottom",
+                                            font=dict(family="Arial", size=15, color="black")),
+                                margin=dict(l=100, r=100, t=100, b=100),
+                                titlefont=dict(size=15))
+              st.plotly_chart(fig)
 
     # Création d'un bouton utilisateur pour l'interactivité
     if st.sidebar.button("User Execution", key = "classify"):
@@ -987,19 +1096,29 @@ if page == pages[3] :
         model = RandomForestClassifier(n_estimators=n_estimators,
                                         max_depth=max_depth,
                                         max_features=max_features,
-                                        class_weight='balanced').fit(X_train_final, y_train)
+                                        class_weight = classes_weights).fit(X_train_final, y_train)
       elif classifier == "Regression Logistique":
          st.subheader("Logistic Regression User Results")
          model = LogisticRegression(random_state = 42, 
                                     max_iter = max_iter, 
-                                    solver = solver).fit(X_train_final, y_train)
-      st.write("Le score d'entrainement est :", model.score(X_train_final, y_train))
+                                    solver = solver,
+                                    class_weight = classes_weights).fit(X_train_final, y_train)
+      elif classifier == "Arbre de Décision":
+        st.subheader("Decision Tree User Results")
+        model = DecisionTreeClassifier(random_state = 42,
+                                        criterion = criterion,
+                                        max_features = max_features,
+                                        max_depth = max_depth,
+                                        min_samples_split = min_samples_split,
+                                        min_samples_leaf = min_samples_leaf,
+                                        class_weight = classes_weights).fit(X_train_final, y_train)
+      st.write("Le score d'entrainement est :", np.round(model.score(X_train_final, y_train), 4))
       y_pred = model.predict(X_test_final)
-      st.write("Le score de test est :", model.score(X_test_final, y_test))
+      st.write("Le score de test est :", np.round(model.score(X_test_final, y_test), 4))
       
       # Tracé des graphes
-      col1, col2, col3 = st.columns(3, gap="small", vertical_alignment="center") #
-      with col3:
+      col1, col2 = st.columns(2, gap="small", vertical_alignment="center") #
+      with col2:
           with st.container(height=500):
               #st.subheader("Courbe Precision Recall")
               fig= multiclass_PR_curve(model, X_test_final, y_test) 
@@ -1009,7 +1128,7 @@ if page == pages[3] :
           })
               st.plotly_chart(fig)   
             
-      with col2:
+      with col1:
           with st.container(height=500):
               #st.subheader("Matrice de Confusion")
               cm = np.round(confusion_matrix(y_test, y_pred, normalize = "true"), 4)
@@ -1019,38 +1138,6 @@ if page == pages[3] :
                   x=0.5, y=1.05, orientation="h", xanchor="center", yanchor="bottom", font=dict(family="Arial", size=15, color="black")),
                 margin=dict(l=100, r=100, t=100, b=100), titlefont=dict(size=20))
               st.plotly_chart(figML)
-
-      with col1:
-          with st.container(height=500):
-              #st.subheader("Feature Importance")
-              if hasattr(model, 'feature_importances_'):
-                  feat_imp = pd.Series(model.feature_importances_, index=X_test_final.columns).sort_values(ascending=True)
-                  fig = px.bar(feat_imp, x=feat_imp.values, y=feat_imp.index, orientation='h')
-                  fig.update_layout(title='Feature Importance',
-                                    xaxis_title='Importance',
-                                    yaxis_title='Features',
-                                    paper_bgcolor='rgba(0,0,0,0)',  
-                                    plot_bgcolor='rgba(0,0,0,0)',  
-                                    width=1000, height=500,
-                                    legend=dict(x=0.5, y=0.93, orientation="h", xanchor="center", yanchor="bottom",
-                                                font=dict(family="Arial", size=15, color="black")),
-                                    margin=dict(l=100, r=100, t=100, b=100),
-                                    titlefont=dict(size=15))
-              elif hasattr(model, "coef_"):
-                  avg_importance_values = np.mean(np.abs(model.coef_), axis = 0)
-                  feat_imp = pd.Series(avg_importance_values, index=X_test_final.columns).sort_values(ascending=True)
-                  fig = px.bar(feat_imp, x=feat_imp.values, y=feat_imp.index, orientation='h')
-                  fig.update_layout(title='Feature Importance',
-                                    xaxis_title='Importance',
-                                    yaxis_title='Features',
-                                    paper_bgcolor='rgba(0,0,0,0)',  
-                                    plot_bgcolor='rgba(0,0,0,0)',  
-                                    width=1000, height=500,
-                                    legend=dict(x=0.5, y=0.93, orientation="h", xanchor="center", yanchor="bottom",
-                                                font=dict(family="Arial", size=15, color="black")),
-                                    margin=dict(l=100, r=100, t=100, b=100),
-                                    titlefont=dict(size=15))
-                  st.plotly_chart(fig)
 
 
   #############################################################################
@@ -1062,13 +1149,15 @@ if page == pages[3] :
   #   st.dataframe(Fires_test2)
 
   # Saisie des nouvelles données et prédiction des causes
-  if st.checkbox("Nouvelle prédiction"):
+  if st.checkbox("PRODUCTION : Nouvelle prédiction"):
     df = pd.DataFrame(columns=["FIRE_YEAR", "LATITUDE", "LONGITUDE", "FIPS_CODE", "AVG_TEMP", "AVG_PCP", "DURATION", "FIRE_SIZE_CLASS", "STATE", "MONTH_DISCOVERY", "DISCOVERY_WEEK", "DAY_OF_WEEK_DISCOVERY"])
     STATE = Fires_ML["STATE"].unique()
+    
     config = {
       "FIRE_YEAR": st.column_config.NumberColumn("FIRE_YEAR", min_value = 2015, required = True, help = "Entrer une année supérieure à 2015"),
       "LATITUDE": st.column_config.NumberColumn("LATITUDE", min_value = 17.9, max_value = 70.4, required = True),
-      "LONGITUDE": st.column_config.NumberColumn("LONGITUDE", min_value = -179, max_value = -65, required = True),
+      "LONGITUDE": st.column_config.NumberColumn("LONGITUDE", min_value = -179, max_value = 0, required = True),
+      "STATE": st.column_config.SelectboxColumn("STATE", options = STATE, required = True),
       "FIPS_CODE": st.column_config.NumberColumn("FIPS_CODE", min_value = 0, max_value = 810, required = True),
       "AVG_TEMP": st.column_config.NumberColumn("AVG_TEMP", min_value = -50, max_value = 50, required = True, help = "Entrer une température en °C"),
       "AVG_PCP": st.column_config.NumberColumn("AVG_PCP", min_value = 0, max_value = 1000, required = True, help = "Entrer un niveau de précipitation en mm"),
@@ -1077,25 +1166,27 @@ if page == pages[3] :
       "DISCOVERY_WEEK": st.column_config.NumberColumn("DISCOVERY_WEEK", min_value = 1, max_value = 53, required = True, help = "Entrer une valeur comprise entre 1 et 53"),
       "DAY_OF_WEEK_DISCOVERY": st.column_config.NumberColumn("DAY_OF_WEEK_DISCOVERY", min_value = 0, max_value = 6, required = True, help = "Entrer une valeur comprise entre 0 et 6"),
       "FIRE_SIZE_CLASS": st.column_config.SelectboxColumn("FIRE_SIZE_CLASS", options=["A", "B", "C", "D", "E", "F", "G"], required = True),
-      "STATE": st.column_config.SelectboxColumn("STATE", options = STATE, required = True),
+      # "STATE": st.column_config.SelectboxColumn("STATE", options = STATE, required = True)
       }
     input_data = st.data_editor(df, column_config = config, num_rows='dynamic')
     if st.button("RUN"):
       input_data_ML = real_data_process(input_data).astype("float")
-      # Affichage des inputs labelisées
-      st.dataframe(input_data_ML)
+      # # Affichage des inputs labelisées
+      # st.dataframe(input_data_ML)
       # Prédiction de la cause du (des) feu(x)
       if classifier == "XGBoost":
           clf = best_xgb_raw_model(X_train_final, y_train)
       elif classifier == "Random Forest":
           clf = best_rf_raw_model(X_train_final, y_train)
       elif classifier == "Regression Logistique":
-          clf = best_lr_raw_model(X_train_final, y_train)
-          st.write(X_train_final.columns)
+          clf = best_LogReg_raw_model(X_train_final, y_train)
+      elif classifier == "Arbre de Décision":
+          clf = best_DecTree_raw_model(X_train_final, y_train)
       y_pred = clf.predict(input_data_ML)
       y_pred = pd.DataFrame(y_pred, columns = ["FIRE CAUSE"], index = input_data.index)
-      # X = pd.DataFrame(columns = overall_col, index=range(data_shape[0]))
-      # st.dataframe(y_pred, column = "Fire Cause", index = input_data.index)
+      y_pred.loc[y_pred["FIRE CAUSE"] == 0, "FIRE CAUSE"] = "Humaine"
+      y_pred.loc[y_pred["FIRE CAUSE"] == 1, "FIRE CAUSE"] = "Criminelle"
+      y_pred.loc[y_pred["FIRE CAUSE"] == 2, "FIRE CAUSE"] = "Naturelle"
       st.dataframe(y_pred)
 
 
