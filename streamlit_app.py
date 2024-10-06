@@ -95,11 +95,10 @@ if page == pages[0] :
     - **Construction de modèles de Machine Learning**
     - **Restitution via Streamlit**
     ### Objectif :
-    Le projet vise à prédire les incendies de forêt pour améliorer la prévention et l’intervention, ainsi que la détection précoce des départs de feu et l’évaluation des risques de grande taille, dans un contexte de préservation de l’environnement, de sécurité publique et d’impacts économiques significatifs.
+    Le projet vise à prédire les incendies de forêt pour améliorer la prévention et l’intervention, ainsi que la détection humaine ou naturelle des départs de feu et l’évaluation des risques de grande ampleur, dans un contexte de préservation de l’environnement, de sécurité publique et d’impacts économiques significatifs.
     ### Données utilisées :
     Nous utilisons des données provenant du **US Forest Service**, qui centralise les informations sur les incendies de forêt aux États-Unis. Ces données incluent les causes des incendies, les surfaces touchées, et leurs localisations. Nous intégrons également des données météorologiques (vent, température, humidité) provenant du **National Interagency Fire Center** pour évaluer les risques de départ et de propagation des feux.
     ### Applications :
-    - Détection précoce des incendies pour cibler les interventions
     - Prévention des incendies criminels et anticipation des feux dus à la foudre.
     - Évaluation des risques de grande taille.
     """)
@@ -1285,14 +1284,18 @@ if page == pages[5] :
   st.markdown("""
 Le projet “Feux de forêts” nous a permis de mettre en pratique les compétences acquises durant notre formation en data analysis, en abordant toutes les étapes d’un projet de Data Science, de l’exploration des données à la modélisation et la data visualisation. Nous avons également abordé les étapes de prédiction, en utilisant des modèles avancés pour prévoir les occurrences de feux de forêts et ainsi mieux comprendre les facteurs qui les influencent.
 ### Résultats obtenus :
-- **Amélioration des performances des modèles** : Grâce à l'utilisation de différentes méthodes de rééchantillonnage et de classificateurs spécifiques pour les jeux de données déséquilibrés, nous avons significativement amélioré les performances des modèles. Le peaufinage des hyperparamètres avec Grid Search a permis d’optimiser encore plus ces performances.
-- **Modèle le plus performant** : Le modèle BalancedRandomForest s'est distingué parmi les huit modèles testés, avec un Recall de presque 80% pour la classe 1 et un score ROC AUC de 0,77. Ce modèle utilise principalement quatre des sept features : température, précipitation, mois et cause du feu.
+- **Amélioration des performances des modèles** : Grâce à l’utilisation de différentes méthodes comme class_weight et de classificateurs spécifiques pour les jeux de données déséquilibrés, tels que SMOTE ou EasyEnsemble, nous avons significativement amélioré les performances des modèles.
+- **Modèles les plus performants** : 
+ **BalancedRandomForest** : Ce modèle trouve que les données météorologiques comme la température et les précipitations sont très importantes pour prédire les feux de forêt. Il utilise aussi beaucoup le mois de l’année et la cause du feu pour faire ses prédictions.
+ **XGBoost** : Ce modèle, en revanche, trouve que les informations géographiques comme l’État ou la longitude sont plus importantes. Il utilise un peu moins les données météorologiques et accorde moins d’importance au mois et à la cause du feu comparé au BalancedRandomForest.
+
+
 ### Pistes d’optimisation :
 - **Méthodes de resampling** : Utiliser des méthodes plus précises que les méthodes aléatoires, comme SMOTETomek, SMOTEEN, KmeansSMOTE.
 - **Données plus précises** : Ajouter des données plus détaillées sur les températures, par exemple des données journalières au lieu de moyennes mensuelles.
 - **Réglage des hyperparamètres** : Continuer à optimiser les hyperparamètres, car toutes les combinaisons n’ont pas pu être testées.
 ### Impact et perspectives :
-Ce projet a démontré l'importance de la data analysis et du machine learning dans la prévention et la gestion des incendies de forêt. En permettant une détection précoce des incendies et en ciblant les interventions là où elles sont le plus nécessaires, nous pouvons contribuer à réduire les coûts économiques et les impacts environnementaux des feux de forêt.
+Ce projet a démontré l'importance de la data analysis et du machine learning dans la prévention et la gestion des incendies de forêt. En permettant une détection humaine ou naturelle des incendies et en ciblant les interventions là où elles sont le plus nécessaires, nous pouvons contribuer à réduire les coûts économiques et les impacts environnementaux des feux de forêt.
 En termes d'expertise, ce projet nous a permis de développer nos compétences en Python et en modélisation via le Machine Learning, des domaines nouveaux pour la plupart d'entre nous. Nous avons également appris à utiliser des outils interactifs comme Streamlit pour la restitution de nos résultats.
 Pour aller plus loin, il serait bénéfique de collaborer avec des spécialistes en lutte contre les incendies de forêt pour affiner nos modèles et mieux comprendre les enjeux opérationnels. De plus, l'intégration de données météorologiques plus précises pourrait améliorer encore davantage les performances de nos modèles.
 En conclusion, ce projet nous a permis de mettre en pratique les compétences acquises durant notre formation et de contribuer à un enjeu crucial de préservation de l'environnement et de sécurité publique.
