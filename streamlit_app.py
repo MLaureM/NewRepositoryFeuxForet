@@ -50,6 +50,8 @@ from sklearn.utils.class_weight import compute_sample_weight
 from sklearn.utils import class_weight
 import joblib
 from itertools import cycle
+import json
+
 
 # Mise en forme couleur du fond de l'application
 page_bg_img="""<style>
@@ -94,11 +96,10 @@ if page == pages[0] :
     - **Construction de modèles de Machine Learning**
     - **Restitution via Streamlit**
     ### Objectif :
-    Le projet vise à prédire les incendies de forêt pour améliorer la prévention et l’intervention, ainsi que la détection précoce des départs de feu et l’évaluation des risques de grande taille, dans un contexte de préservation de l’environnement, de sécurité publique et d’impacts économiques significatifs.
+    Le projet vise à prédire les incendies de forêt pour améliorer la prévention et l’intervention, ainsi que la détection humaine ou naturelle des départs de feu et l’évaluation des risques de grande ampleur, dans un contexte de préservation de l’environnement, de sécurité publique et d’impacts économiques significatifs.
     ### Données utilisées :
     Nous utilisons des données provenant du **US Forest Service**, qui centralise les informations sur les incendies de forêt aux États-Unis. Ces données incluent les causes des incendies, les surfaces touchées, et leurs localisations. Nous intégrons également des données météorologiques (vent, température, humidité) provenant du **National Interagency Fire Center** pour évaluer les risques de départ et de propagation des feux.
     ### Applications :
-    - Détection précoce des incendies pour cibler les interventions
     - Prévention des incendies criminels et anticipation des feux dus à la foudre.
     - Évaluation des risques de grande taille.
     """)
@@ -163,8 +164,7 @@ if page == pages[1]:
   #if st.checkbox("Afficher la dimension") :
   #   st.write(f"La dimension : {df.shape}")
   st.write("""
-           Nous avons éliminé les colonnes non pertinentes ou avec trop de valeurs manquantes, notamment celles liées aux codes d’identification des agences, car elles n’étaient pas utiles pour notre analyse:
-           """)
+    Nous avons éliminé les colonnes non pertinentes ou avec trop de valeurs manquantes, notamment celles liées aux codes d’identification des agences, car elles n’étaient pas utiles pour notre analyse:""")
   if st.checkbox("Afficher les na") :
     st.dataframe(df.isna().sum(), width=300, height=640)
       
@@ -179,7 +179,7 @@ if page == pages[2] :
     @st.cache_data(persist=True)
     def plot_violin():
       fig, axes = plt.subplots(2, 3,figsize=(12,7))
-      sns.set_style(style='white')
+      #sns.set_style(style='white')
       sns.set(rc={"axes.facecolor": "#F4E4AA", "figure.facecolor": "#F4E4AA"})
       sns.set_theme()
       sns.violinplot(ax=axes[0, 0], x=df['DURATION'])
@@ -377,7 +377,7 @@ if page == pages[2] :
  
  
   st.subheader("4 - Répartition géographique")
-  st.markdown("On observe une densité plus élevée de surfaces brûlées à l’ouest des États-Unis, ce qui pourrait être attribué à divers facteurs tels que le climat, la végétation et les activités humaines. .")
+  st.markdown("On observe une densité plus élevée de surfaces brûlées à l’ouest des États-Unis, ce qui pourrait être attribué à divers facteurs tels que le climat, la végétation et les activités humaines.")
   @st.cache_data(persist=True)
   def load_FiresClasse():
     Fires_bis = df
@@ -540,7 +540,7 @@ if page == pages[3] :
       st.write("""On observe un grand déséquilibre du jeu de données. Ce qui va rendre complexe la prédiction de l'analyse.
                Les feux Missing/Undefined et Miscellaneous représentent environ le quart des données. 
                Compte tenu de leur caractère inerte par rapport à l'objectif de l'étude, nous les supprimerons.
-               Pour les diverses qui peuvent se ressembler, nous procéderons à leur regroupement dans une cause parente""")
+               Pour les diverses qui peuvent se ressembler, nous procéderons à leur regroupement dans une cause parente.""")
     with col2:
       st.write("### Distribution des causes après regroupement")
       count2 = Fires_ML["STAT_CAUSE_CODE"].value_counts()
@@ -1099,7 +1099,7 @@ if page == pages[3] :
       st.dataframe(y_pred)
 
 
-if page == pages[4] : 
+if page == pages[4] :  
 
  @st.cache_data(persist=True)
  def load_FiresML2():
@@ -1108,38 +1108,27 @@ if page == pages[4] :
   FiresML2=FiresML2.dropna() 
   return FiresML2
  FiresML2=load_FiresML2()
-
- #st.dataframe(FiresML2.describe()) 
-
  @st.cache_data(persist=True)
  def feats_target():
    feats = FiresML2.drop('FIRE_SIZE_CLASS', axis=1)
    target = FiresML2['FIRE_SIZE_CLASS'].astype('int')
    return feats, target
  feats,target=feats_target()
- 
  @st.cache_data(persist=True)
  def data_split(X, y):
   X_train, X_test, y_train, y_test = train_test_split(feats, target, test_size=0.25, random_state = 42,stratify=target)
   return X_train, X_test, y_train, y_test
  X_train, X_test, y_train, y_test = data_split(feats, target)
-
-
  num_train=X_train.drop(['STAT_CAUSE_DESCR','MONTH_DISCOVERY'],axis=1)
  num_test=X_test.drop(['STAT_CAUSE_DESCR','MONTH_DISCOVERY'],axis=1)
  sc = StandardScaler()
  num_train= sc.fit_transform(num_train)
  num_test= sc.transform(num_test)
- #   return num_train, num_test
- #num_train, num_test = label_num(X_train, X_test)
-
  oneh = OneHotEncoder(drop = 'first', sparse_output=False)
  cat_train=X_train.drop(['AVG_TEMP [°C]','AVG_PCP [mm]','MONTH_DISCOVERY','LONGITUDE','LATITUDE'],axis=1)
  cat_test=X_test.drop(['AVG_TEMP [°C]','AVG_PCP [mm]','MONTH_DISCOVERY','LONGITUDE','LATITUDE'],axis=1)
  cat_train=oneh.fit_transform(cat_train)
  cat_test= oneh.transform(cat_test)
-
-
  @st.cache_data(persist=True)
  def label_circ(X_train, X_test):
    circular_cols = ['MONTH_DISCOVERY']
@@ -1151,14 +1140,12 @@ if page == pages[4] :
    circular_test['MONTH_DISCOVERY'] = circular_test['MONTH_DISCOVERY'].apply(lambda h : np.cos(2 * np.pi * h / 12))
    return circular_train,circular_test
  circular_train,circular_test=label_circ(X_train,X_test)
-
  @st.cache_data(persist=True)
  def X_train_X_test(X_train, X_test):
    X_train=np.concatenate((num_train,cat_train,circular_train),axis=1)
    X_test=np.concatenate((num_test,cat_test,circular_test), axis=1)
    return X_train,X_test
  X_train,X_test=X_train_X_test(X_train, X_test)
-
  @st.cache_data(persist=True)
  def y_train_ytest(y_train,y_test):
    le = LabelEncoder()
@@ -1166,219 +1153,175 @@ if page == pages[4] :
    y_test = le.transform(y_test)
    return y_train,y_test
  y_train,y_test=y_train_ytest(y_train,y_test)
-
-
-
- with st.sidebar :
-      st.header("Paramètres d'entrée")
-      mois=st.slider('mois',1,12,6)
-      Cause=st.selectbox("Cause",('Non défini', 'Origine humaine', 'Équipements', 'Criminel', 'Foudre'))
-      Température=st.slider('Température',-25.00,40.00,16.00)
-      Précipitations=st.slider('Précipitation',0.00,917.00,63.00)
-      Longitude=st.slider('Longitude',-178.00,-65.00,-96.00)
-      Latitude=st.slider('Latitude',17.00,71.00,37.00)
-         
- data={'MONTH_DISCOVERY':mois,'STAT_CAUSE_DESCR':Cause,'AVG_TEMP [°C]':Température,'AVG_PCP [mm]':Précipitations,"LONGITUDE":Longitude,"LATITUDE":Latitude}
- input_df=pd.DataFrame(data,index=[0])
- input_array=np.array(input_df)
- input_fires=pd.concat([input_df,feats],axis=0)    
- num_input_fires=input_fires.drop(['STAT_CAUSE_DESCR','MONTH_DISCOVERY'],axis=1)
- num_input_fires= sc.transform(num_input_fires)    
-#oneh = OneHotEncoder(drop = 'first', sparse_output=False)
- cat_input_fires=input_fires.drop(['AVG_TEMP [°C]','AVG_PCP [mm]','MONTH_DISCOVERY','LONGITUDE','LATITUDE'],axis=1)
- cat_input_fires=oneh.transform(cat_input_fires)
- circular_cols = ['MONTH_DISCOVERY']
- circular_input_fires = input_fires[circular_cols]
- circular_input_fires['MONTH_DISCOVERY'] = circular_input_fires['MONTH_DISCOVERY'].apply(lambda h : np.sin(2 * np.pi * h / 12))
- circular_input_fires['MONTH_DISCOVERY'] = circular_input_fires['MONTH_DISCOVERY'].apply(lambda h : np.cos(2 * np.pi * h / 12))
- df_fires_encoded=np.concatenate((num_input_fires,cat_input_fires,circular_input_fires),axis=1)
- #x=df_fires_encoded[1:]
- #model_=XGBClassifier(max_bin=400,
- #                       scale_pos_weight=29,
-  #                     subsample=0.92,
-  #                    colsample_bytree=0.96,
-  #                     learning_rate=0.31,
-  #                     tree_method='hist' ).fit(x,target)
- #joblib.dump(model_, "model_.joblib")
- LAT=input_df[:1].LATITUDE.to_numpy()
- LONG=input_df[:1].LONGITUDE.to_numpy()
- classifier=st.selectbox("Sélection du modèle",("XGBoost","BalancedRandomForest"))
- if classifier == "XGBoost":   
-  if st.sidebar.button("Execution modèle XGB",key="classify"):
-      st.subheader("XGBoost Results")
-   #model=XGBClassifier(max_bin=400,
-   #                     scale_pos_weight=29,
-    #                    subsample=0.92,
-    #                    colsample_bytree=0.96,
-    #                    learning_rate=0.31,
-    #                    tree_method='hist' ).fit(X_train,y_train)
-   #joblib.dump(model, "model.joblib")
-
+ st.subheader("Objectif", divider="blue") 
+ st.markdown("L'objectif du modèle est de définir la probabilité qu'un feu se transorme en feu de grande classe. Les classes ont été regroupées de la façon suivante : la classe 0 (petite classe) regroupe les feux de classes A à C (0 à 100 acres), la classe 1 (grande classe) regroupe les feux des classes D à G (100 à plus de 5000 acres).")  
+ #if st.checkbox("Affichage répartition des classes") :
+ with st.container():
+   #@st.cache_data(persist=True)
+   #def Rep_Class():
+    fig30= make_subplots(rows=1, cols=2, shared_yaxes=False,subplot_titles=("Répartition avant regroupement","Répartition après regroupement"))
+    fig30.add_trace(go.Histogram(histfunc="count",
+    name="Répartition des classes avant regroupement",
+     x=df['FIRE_SIZE_CLASS'], marker_color='red'),1,1)    
+    fig30.update_xaxes(categoryorder='array', categoryarray= ['A', 'B', 'C', 'D', 'E', 'F', 'G'])
+    fig30.add_trace(go.Histogram(histfunc="count",
+      name="Répartition Classe",
+      x=FiresML2['FIRE_SIZE_CLASS'],marker_color='blue'),1,2)
+    fig30.update_layout(bargap=0.2,height=300, width=1100, coloraxis=dict(colorscale='Bluered_r'), showlegend=False,paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)')
+    #return fig30
+   #fig30=Rep_Class()
+   #fig30
+ joblib.dump(st.plotly_chart(fig30),"Répartition Classe")
+ with st.sidebar :  
+  with st.form(key='my_form2'):
+   st.header("1 - Choix du modèle")
+   classifier=st.selectbox("",("XGBoost","BalancedRandomForest"))      
+   st.header("2 - Choix des paramètres")
+   mois=st.slider('mois',1,12,1)
+   Cause=st.selectbox("Cause",('Non défini','Origine humaine', 'Équipements', 'Criminel', 'Foudre','Non défini'),index=1)
+   Température=st.slider('Température',-25.00,40.00,1.00)
+   Précipitations=st.slider('Précipitation',0.00,917.00,800.00)
+   Longitude=st.slider('Longitude',-178.00,-65.00,-119.00)
+   Latitude=st.slider('Latitude',17.00,71.00,36.77)
+   submit_button = st.form_submit_button(label='Execution')
+  data={'MONTH_DISCOVERY':mois,'STAT_CAUSE_DESCR':Cause,'AVG_TEMP [°C]':Température,'AVG_PCP [mm]':Précipitations,"LONGITUDE":Longitude,"LATITUDE":Latitude}
+  input_df=pd.DataFrame(data,index=[0])
+  input_array=np.array(input_df)
+  input_fires=pd.concat([input_df,feats],axis=0)    
+  num_input_fires=input_fires.drop(['STAT_CAUSE_DESCR','MONTH_DISCOVERY'],axis=1)
+  num_input_fires= sc.transform(num_input_fires)    
+  cat_input_fires=input_fires.drop(['AVG_TEMP [°C]','AVG_PCP [mm]','MONTH_DISCOVERY','LONGITUDE','LATITUDE'],axis=1)
+  cat_input_fires=oneh.transform(cat_input_fires)
+  circular_cols = ['MONTH_DISCOVERY']
+  circular_input_fires = input_fires[circular_cols]
+  circular_input_fires['MONTH_DISCOVERY'] = circular_input_fires['MONTH_DISCOVERY'].apply(lambda h : np.sin(2 * np.pi * h / 12))
+  circular_input_fires['MONTH_DISCOVERY'] = circular_input_fires['MONTH_DISCOVERY'].apply(lambda h : np.cos(2 * np.pi * h / 12))
+  df_fires_encoded=np.concatenate((num_input_fires,cat_input_fires,circular_input_fires),axis=1)
+  LAT=input_df[:1].LATITUDE.to_numpy()
+  LONG=input_df[:1].LONGITUDE.to_numpy()
+ #classifier=st.selectbox("Sélection du modèle",("BalancedRandomForest","XGBoost"))
+ #with st.form(key='my_form'):
+  #submit_button = st.form_submit_button(label='Submit')
+ 
+ if classifier == "XGBoost":       
   model = joblib.load("model.joblib")
-  #model_ = joblib.load("model_.joblib")
   y_pred=model.predict(X_test)
-  #y_pred_bis=model.predict(df_fires_encoded)
-  #y_pred_input=model.predict(df_fires_encoded[:1])
   prediction=model.predict(df_fires_encoded[:1])
   prediction_proba=model.predict_proba(df_fires_encoded[:1])
   df_prediction_proba=pd.DataFrame(prediction_proba)
   df_prediction_proba.columns=['Petite Classe','Grande Classe']
-  df_prediction_proba.rename(columns={0:"Petite Classe",1:"Grande Classe"})  
-  accuracy=model.score(X_test,y_test)
-  recall=recall_score(y_test,y_pred)
-
-  st.subheader("Prédiction classe de feux en fonction des paramètres d'entrée", divider="blue") 
-  col1, col2 = st.columns([0.5,0.5],gap="small",vertical_alignment="center")
-  with col1 :
-   with st.container(height=350):
-     m = folium.Map(location=[30, -75.844032],zoom_start=3)
-     #tiles='http://services.arcgisonline.com/arcgis/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}',attr="Sources: National Geographic, Esri, Garmin, HERE, UNEP-WCMC, USGS, NASA, ESA, METI, NRCAN, GEBCO, NOAA, INCREMENT P"
-     folium.Marker([LAT, LONG],icon=folium.Icon(color='orange', icon='fire', prefix='fa')).add_to(m)
-      #folium.Marker([LAT, LONG], popup=input_df[:1].STATE, tooltip=input_df[:1].STATE,icon=folium.Icon(color='orange', icon='fire', prefix='fa')).add_to(m)
-     st_data = st_folium(m, width=800)   
-  with col2 :
-    st.write("Paramètres d'entrée")
-    input_df=pd.DataFrame(input_df)
-    input_df.columns=['Mois','Cause','Température','Précipitation','Longitude','Latitude']
-    input_df.rename(columns={'MONTH_DISCOVERY':'Mois','STAT_CAUSE_DESCR':'Cause','AVG_TEMP [°C]':"Température",'AVG_PCP [mm]':"Précipitation",'LONGITUDE':'Longitude','LATITUDE':"Latitude"})  
-    input_df[:1]
-    #df_fires_encoded[:1]
-    #df_fires_encoded[1:]
-    #feats
-    st.write("Probabilité de classe")
-    st.dataframe(df_prediction_proba,
-              column_config={
-             'Petite Classe':st.column_config.ProgressColumn('Petite Classe',format='%.2f',width='medium',min_value=0,max_value=1),
-             'Grande Classe':st.column_config.ProgressColumn('Grande Classe',format='%.2f',width='medium',min_value=0,max_value=1)},hide_index=True)
-    Fires_class_pred=np.array(['Petite Classe','Grande Classe'])
-    #st.write("X_train")
-    #X_train
-    #st.write("X_input")
-    #df_fires_encoded
-    #st.write("input_fire")
-    #input_fires
-    #st.write("feats")
-    #feats
-
-    st.success(str(Fires_class_pred[prediction][0]))
-    
-  st.subheader("Scores de performance du modèle optimisé XGBoost", divider="blue")   
+  df_prediction_proba.rename(columns={0:"Petite Classe",1:"Grande Classe"})
+  Fires_class_pred=np.array(['Petite Classe','Grande Classe'])
+ #classifier=st.selectbox("Sélection du modèle",("XGBoost","BalancedRandomForest"))
+ #if classifier == "XGBoost":
+  #model = joblib.load("model.joblib")
+   #if st.sidebar.button("Execution modèle XGB",key="classify"):
+   #st.subheader("XGBoost Results")
+  #model=XGBClassifier(max_bin=410,
+  #                      scale_pos_weight=29.3333,
+  #                     subsample=0.91,
+  #                     colsample_bytree=0.65,
+  #                     learning_rate=0.31).fit(X_train,y_train)
+  #joblib.dump(model, "model.joblib")  
+  #model = joblib.load("model.joblib")   
+  st.subheader("Importance features et performance du modèle XGBoost optimisé", divider="blue")
   st.write("Accuracy",round(model.score(X_test,y_test),4))
-  st.write("Recall",round(recall,4))  
+  st.write("Recall",round(recall_score(y_test,y_pred),4))  
+
   col1, col2,col3 = st.columns(3,gap="small",vertical_alignment="center")
-  with col1:
-   with st.container(height=350):      
-    precision, recall, thresholds = precision_recall_curve(y_test, y_pred)
-    fpr, tpr, thresholds = roc_curve(y_test, y_pred)
-    roc_auc = auc(fpr, tpr)
-    figML2 = px.area(x=fpr, y=tpr,title=f'Courbe ROC (AUC={auc(fpr, tpr):.4f})',labels=dict(x='Taux faux positifs', y='Taux vrais positifs'))
-    figML2.add_shape(type='line', line=dict(dash='dash'),x0=0, x1=1, y0=0, y1=1)
-    figML2.update_yaxes(scaleanchor="x", scaleratio=1)
-    figML2.update_xaxes(constrain='domain')
-    figML2.update_layout(title_x = 0.2, title_y =0.98,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=900, height=320,margin=dict(l=0, r=0, t=20, b=0))
-    st.plotly_chart(figML2)
+  with col3:
+   with st.container(height=350):
+    @st.cache_data(persist=True)
+    def AUC():      
+     precision, recall, thresholds = precision_recall_curve(y_test, y_pred)
+     fpr, tpr, thresholds = roc_curve(y_test, y_pred)
+     roc_auc = auc(fpr, tpr)
+     figML2 = px.area(x=fpr, y=tpr,title=f'Courbe ROC (AUC={auc(fpr, tpr):.4f})',labels=dict(x='Taux faux positifs', y='Taux vrais positifs'))
+     figML2.add_shape(type='line', line=dict(dash='dash'),x0=0, x1=1, y0=0, y1=1)
+     figML2.update_yaxes(scaleanchor="x", scaleratio=1)
+     figML2.update_xaxes(constrain='domain')
+     figML2.update_layout(title_x = 0.2, title_y =0.98,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=900, height=320,margin=dict(l=0, r=0, t=20, b=0))
+     return figML2
+    figML2=AUC()
+    figML2
   with col2:
-    with st.container(height=350):
-  #st.subheader('Matrice de confusion') 
+   with st.container(height=350):
+    @st.cache_data(persist=True)
+    def cm():
      cm = confusion_matrix(y_test, y_pred)
-     figML1 = px.imshow(cm,labels={"x": "Predicted Label", "y": "True Label"},width=800,height=800,text_auto=True)#color_continuous_scale='hot'
-  #layout = go.Layout(title='Matrice de confusion',paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)')
+     figML1 = px.imshow(cm,labels={"x": "Classe prédite", "y": "Classe réelle"},width=800,height=800,text_auto=True)
      figML1.update_layout(title='Matrice de confusion',title_x = 0.35, title_y =0.98,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=900, height=320,legend=dict(x=0.5, y=1,orientation="h",xanchor="center",yanchor="bottom",font=dict(
      family="Arial",size=15,color="black")),margin=dict(l=0, r=0, t=2, b=0))
      figML1.update_traces(dict(showscale=False,coloraxis=None), selector={'type':'heatmap'})
-  #titlefont=dict(size=20)
-     st.plotly_chart(figML1)
-  with col3 : 
-    with st.container(height=350):     
+     return figML1
+    figML1=cm()
+    figML1 
+   with col1 : 
+    with st.container(height=350):
      feats1 = {}
      for feature, importance in zip(feats.columns,model.feature_importances_):
       feats1[feature] = importance
      importances= pd.DataFrame.from_dict(feats1, orient='index').rename(columns={0: 'Importance'})
      importances.sort_values(by='Importance', ascending=False).head(8)
-   
      fig = px.bar(importances, x='Importance', y=importances.index)
-     fig.update_layout(title='Feature Importance',title_x = 0.4, title_y = 0.98,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=900, height=320,legend=dict(x=0.5, y=0.93,orientation="h",xanchor="center",yanchor="bottom",font=dict(
+     fig.update_layout(title='Features Importance',title_x = 0.4, title_y = 0.98,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=900, height=320,legend=dict(x=0.5, y=0.93,orientation="h",xanchor="center",yanchor="bottom",font=dict(
      family="Arial",size=15,color="black")),margin=dict(l=0, r=0, t=50, b=0),titlefont=dict(size=15))
-     st.plotly_chart(fig)
- if classifier == "BalancedRandomForest":
-  #st.sidebar.subheader("Hyperparamètres BalancedRandomForest")
-  #min_samples_split_test = st.sidebar.slider("Min_samples_split selection",2, 10,7)
-  #max_depth_test = st.sidebar.slider("max_depth selection",1, 100, 70)
-  #sampling_strategy_test = st.sidebar.radio("sampling_strategy selection",("not minority","not majority"))
-  #replacement_test= st.sidebar.radio("replacement selection",(True,False))
-  #Bootstrap_test= st.sidebar.radio("bootstrap selection",(True,False))
-  #random_state_test=st.sidebar.slider("random_state selection",200,200, 200)
-  #n_estimator_test=st.sidebar.slider("n_estimator selection",100,1000, 600)
-  #criterion_test=st.sidebar.radio("criterion selection",("entropy","giny"))
-  #class_weight_test=st.sidebar.radio("class_weight selection",("balanced_subsample","None"))
-  #max_features_test=st.sidebar.slider("max_features selection",100,200,180)
-   
-  if st.sidebar.button("Execution Balanced Random Forest",key="classify2"):
-    st.subheader("BalancedRandomForest Results")
-  #model2=BalancedRandomForestClassifier(min_samples_split=7,
-  #                      max_depth=70,
-  #                      sampling_strategy='not minority',
-  #                      replacement=True,
-  #                      bootstrap=True,
-  #                      random_state=200,
-  #                      n_estimators=600,
-  #                      criterion='entropy',
-  #                      class_weight='balanced_subsample',
-  #                      max_features=180).fit(X_train,y_train)
-  #joblib.dump(model2, "model2.joblib")
-  #dict_weights = {0:1, 1: 1.2933}
-  #model3=BalancedRandomForestClassifier(sampling_strategy="not minority", replacement=True,random_state=200,n_estimators=400,class_weight=dict_weights).fit(X_train,y_train)
-  #joblib.dump(model3, "model3.joblib")
-  model3 = joblib.load("model3.joblib")
-  y_pred2=model3.predict(X_test)
-  #y_pred2_input=model2.predict(df_fires_encoded)
-  prediction2=model3.predict(df_fires_encoded[:1])
-  prediction_proba2=model3.predict_proba(df_fires_encoded[:1])
-  df_prediction_proba=pd.DataFrame(prediction_proba2)
-  df_prediction_proba.columns=['Petite Classe','Grande Classe']
-  df_prediction_proba.rename(columns={0:"Petite Classe",1:"Grande Classe"})  
-
-  st.subheader("Prédiction classe de feux en fonction des paramètres d'entrée", divider="blue") 
-  col1, col2 = st.columns([0.5,0.5],gap="small",vertical_alignment="center")
+     st.plotly_chart(fig) 
+  st.subheader("Prédiction de la classe de feux selon les paramètres choisis", divider="blue") 
+  col1, col2 = st.columns([0.55,0.45],gap="small",vertical_alignment="center")
   with col1 :
    with st.container(height=350):
-    m = folium.Map(location=[36.966428, -95.844032],zoom_start=3.4988)
-    folium.Marker([LAT, LONG],icon=folium.Icon(color='orange', icon='fire', prefix='fa')).add_to(m)
-    st_data = st_folium(m, width=800)
-    
+    for i in range(0,len(Fires_class_pred)):    
+     if Fires_class_pred[prediction][0] == 'Petite Classe':
+      color = 'darkblue'
+     elif Fires_class_pred[prediction][0] == 'Grande Classe':
+      color = 'red'
+     else:
+      color = 'gray' 
+     html = df_prediction_proba.to_html(classes="table table-striped table-hover table-condensed table-responsive")
+     popup2 = folium.Popup(html)
+     m = folium.Map(location=[30, -65.844032],zoom_start=3,tiles='http://services.arcgisonline.com/arcgis/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}',
+           attr="Sources: National Geographic, Esri, Garmin, HERE, UNEP-WCMC, USGS, NASA, ESA, METI, NRCAN, GEBCO, NOAA, INCREMENT P")  
+     folium.Marker([LAT, LONG],popup=popup2,icon=folium.Icon(color=color, icon='fire', prefix='fa')).add_to(m)
+    st_data = st_folium(m,width=800,returned_objects=[])
   with col2 :
-   st.write("Paramètres d'entrée")    
-   input_df[:1]
-   st.write("Probabilité de classe")
-     #st.dataframe(df_prediction_proba2,
-     #            column_config={
-      #          'Petite Classe':st.column_config.ProgressColumn('Petite Classe',format='%.2f',width='medium',min_value=0,max_value=1),
-       #         'Grande Classe':st.column_config.ProgressColumn('Grande Classe',format='%.2f',width='medium',min_value=0,max_value=1)},hide_index=True)
-   Fires_class_pred2=np.array(['Petite Classe','Grande Classe'])
-   st.dataframe(df_prediction_proba)     
-   st.success(str(Fires_class_pred2[prediction2][0]))     
-
-  st.subheader("Scores de performance du modèle optimisé BalancedRandomClassifier", divider="blue")   
-  @st.cache_data(persist=True)
-  def Accuracy_BRF():
-    AccuracyBRF=model3.score(X_test,y_test)
-    return AccuracyBRF
-  AccruracyBRF=Accuracy_BRF()
-  st.write("Accuracy",round(AccruracyBRF,4))
-  @st.cache_data(persist=True)
-  def recall2():
-    recall2=recall_score(y_test,y_pred2)
-    return recall2
-  recall2=recall2()  
-  st.write("Recall",round(recall2,4))      
-
+   st.info('Cliquer sur le point localisé sur la carte pour afficher les probabilités de chaque classe',icon="ℹ️",)
+   st.markdown("")
+   st.markdown("Légende :")
+   col1, col2 = st.columns([0.15,0.85],gap="small",vertical_alignment="center")
+   with col1:
+    st.image("feu_bleu.jpg",width=40)
+   with col2:
+    st.markdown(":blue[Probabilité classe 1 < 50%]")
+   col1, col2 = st.columns([0.15,0.85],gap="small",vertical_alignment="center")
+   with col1:
+    st.image("feu_rouge.jpg",width=40)
+   with col2:
+    st.markdown(":red[Probabilité classe 1 > 50%]")
+ 
+ if classifier == "BalancedRandomForest":
+   #dict_weights = {0:1, 1: 1.2933}
+   #model3=BalancedRandomForestClassifier(sampling_strategy="not minority", replacement=True,random_state=200,n_estimators=400,class_weight=dict_weights).fit(X_train,y_train)
+   #joblib.dump(model3, "model3.joblib")
+  model3 = joblib.load("model3.joblib")
+  y_pred=model3.predict(X_test)
+  prediction=model3.predict(df_fires_encoded[:1])
+  prediction_proba=model3.predict_proba(df_fires_encoded[:1])
+  df_prediction_proba=pd.DataFrame(prediction_proba)
+  df_prediction_proba.columns=['Petite Classe','Grande Classe']
+  df_prediction_proba.rename(columns={0:"Petite Classe",1:"Grande Classe"})
+  Fires_class_pred=np.array(['Petite Classe','Grande Classe'])   
+  st.subheader("Importance features et performance du modèle Balanced Random Forest", divider="blue")
+  st.write("Accuracy",round(model3.score(X_test,y_test),4))
+  st.write("Recall",round(recall_score(y_test,y_pred),4))
   col1, col2,col3 = st.columns(3,gap="small",vertical_alignment="center")
-  with col1:
-    with st.container(height=350):
+  with col3:
+   with st.container(height=350):
         @st.cache_data(persist=True)
         def ROCAUC():
-         precision, recall, thresholds = precision_recall_curve(y_test, y_pred2)
-         fpr, tpr, thresholds = roc_curve(y_test, y_pred2)
+         precision, recall, thresholds = precision_recall_curve(y_test, y_pred)
+         fpr, tpr, thresholds = roc_curve(y_test, y_pred)
          roc_auc = auc(fpr, tpr)
          figML2 = px.area(x=fpr, y=tpr,title=f'Courbe ROC (AUC={auc(fpr, tpr):.4f})',labels=dict(x='Taux faux positifs', y='Taux vrais positifs'))
          figML2.add_shape(type='line', line=dict(dash='dash'),x0=0, x1=1, y0=0, y1=1)
@@ -1388,50 +1331,86 @@ if page == pages[4] :
          return figML2
         figML2=ROCAUC()
         figML2
-  with col2:
+   with col2:
     with st.container(height=350):
-        @st.cache_data(persist=True)
-        def MatriceConfusion():
-          cm = confusion_matrix(y_test, y_pred2)
-          figML1 = px.imshow(cm,labels={"x": "Predicted Label", "y": "True Label"},width=800,height=800,text_auto=True)#color_continuous_scale='hot'
-          figML1.update_layout(title='Matrice de confusion',title_x = 0.35, title_y =0.98,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=900, height=320,legend=dict(x=0.5, y=1,orientation="h",xanchor="center",yanchor="bottom",font=dict(
-          family="Arial",size=15,color="black")),margin=dict(l=0, r=0, t=2, b=0))
-          figML1.update_traces(dict(showscale=False,coloraxis=None), selector={'type':'heatmap'})
-          return figML1
-        figML1=MatriceConfusion()
-        figML1
-
-  with col3 : 
+     @st.cache_data(persist=True)
+     def MatriceConfusion():
+      cm = confusion_matrix(y_test, y_pred)
+      smallest_number = cm.min()
+      largest_number = cm.max()
+      #colors = [(0, negative_color),(0.5, zero_color),(1, positive_color)]# Normalize the midpoint value to 0.5
+      figML1 = px.imshow(cm,labels={"x": "Classe prédite", "y": "Classe réelle"},width=800,height=800,text_auto=True)#color_continuous_scale='hot'
+      figML1.update_layout(title='Matrice de confusion',title_x = 0.35, title_y =0.98,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=900, height=320,legend=dict(x=0.5, y=1,orientation="h",xanchor="center",yanchor="bottom",font=dict(
+      family="Arial",size=15,color="black")),margin=dict(l=0, r=0, t=2, b=0))
+      figML1.update_traces(dict(showscale=False,coloraxis=None), selector={'type':'heatmap'})
+      return figML1
+     figML1=MatriceConfusion()
+     figML1
+   with col1 : 
     with st.container(height=350):
-      @st.cache_data(persist=True)
-      def FeatureImportance():    
+     @st.cache_data(persist=True)
+     def FeatureImportance():    
         feats2 = {}
         for feature, importance in zip(feats.columns,model3.feature_importances_):
             feats2[feature] = importance
         importances2= pd.DataFrame.from_dict(feats2, orient='index').rename(columns={0: 'Importance'})
-        importances2.sort_values(by='Importance', ascending=False).head(8)
-      
+        importances2.sort_values(by='Importance', ascending=False).head(8)    
         figML3 = px.bar(importances2, x='Importance', y=importances2.index)
         figML3.update_layout(title='Feature Importance',title_x = 0.4, title_y = 0.98,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',width=900, height=320,legend=dict(x=0.5, y=0.93,orientation="h",xanchor="center",yanchor="bottom",font=dict(
         family="Arial",size=15,color="black")),margin=dict(l=0, r=0, t=50, b=0),titlefont=dict(size=15))
         return figML3
-      figML3=FeatureImportance()
-      figML3   
-    
+     figML3=FeatureImportance()
+     figML3
+  st.subheader("Prédiction de la classe de feux selon les paramètres choisis", divider="blue")
+  col1, col2 = st.columns([0.55,0.45],gap="small",vertical_alignment="center")
+  with col1 :
+    with st.container(height=350):
+     for i in range(0,len(Fires_class_pred)):    
+      if Fires_class_pred[prediction][0] == 'Petite Classe':
+       color = 'darkblue'
+      elif Fires_class_pred[prediction][0] == 'Grande Classe':
+       color = 'red'
+      else:
+       color = 'gray'
+     html = df_prediction_proba.to_html(classes="table table-striped table-hover table-condensed table-responsive")
+     popup2 = folium.Popup(html)
+     m = folium.Map(location=[30, -65.844032],zoom_start=3,tiles='http://services.arcgisonline.com/arcgis/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}',
+           attr="Sources: National Geographic, Esri, Garmin, HERE, UNEP-WCMC, USGS, NASA, ESA, METI, NRCAN, GEBCO, NOAA, INCREMENT P")  
+     folium.Marker([LAT, LONG],popup=popup2,icon=folium.Icon(color=color, icon='fire', prefix='fa')).add_to(m)
+     st_data = st_folium(m,width=800,returned_objects=[])
+  with col2 :
+    st.info('Cliquer sur le point localisé sur la carte pour afficher les probabilités de chaque classe',icon="ℹ️",)
+    st.markdown("")
+    st.markdown("Légende :")
+    col1, col2 = st.columns([0.15,0.85],gap="small",vertical_alignment="center")
+    with col1:
+     st.image("feu_bleu.jpg",width=40)
+    with col2:
+     st.markdown(":blue[Probabilité classe 1 < 50%]")
+    col1, col2 = st.columns([0.15,0.85],gap="small",vertical_alignment="center")
+    with col1:
+     st.image("feu_rouge.jpg",width=40)
+    with col2:
+     st.markdown(":red[Probabilité classe 1 > 50%]")
+  
 if page == pages[5] : 
   #  st.write("### Conclusion")
   st.write("### Conclusion et propositions d’optimisation")
   st.markdown("""
 Le projet “Feux de forêts” nous a permis de mettre en pratique les compétences acquises durant notre formation en data analysis, en abordant toutes les étapes d’un projet de Data Science, de l’exploration des données à la modélisation et la data visualisation. Nous avons également abordé les étapes de prédiction, en utilisant des modèles avancés pour prévoir les occurrences de feux de forêts et ainsi mieux comprendre les facteurs qui les influencent.
 ### Résultats obtenus :
-- **Amélioration des performances des modèles** : Grâce à l'utilisation de différentes méthodes de rééchantillonnage et de classificateurs spécifiques pour les jeux de données déséquilibrés, nous avons significativement amélioré les performances des modèles. Le peaufinage des hyperparamètres avec Grid Search a permis d’optimiser encore plus ces performances.
-- **Modèle le plus performant** : Le modèle BalancedRandomForest s'est distingué parmi les huit modèles testés, avec un Recall de presque 80% pour la classe 1 et un score ROC AUC de 0,77. Ce modèle utilise principalement quatre des sept features : température, précipitation, mois et cause du feu.
+- **Amélioration des performances des modèles** : Grâce à l’utilisation de différentes méthodes comme class_weight et de classificateurs spécifiques pour les jeux de données déséquilibrés, tels que SMOTE ou EasyEnsemble, nous avons significativement amélioré les performances des modèles.
+- **Modèles les plus performants** : 
+ **BalancedRandomForest** : Ce modèle trouve que les données météorologiques comme la température et les précipitations sont très importantes pour prédire les feux de forêt. Il utilise aussi beaucoup le mois de l’année et la cause du feu pour faire ses prédictions.
+ **XGBoost** : Ce modèle, en revanche, trouve que les informations géographiques comme l’État ou la longitude sont plus importantes. Il utilise un peu moins les données météorologiques et accorde moins d’importance au mois et à la cause du feu comparé au BalancedRandomForest.
+
+
 ### Pistes d’optimisation :
 - **Méthodes de resampling** : Utiliser des méthodes plus précises que les méthodes aléatoires, comme SMOTETomek, SMOTEEN, KmeansSMOTE.
 - **Données plus précises** : Ajouter des données plus détaillées sur les températures, par exemple des données journalières au lieu de moyennes mensuelles.
 - **Réglage des hyperparamètres** : Continuer à optimiser les hyperparamètres, car toutes les combinaisons n’ont pas pu être testées.
 ### Impact et perspectives :
-Ce projet a démontré l'importance de la data analysis et du machine learning dans la prévention et la gestion des incendies de forêt. En permettant une détection précoce des incendies et en ciblant les interventions là où elles sont le plus nécessaires, nous pouvons contribuer à réduire les coûts économiques et les impacts environnementaux des feux de forêt.
+Ce projet a démontré l'importance de la data analysis et du machine learning dans la prévention et la gestion des incendies de forêt. En permettant une détection humaine ou naturelle des incendies et en ciblant les interventions là où elles sont le plus nécessaires, nous pouvons contribuer à réduire les coûts économiques et les impacts environnementaux des feux de forêt.
 En termes d'expertise, ce projet nous a permis de développer nos compétences en Python et en modélisation via le Machine Learning, des domaines nouveaux pour la plupart d'entre nous. Nous avons également appris à utiliser des outils interactifs comme Streamlit pour la restitution de nos résultats.
 Pour aller plus loin, il serait bénéfique de collaborer avec des spécialistes en lutte contre les incendies de forêt pour affiner nos modèles et mieux comprendre les enjeux opérationnels. De plus, l'intégration de données météorologiques plus précises pourrait améliorer encore davantage les performances de nos modèles.
 En conclusion, ce projet nous a permis de mettre en pratique les compétences acquises durant notre formation et de contribuer à un enjeu crucial de préservation de l'environnement et de sécurité publique.
