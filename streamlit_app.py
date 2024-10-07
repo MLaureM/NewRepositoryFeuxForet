@@ -36,6 +36,7 @@ from sklearn.metrics import roc_curve
 from sklearn.model_selection import GridSearchCV, train_test_split, StratifiedKFold, cross_val_score
 from sklearn import model_selection
 from sklearn import tree
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import precision_recall_curve, auc, PrecisionRecallDisplay, average_precision_score, roc_auc_score  
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.ensemble import GradientBoostingClassifier
@@ -80,7 +81,7 @@ def load_data():
 df=load_data()
 
 st.sidebar.title("Sommaire")
-pages=["Contexte et présentation", "Preprocessing", "DataVizualization", "Prédiction causes de feux", "Prédiction classes de feux", "Conclusion"]
+pages=["Contexte et présentation", "Preprocessing", "DataVizualization", "Prédiction des causes de feux", "Prédiction des classes de feux", "Conclusion"]
 page=st.sidebar.radio("Aller vers", pages)
 
 # Création contenu de la première page (page 0) avec le contexte et présentation du projet
@@ -508,7 +509,7 @@ if page == pages[2] :
   
 
 if page == pages[3] : 
-  st.write("### Prédiction causes de feux")
+  st.write("## Prédiction causes de feux")
 
   # Suppression des variables non utiles au ML
   Drop_col_ML = ["NWCG_REPORTING_UNIT_NAME", "FPA_ID","DISCOVERY_DATE","DISCOVERY_DOY","DISCOVERY_TIME","CONT_DOY","CONT_DATE","CONT_TIME","FIRE_SIZE","STAT_CAUSE_DESCR","COUNTY","FIPS_NAME"] 
@@ -516,9 +517,11 @@ if page == pages[3] :
   Fires_ML = Fires35.drop(Drop_col_ML, axis = 1)
   # Suppression des lignes de "STATE", "AVG_TEMP [°C]", "AVG_PCP [mm]" ayant des données manquantes 
   Fires_ML = Fires_ML.dropna(subset = ["STATE", "AVG_TEMP [°C]", "AVG_PCP [mm]"])
-  # Création d'une checkbox pour afficher ou non le jeu de données ML
-  if st.checkbox("Affichage du jeu de données pour Machine Learning") :
-    st.dataframe(Fires_ML.head(50))
+
+  st.subheader("Objectif 🎯", divider="blue") 
+  st.write("""L'objectif de cette section est de :
+  - définir les causes de feux
+  - construire des modèles de prédictions capables de déterminer la cause d'un feu à partir des caractéristiques de celui-ci.""")
   
   # Création d'une checkbox pour afficher la distribution des causes avant et après regroupement
   # Nouvelle distribution des causes suite au regroupement des causes initiales
@@ -532,19 +535,20 @@ if page == pages[3] :
   Fires_test2 = Fires_ML.iloc[-200:, :]
   Fires_ML = Fires_ML.iloc[:-200, :]
 
-  if st.checkbox("Regroupement des causes de feux"):
+  st.subheader("Regroupement des causes 🗂️", divider="blue") 
+  if st.checkbox("Cliquez pour voir les causes de feux"):
     col1, col2= st.columns(spec = 2, gap = "large")
     with col1:
-      st.write("### Distribution initiale des causes de feux")
+      st.write("#### Distribution initiale des causes de feux")
       count = Fires_ML["STAT_CAUSE_DESCR_1"].value_counts()
       color = ["blue", "orange", "yellow", "blue", "blue", "blue", "blue", "blue", "blue", "blue", "blue"]
-      fig, ax = plt.subplots(figsize=(16, 12), facecolor='none') 
+      fig, ax = plt.subplots(figsize=(12, 9), facecolor='none') 
       ax.bar(count.index, count.values, label = Fires_ML["STAT_CAUSE_DESCR_1"].unique(), color=color)
       ax.set_facecolor('none') 
       fig.patch.set_alpha(0.0) 
-      ax.set_ylabel("COUNT", fontsize=25)
+      ax.set_ylabel("COUNT", fontsize=20)
       ax.set_xticks(range(len(count.index)))
-      ax.set_xticklabels(count.index, rotation=75, fontsize=25)
+      ax.set_xticklabels(count.index, rotation=75, fontsize=18)
       # ax.set_yticklabels(count.values, fontsize=40)
       ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
       st.pyplot(fig)
@@ -553,16 +557,16 @@ if page == pages[3] :
                Compte tenu de leur caractère inerte par rapport à l'objectif de l'étude, nous les supprimerons.
                Pour les diverses qui peuvent se ressembler, nous procéderons à leur regroupement dans une cause parente""")
     with col2:
-      st.write("### Distribution des causes après regroupement")
+      st.write("#### Distribution des causes après regroupement")
       count2 = Fires_ML["STAT_CAUSE_CODE"].value_counts()
       color = ["blue", "orange", "yellow"]
-      fig, ax = plt.subplots(figsize=(16, 12), facecolor='none')  
+      fig, ax = plt.subplots(figsize=(12, 9), facecolor='none')  
       ax.bar(count2.index, count2.values, color=color)
       ax.set_facecolor('none') 
       fig.patch.set_alpha(0.0) 
-      ax.set_ylabel("COUNT", fontsize = 25)
+      ax.set_ylabel("COUNT", fontsize = 20)
       ax.set_xticks([0, 1, 2])
-      ax.set_xticklabels(["Humaine", "Criminelle", "Naturelle"], rotation = 25, fontsize = 25)
+      ax.set_xticklabels(["Humaine", "Criminelle", "Naturelle"], rotation = 25, fontsize = 18)
       ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
       st.pyplot(fig)
 
@@ -916,7 +920,8 @@ if page == pages[3] :
   ###################################
   ### Test des différents modèles ###
   ###################################
-  if st.checkbox("METIER : Voulez-vous tester les différents modèles ?"):
+  st.subheader("Développement METIER - A vous de jouer :smiley:", divider="blue") 
+  if st.checkbox("Voulez-vous tester les différents modèles ?"):
     Feature_importances = st.sidebar.radio("Voulez-vous réduire la dimension du jeu ?", ("Oui", "Non"), horizontal=True)
     if Feature_importances == "Oui":
       feat_imp = model_reduction(classifier, X_train_final, y_train)
@@ -986,16 +991,7 @@ if page == pages[3] :
       max_depth = st.sidebar.slider("Veuillez choisir la profondeur de l'arbre", 10, 200, 10, 10)
       min_samples_split = st.sidebar.slider("Veuillez choisir la profondeur de l'arbre", 10, 50, 20, 5)
       min_samples_leaf = st.sidebar.slider("Veuillez choisir la profondeur de l'arbre", 10, 100, 50, 5)
-    ####################################
-    ###  Modèle K-Nearest Neighbors  ###
-    ####################################
-    elif classifier == "KNN":
-      st.write("KNN")
-    ####################################
-    ###   Modèle Gradient Boosting   ###
-    ####################################
-    elif classifier == "Gradient Boosting":
-      st.write("Gradient Boosting")
+
 
     # Création d'un bouton pour le modèle avec les meilleurs paramètres
     if st.sidebar.button("Best Model Execution"):
@@ -1160,6 +1156,7 @@ if page == pages[3] :
   #   st.dataframe(Fires_test2)
 
   # Saisie des nouvelles données et prédiction des causes
+  st.subheader("Prédiction 🔎", divider="blue") 
   if st.checkbox("PRODUCTION : Nouvelle prédiction"):
     df = pd.DataFrame(columns=["FIRE_YEAR", "LATITUDE", "LONGITUDE", "FIPS_CODE", "AVG_TEMP", "AVG_PCP", "DURATION", "FIRE_SIZE_CLASS", "STATE", "MONTH_DISCOVERY", "DISCOVERY_WEEK", "DAY_OF_WEEK_DISCOVERY"])
     STATE = Fires_ML["STATE"].unique()
@@ -1195,9 +1192,9 @@ if page == pages[3] :
           clf = best_DecTree_raw_model(X_train_final, y_train)
       y_pred = clf.predict(input_data_ML)
       y_pred = pd.DataFrame(y_pred, columns = ["FIRE CAUSE"], index = input_data.index)
-      y_pred.loc[y_pred["FIRE CAUSE"] == 0, "FIRE CAUSE"] = "Humaine"
-      y_pred.loc[y_pred["FIRE CAUSE"] == 1, "FIRE CAUSE"] = "Criminelle"
-      y_pred.loc[y_pred["FIRE CAUSE"] == 2, "FIRE CAUSE"] = "Naturelle"
+      y_pred.loc[y_pred["FIRE CAUSE"] == 0, "FIRE CAUSE"] = "Humaine 🧑"
+      y_pred.loc[y_pred["FIRE CAUSE"] == 1, "FIRE CAUSE"] = "Criminelle 🦹🏻‍♂️🔥"
+      y_pred.loc[y_pred["FIRE CAUSE"] == 2, "FIRE CAUSE"] = "Naturelle 🌩️"
       st.dataframe(y_pred)
 
 
