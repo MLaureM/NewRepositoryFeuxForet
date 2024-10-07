@@ -254,6 +254,7 @@ if page == pages[2] :
   st.subheader("3 - Répartition temporelle des feux")
   st.write("Cet axe révèle assez clairement des périodes à risque sur les départs et la gravité des feux")
 #Histogrammes année
+  st.write("**Variabilité annuelle**")
   st.write("Certaines années semblent clairement plus propices aux départs de feux. Cela peut s’expliquer par les conditions météorologiques. On observe notamment que les années où les surfaces brûlées sont significativement supérieures à la moyenne cela est dû à la foudre")
   #if st.checkbox("Afficher graphiques année") :
     #fig2 = make_subplots(rows=1, cols=2, shared_yaxes=False,subplot_titles=("Surfaces brûlées (acres)","Nombre de départs"))
@@ -292,6 +293,7 @@ if page == pages[2] :
     fig3bis=graph_annee_nombre()
     fig3bis
 #Histogrammes mois
+  st.write("**Périodes à risque**")
   st.write("Les mois de juin à août sont les plus dévastateurs ce qui qui peut sous-entendre 2 facteurs : un climat plus favorable aux départs de feux, des activités humaines à risque plus élevées pendant les périodes de vacances")
   #if st.checkbox("Afficher graphiques mois") :
   @st.cache_data(persist=True)
@@ -311,6 +313,7 @@ if page == pages[2] :
 
 
 #Histogrammes jour semaine
+  st.write("**Corrélation avec les feux d’origine humaine**")   
   st.write("On observe également des départs de feux significativement plus élevés le week-end. Ce qui peut être mis en corrélation avec les feux d'origine humaine déclenchés par des activités à risque plus propices en périodes de week-end (feux de camps...)")
   #if st.checkbox("Afficher graphiques jour de la semaine") :
   @st.cache_data(persist=True)
@@ -350,6 +353,7 @@ if page == pages[2] :
 
 # Durée moyenne
   st.write('L’analyse de la durée des feux par cause montre une certaine hétérogénéité de la durée des feux en fonction de la cause. Les feux liés à la foudre sont en moyenne deux fois plus longs à contenir que les autres types de feux')
+  st.write("La Foudre : Les feux déclenchés par la foudre sont souvent situés dans des zones difficiles d’accès, ce qui complique les efforts de lutte contre les incendies. De plus, ces feux peuvent se propager rapidement en raison des conditions météorologiques associées aux orages, comme les vents forts.")
   #if st.checkbox("Afficher graphiques par durée") :
   @st.cache_data(persist=True)
   def durée(): 
@@ -365,7 +369,7 @@ if page == pages[2] :
       x='BURN_TIME',
       y='STAT_CAUSE_DESCR',
       labels={"STAT_CAUSE_DESCR": "Cause", "BURN_TIME": "Durée moyenne (jours)"},
-      title='Durée moyenne de feux par cause',
+      title='Durée moyenne des feux par cause',
       orientation='h',  # Horizontal orientation
       color='STAT_CAUSE_DESCR',
       color_discrete_sequence=px.colors.sequential.Reds_r)
@@ -378,6 +382,9 @@ if page == pages[2] :
  
   st.subheader("4 - Répartition géographique")
   st.markdown("On observe une densité plus élevée de surfaces brûlées à l’ouest des États-Unis, ce qui pourrait être attribué à divers facteurs tels que le climat, la végétation et les activités humaines.")
+  st.markdown("**Facteurs Climatiques**- périodes de sécheresse prolongées")
+  st.markdown("**Végétations**- type de végétation vulnérables aux feux et contribule à la propagation des feux")
+  st.markdown("**Activités humaines**- l’urbanisation croissante dans les zones à risque, les pratiques agricoles, et les loisirs en plein air augmentent la probabilité de départs de feux")
   @st.cache_data(persist=True)
   def load_FiresClasse():
     Fires_bis = df
@@ -479,6 +486,8 @@ if page == pages[2] :
 #style.use('ggplot')
   
   #if st.checkbox("Afficher heatmap") :
+  st.write('Cette matrice permet d’identifier quelles variables ont de fortes corrélations entre elles, ce qui nous aide à **sélectionner les caractéristiques les plus pertinentes** pour notre modèle de Machine Learning.')
+  st.write('Elles nous permettent de **comprendre les relations entre les variables**, d’améliorer la performance et l’interprétabilité du modèle en réduisant le bruit et en se concentrant sur les variables les plus influentes.')
   @st.cache_data(persist=True)
   def heat_map():
     df_Fires_ML_num = df.select_dtypes(include=[np.number])
@@ -494,6 +503,8 @@ if page == pages[2] :
     return fig7b
   fig7b=heat_map()
   fig7b 
+
+  st.write("En analysant ces données plus en détail, on peut mieux comprendre les facteurs qui contribuent aux feux. Ces données soulignent l’importance de la prévention des feux de foret d’origine humaine et de la gestion des risques naturels pour minimiser les dégâts causés par les feux de forêt.")
   
 
 if page == pages[3] : 
