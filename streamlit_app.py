@@ -8,7 +8,7 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-st.title('Prédiction feux de forêt USA 🔥')
+st.title('Prédiction des feux de forêts aux USA 🔥')
 from collections import Counter
 from imblearn.ensemble import EasyEnsembleClassifier
 from imblearn.ensemble import BalancedRandomForestClassifier
@@ -47,6 +47,7 @@ import sklearn.metrics as metrics
 from sklearn.metrics import make_scorer, f1_score, confusion_matrix, classification_report, recall_score
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.utils.class_weight import compute_sample_weight
+from sklearn.utils import class_weight
 import joblib
 from itertools import cycle
 import json
@@ -72,7 +73,7 @@ div[class^='block-container'] { padding-side: 2rem; }
 st.markdown(page_bg_img,unsafe_allow_html=True)
 st.markdown("""<style>.block-container {padding-top: 3rem;padding-bottom: 2rem;padding-left: 5rem;padding-right: 5rem;}</style>""", unsafe_allow_html=True)
 #Chargement dataframe sous alias df
-@st.cache_data(persist=True)
+@st.cache_data(persist="disk")
 def load_data():
   data=pd.read_csv('Firesclean.csv', index_col=0)
   return data
@@ -106,7 +107,7 @@ if page == pages[0] :
 #Création de la page 1 avec explication du préprocessing     
 #if page == pages[1] : 
 
-if page == "Preprocessing":
+if page == pages[1]:
 
   st.write("### Preprocessing")
   # Nettoyage des données
@@ -253,7 +254,6 @@ if page == pages[2] :
   st.subheader("3 - Répartition temporelle des feux")
   st.write("Cet axe révèle assez clairement des périodes à risque sur les départs et la gravité des feux")
 #Histogrammes année
-  st.write("**Variabilité annuelle**")
   st.write("Certaines années semblent clairement plus propices aux départs de feux. Cela peut s’expliquer par les conditions météorologiques. On observe notamment que les années où les surfaces brûlées sont significativement supérieures à la moyenne cela est dû à la foudre")
   #if st.checkbox("Afficher graphiques année") :
     #fig2 = make_subplots(rows=1, cols=2, shared_yaxes=False,subplot_titles=("Surfaces brûlées (acres)","Nombre de départs"))
@@ -292,8 +292,7 @@ if page == pages[2] :
     fig3bis=graph_annee_nombre()
     fig3bis
 #Histogrammes mois
-  st.write("**Périodes à risque**")
-  st.write("Les mois de juin à août sont les plus dévastateurs ce qui qui peut sous-entendre 2 facteurs : un climat plus favorable aux départs de feux en raison de la chaleur et de la sécheresse accrues, des activités humaines à risque plus élevées pendant les périodes de vacances")
+  st.write("Les mois de juin à août sont les plus dévastateurs ce qui qui peut sous-entendre 2 facteurs : un climat plus favorable aux départs de feux, des activités humaines à risque plus élevées pendant les périodes de vacances")
   #if st.checkbox("Afficher graphiques mois") :
   @st.cache_data(persist=True)
   def hist_mois_acres_nb():
@@ -312,7 +311,6 @@ if page == pages[2] :
 
 
 #Histogrammes jour semaine
-  st.write("**Corrélation avec les feux d’origine humaine**") 
   st.write("On observe également des départs de feux significativement plus élevés le week-end. Ce qui peut être mis en corrélation avec les feux d'origine humaine déclenchés par des activités à risque plus propices en périodes de week-end (feux de camps...)")
   #if st.checkbox("Afficher graphiques jour de la semaine") :
   @st.cache_data(persist=True)
@@ -351,8 +349,7 @@ if page == pages[2] :
   fig4bis
 
 # Durée moyenne
-  st.write('L’analyse de la durée des feux par cause montre une certaine hétérogénéité de la durée des feux en fonction de la cause. Les feux liés à la foudre sont en moyenne **deux fois plus longs à contenir** que les autres types de feux')
-  st.write("La Foudre : Les feux déclenchés par la foudre sont souvent situés dans des zones difficiles d’accès, ce qui complique les efforts de lutte contre les incendies. De plus, ces feux peuvent se propager rapidement en raison des conditions météorologiques associées aux orages, comme les vents forts.")
+  st.write('L’analyse de la durée des feux par cause montre une certaine hétérogénéité de la durée des feux en fonction de la cause. Les feux liés à la foudre sont en moyenne deux fois plus longs à contenir que les autres types de feux')
   #if st.checkbox("Afficher graphiques par durée") :
   @st.cache_data(persist=True)
   def durée(): 
@@ -368,7 +365,7 @@ if page == pages[2] :
       x='BURN_TIME',
       y='STAT_CAUSE_DESCR',
       labels={"STAT_CAUSE_DESCR": "Cause", "BURN_TIME": "Durée moyenne (jours)"},
-      title='Durée moyenne des feux par cause',
+      title='Durée moyenne de feux par cause',
       orientation='h',  # Horizontal orientation
       color='STAT_CAUSE_DESCR',
       color_discrete_sequence=px.colors.sequential.Reds_r)
@@ -381,9 +378,6 @@ if page == pages[2] :
  
   st.subheader("4 - Répartition géographique")
   st.markdown("On observe une densité plus élevée de surfaces brûlées à l’ouest des États-Unis, ce qui pourrait être attribué à divers facteurs tels que le climat, la végétation et les activités humaines.")
-  st.markdown("**Facteurs Climatiques**- périodes de sécheresse prolongées")
-  st.markdown("**Végétations**- type de végétation vulnérables aux feux et contribule à la propagation des feux")
-  st.markdown("**Activités humaines**- l’urbanisation croissante dans les zones à risque, les pratiques agricoles, et les loisirs en plein air augmentent la probabilité de départs de feux")
   @st.cache_data(persist=True)
   def load_FiresClasse():
     Fires_bis = df
@@ -451,6 +445,7 @@ if page == pages[2] :
     #joblib.dump(st.plotly_chart(fig7),"répartition_géo")
 
   with col2:
+
     @st.cache_data(persist=True)
     def scatter_geo():
       fig7_ = px.scatter_geo(FiresClasse,
@@ -484,8 +479,6 @@ if page == pages[2] :
 #style.use('ggplot')
   
   #if st.checkbox("Afficher heatmap") :
-  st.write('Cette matrice permet d’identifier quelles variables ont de fortes corrélations entre elles, ce qui nous aide à **sélectionner les caractéristiques les plus pertinentes** pour notre modèle de Machine Learning.')
-  st.write('Elles nous permettent de **comprendre les relations entre les variables**, d’améliorer la performance et l’interprétabilité du modèle en réduisant le bruit et en se concentrant sur les variables les plus influentes.')
   @st.cache_data(persist=True)
   def heat_map():
     df_Fires_ML_num = df.select_dtypes(include=[np.number])
@@ -497,13 +490,11 @@ if page == pages[2] :
     mask[np.triu_indices_from(mask)] = True
     fig7b, ax = plt.subplots(figsize = (10,7))
     sns.heatmap(df_Fires_ML_num.corr(), cmap=sns.diverging_palette(20, 220, n=200), annot=True, center = 0, mask=mask, annot_kws={"size": 8})
-    plt.title("Heatmap des variables", fontsize = 15)
+    plt.title("Heatmap of all the selected features of data set", fontsize = 15)
     return fig7b
   fig7b=heat_map()
   fig7b 
   
-  st.write("En analysant ces données plus en détail, on peut mieux comprendre les facteurs qui contribuent aux feux. Ces données soulignent l’importance de la prévention des feux de foret d’origine humaine et de la gestion des risques naturels pour minimiser les dégâts causés par les feux de forêt.")
-
 
 if page == pages[3] : 
   st.write("### Prédiction causes de feux")
@@ -516,8 +507,7 @@ if page == pages[3] :
   Fires_ML = Fires_ML.dropna(subset = ["STATE", "AVG_TEMP [°C]", "AVG_PCP [mm]"])
   # Création d'une checkbox pour afficher ou non le jeu de données ML
   if st.checkbox("Affichage du jeu de données pour Machine Learning") :
-    st.dataframe(Fires_ML.head(5))
-    st.write(Fires_ML.columns)
+    st.dataframe(Fires_ML.head(50))
   
   # Création d'une checkbox pour afficher la distribution des causes avant et après regroupement
   # Nouvelle distribution des causes suite au regroupement des causes initiales
@@ -527,6 +517,10 @@ if page == pages[3] :
   Fires_ML["STAT_CAUSE_CODE"] = Fires_ML["STAT_CAUSE_CODE"].replace(7, 21)
   Fires_ML["STAT_CAUSE_CODE"] = Fires_ML["STAT_CAUSE_CODE"].replace(1, 22)
   Fires_ML["STAT_CAUSE_CODE"] = Fires_ML["STAT_CAUSE_CODE"].replace({20: 0, 21: 1, 22: 2})
+  # Sauvegarde des 200 dernières lignes du jeu pour la validation finale et l'interactivité
+  Fires_test2 = Fires_ML.iloc[-200:, :]
+  Fires_ML = Fires_ML.iloc[:-200, :]
+
   if st.checkbox("Regroupement des causes de feux"):
     col1, col2= st.columns(spec = 2, gap = "large")
     with col1:
@@ -543,10 +537,10 @@ if page == pages[3] :
       # ax.set_yticklabels(count.values, fontsize=40)
       ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
       st.pyplot(fig)
-      st.write("""On observe un grand déséquilibre du jeu de données. Ce qui va rendre complexe la prédiction de l analyse.
+      st.write("""On observe un grand déséquilibre du jeu de données. Ce qui va rendre complexe la prédiction de l'analyse.
                Les feux Missing/Undefined et Miscellaneous représentent environ le quart des données. 
-               Compte tenu de leur caractère inerte par rapport à l objectif de létude, nous les supprimerons.
-               Pour les diverses qui peuvent se ressembler, nous procéderons à leur regroupement dans une cause parente.""")
+               Compte tenu de leur caractère inerte par rapport à l'objectif de l'étude, nous les supprimerons.
+               Pour les diverses qui peuvent se ressembler, nous procéderons à leur regroupement dans une cause parente""")
     with col2:
       st.write("### Distribution des causes après regroupement")
       count2 = Fires_ML["STAT_CAUSE_CODE"].value_counts()
@@ -564,14 +558,18 @@ if page == pages[3] :
       st.write("Suppresion des causses non-définies : Missing/Undefined, Miscellaneous, Others")
       st.write("""
                Regroupement des feux en 3 principales causes :
-               - **Humaine (0)** : Debris burning, Campfire, Children, Smoking, Equipment Use, Railroad, Powerline, Structure, Fireworks
-               - **Criminelle (1)** : Arson
+               - **Humaine (0)** : Debris burning, Campfire, Children, Smoking, Equipment Use, Railroad, Powerline, Structure, Fireworks"
+               - **Criminelle (1)** : Arson"
                - **Naturelle (2)** : Ligthning
                """)
 
-  # Preprocessing des données pour le ML
+  ######################################################################################################################################################################
+  ### Fonctions de preprocessing du jeu de données pour le ML ##########################################################################################################
+  ######################################################################################################################################################################
+
+  # Séparation des variables du target
   Fires_ML = Fires_ML.drop("STAT_CAUSE_DESCR_1", axis = 1)
-  @st.cache_data(persist=True)
+  @st.cache_data(persist="disk")
   def data_labeling(data):
     # Remplacement des jours de la semaine par 1 à 7 au lieu de 0 à 6
     data["DAY_OF_WEEK_DISCOVERY"] = data["DAY_OF_WEEK_DISCOVERY"].replace({0:1, 1:2, 2:3, 3:4, 4:5, 5:6, 6:7})
@@ -583,53 +581,43 @@ if page == pages[3] :
     feats = pd.get_dummies(feats, dtype = "int")
     return feats, target
   feats, target = data_labeling(Fires_ML)
-  # st.dataframe(feats.head())
 
-  @st.cache_data(persist=True)
+  # Séparation du jeu en train et test
+  @st.cache_data(persist="disk")
   def data_split(X, y):
     # Data split of features and target
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.25, shuffle = False)
     # display(feats.shape, X_train.shape, X_test.shape)
     return X_train, X_test, y_train, y_test
   X_train, X_test, y_train, y_test = data_split(feats, target)
-  # st.dataframe(X_train.head())
 
-  @st.cache_data(persist=True)
-  def cyclic_transform(X_train, X_test):
+
+  # Traitement des variables cycliques
+  @st.cache_data(persist="disk")
+  def cyclic_transform(X):
     # Séparation des variables suivant leur type
     circular_cols_init = ["MONTH_DISCOVERY", "DISCOVERY_WEEK", "DAY_OF_WEEK_DISCOVERY"]
-    circular_train, circular_test = X_train[circular_cols_init], X_test[circular_cols_init]
-    
+    circular_data = X[circular_cols_init]
     # Encodage des variables temporelles cycliques
-    circular_train["SIN_MONTH"] = circular_train["MONTH_DISCOVERY"].apply(lambda m: np.sin(2*np.pi*m/12))
-    circular_train["COS_MONTH"] = circular_train["MONTH_DISCOVERY"].apply(lambda m: np.cos(2*np.pi*m/12))
-    circular_train["SIN_WEEK"] = circular_train["DISCOVERY_WEEK"].apply(lambda w: np.sin(2*np.pi*w/53))
-    circular_train["COS_WEEK"] = circular_train["DISCOVERY_WEEK"].apply(lambda w: np.cos(2*np.pi*w/53))
-    circular_train["SIN_DAY"] = circular_train["DAY_OF_WEEK_DISCOVERY"].apply(lambda d: np.sin(2*np.pi*d/7))
-    circular_train["COS_DAY"] = circular_train["DAY_OF_WEEK_DISCOVERY"].apply(lambda d: np.cos(2*np.pi*d/7))
-
-    circular_test["SIN_MONTH"] = circular_test["MONTH_DISCOVERY"].apply(lambda m: np.sin(2*np.pi*m/12))
-    circular_test["COS_MONTH"] = circular_test["MONTH_DISCOVERY"].apply(lambda m: np.cos(2*np.pi*m/12))
-    circular_test["SIN_WEEK"] = circular_test["DISCOVERY_WEEK"].apply(lambda w: np.sin(2*np.pi*w/53))
-    circular_test["COS_WEEK"] = circular_test["DISCOVERY_WEEK"].apply(lambda w: np.cos(2*np.pi*w/53))
-    circular_test["SIN_DAY"] = circular_test["DAY_OF_WEEK_DISCOVERY"].apply(lambda d: np.sin(2*np.pi*d/7))
-    circular_test["COS_DAY"] = circular_test["DAY_OF_WEEK_DISCOVERY"].apply(lambda d: np.cos(2*np.pi*d/7))
-
+    circular_data["SIN_MONTH"] = circular_data["MONTH_DISCOVERY"].apply(lambda m: np.sin(2*np.pi*m/12))
+    circular_data["COS_MONTH"] = circular_data["MONTH_DISCOVERY"].apply(lambda m: np.cos(2*np.pi*m/12))
+    circular_data["SIN_WEEK"] = circular_data["DISCOVERY_WEEK"].apply(lambda w: np.sin(2*np.pi*w/53))
+    circular_data["COS_WEEK"] = circular_data["DISCOVERY_WEEK"].apply(lambda w: np.cos(2*np.pi*w/53))
+    circular_data["SIN_DAY"] = circular_data["DAY_OF_WEEK_DISCOVERY"].apply(lambda d: np.sin(2*np.pi*d/7))
+    circular_data["COS_DAY"] = circular_data["DAY_OF_WEEK_DISCOVERY"].apply(lambda d: np.cos(2*np.pi*d/7))
     # Suppression des variables cycliques sources pour éviter le doublon d'informations
-    circular_train = circular_train.drop(circular_cols_init, axis = 1).reset_index(drop = True)
-    circular_test = circular_test.drop(circular_cols_init, axis = 1).reset_index(drop = True)
-
+    circular_data = circular_data.drop(circular_cols_init, axis = 1).reset_index(drop = True)
     # Récupération des noms de colonnes des nouvelles variables
-    circular_cols = circular_train.columns
-    return circular_train, circular_test
-  circular_train, circular_test = cyclic_transform(X_train, X_test)
-  # st.dataframe(circular_train.head())
+    # circular_cols = circular_data.columns
+    return circular_data
+  circular_train, circular_test = cyclic_transform(X_train), cyclic_transform(X_test)
 
-  @st.cache_data(persist=True)
-  def num_imputer(X_train, X_test):
+  # TRaitement des variables numériques
+  @st.cache_data(persist="disk")
+  def num_imputer(X):
     circular_cols_init = ["MONTH_DISCOVERY", "DISCOVERY_WEEK", "DAY_OF_WEEK_DISCOVERY"]
     num_cols = feats.drop(circular_cols_init, axis = 1).columns
-    num_train, num_test = X_train[num_cols], X_test[num_cols]
+    X_num = X[num_cols]
     # Instanciation de la méthode SimpleImputer
     numeric_imputer = SimpleImputer(strategy = "median")
     # Initialisation des variables
@@ -637,35 +625,66 @@ if page == pages[3] :
              "FIRE_SIZE_CLASS_F", "FIRE_SIZE_CLASS_G"]
     sub_col = ["DURATION","FIRE_SIZE_CLASS_A", "FIRE_SIZE_CLASS_B", "FIRE_SIZE_CLASS_C", "FIRE_SIZE_CLASS_D", 
                "FIRE_SIZE_CLASS_E", "FIRE_SIZE_CLASS_F", "FIRE_SIZE_CLASS_G"]
-    sub_num_train_data = num_train[sub_col]
-    sub_num_test_data = num_test[sub_col]
-    train, test = sub_num_train_data, sub_num_test_data
+    sub_num_data = X_num[sub_col]
+    num_data = sub_num_data
     for fire_class in CLASS:
-        num_train_imputed = numeric_imputer.fit_transform(sub_num_train_data[sub_num_train_data[fire_class] == 1])
-        num_test_imputed = numeric_imputer.transform(sub_num_test_data[sub_num_test_data[fire_class] == 1])
-        train[train[fire_class] == 1] = num_train_imputed
-        test[test[fire_class] == 1] = num_test_imputed
-    num_train["DURATION"], num_test["DURATION"] = train["DURATION"], test["DURATION"]
-    num_train, num_test = num_train.reset_index(drop = True), num_test.reset_index(drop = True)
-    return num_train, num_test
-  num_train_imputed, num_test_imputed = num_imputer(X_train, X_test)
-  # st.dataframe(num_train_imputed.head())
-  
-  @st.cache_data(persist=True)
+        num_imputed = numeric_imputer.fit_transform(sub_num_data[sub_num_data[fire_class] == 1])
+        num_data[num_data[fire_class] == 1] = num_imputed
+    X_num["DURATION"] = num_data["DURATION"]
+    X_num = X_num.reset_index(drop = True)
+    return X_num
+  num_train_imputed, num_test_imputed = num_imputer(X_train), num_imputer(X_test)
+
+  # Reconstitution du jeu de données après traitement
+  @st.cache_data(persist="disk")
   def X_concat(X_train_num, X_test_num, circular_train, circular_test):
     X_train_final = pd.concat([X_train_num, circular_train], axis = 1)
     X_test_final = pd.concat([X_test_num, circular_test], axis = 1)
+    X_train_final = X_train_final.rename(columns={"AVG_TEMP [°C]": "AVG_TEMP", "AVG_PCP [mm]": "AVG_PCP"})
+    X_test_final = X_test_final.rename(columns={"AVG_TEMP [°C]": "AVG_TEMP", "AVG_PCP [mm]": "AVG_PCP"})
     X_total = pd.concat([X_train_final, X_test_final], axis = 0)
     y_total = pd.concat([y_train, y_test], axis = 0)
-    return X_train_final, X_test_final
-  X_train_final, X_test_final = X_concat(num_train_imputed, num_test_imputed, circular_train, circular_test)
-  # st.dataframe(X_train_final.head(10))
-  X_train_final = X_train_final.rename(columns={"AVG_TEMP [°C]": "AVG_TEMP", "AVG_PCP [mm]": "AVG_PCP"})
-  X_test_final = X_test_final.rename(columns={"AVG_TEMP [°C]": "AVG_TEMP", "AVG_PCP [mm]": "AVG_PCP"})
+    overall_col = X_train_final.columns
+    return X_train_final, X_test_final, overall_col
+  X_train_final, X_test_final, overall_col = X_concat(num_train_imputed, num_test_imputed, circular_train, circular_test)
+  y_train.to_csv("y_train.csv", index=False)
+  y_test.to_csv("y_test.csv", index=False)
 
 
+  # Réduction du modèle avec la méthode feature importances
+  @st.cache_data(persist="disk")
+  def model_reduction(classifier, X_train, y_train):
+    if classifier == "XGBoost":
+       clf = XGBClassifier(tree_meethod = "approx",
+                           objective = "multi:softprob").fit(X_train, y_train)
+       feat_imp_data = pd.DataFrame(list(clf.get_booster().get_fscore().items()),
+                                    columns=["feature", "importance"]).sort_values('importance', ascending=True)
+       feat_imp = list(feat_imp_data["feature"][-11:])
+    elif classifier == "Random Forest":
+       clf = RandomForestClassifier().fit(X_train, y_train)
+       feat_imp_data = pd.DataFrame(clf.feature_importances_,
+                                    index=X_train.columns, columns=["importance"]).sort_values('importance', ascending=True)
+       feat_imp = list(feat_imp_data.index[-11:])
+    elif classifier == "Regression Logistique":
+       clf = LogisticRegression(random_state = 42, max_iter=1000).fit(X_train, y_train)
+       coefficients = clf.coef_
+       avg_importance = np.mean(np.abs(coefficients), axis = 0)
+       feat_imp_data = pd.DataFrame({"feature":X_train.columns, "importance":avg_importance}).sort_values('importance', ascending=True)
+       feat_imp = list(feat_imp_data["feature"][-11:])
+    elif classifier == "Arbre de Décision":
+       clf = DecisionTreeClassifier(criterion = "gini", random_state = 42).fit(X_train, y_train)
+       feat_imp_data = pd.DataFrame(clf.feature_importances_,
+                                    index=X_train.columns, columns=["importance"]).sort_values('importance', ascending=True)
+       feat_imp = list(feat_imp_data.index[-11:])
+    return feat_imp
+    
+
+  ######################################################################################################################################################################
+  ### Fonctions de visualisation des métriques et graphes ##############################################################################################################
+  ######################################################################################################################################################################  
+  
   # Tracé des courbes Precision_Recall  
-  @st.cache_data(persist=True) 
+  @st.cache_data(persist="disk") 
   def multiclass_PR_curve(_classifier, X_test, y_test):
     y_test= label_binarize(y_test, classes=np.unique(y_test))
     n_classes = y_test.shape[1]
@@ -675,7 +694,7 @@ if page == pages[3] :
     precision = dict()
     recall = dict()
     average_precision = dict()
-    n_classes = y_test.shape[1]
+    # n_classes = y_test.shape[1]
     for i in range(n_classes):
         precision[i], recall[i], _ = precision_recall_curve(y_test[:, i], y_score[:, i])
         average_precision[i] = average_precision_score(y_test[:, i], y_score[:, i])
@@ -693,305 +712,482 @@ if page == pages[3] :
         legend_title='Classes'
     )
     return fig 
+  
+  ######################################################################################################################################################################
+  ### Fonctions d'entrainement sur l'ensemble du jeu d'entrainement et de sauvegarde des meilleurs modèles #############################################################
+  ######################################################################################################################################################################  
 
+  # Enregistrement des meilleurs modèles
+  # Best xgb raw model
+  @st.cache_data(persist="disk")
+  def best_xgb_raw_model(X, y):
+      xgb_best_params = {"learning_rate": 0.015,
+                        "max_depth": 3, 
+                        "n_estimators": 10}
+      clf_xgb = XGBClassifier(objective = "multi:softprob",
+                             tree_method = "approx",
+                             **xgb_best_params).fit(X, y)
+      joblib.dump(clf_xgb, "best_xgb_raw_model.joblib")
+      model = joblib.load("best_xgb_raw_model.joblib")
+      return model
+  # Best xgb raw model
+  @st.cache_data(persist="disk")
+  def best_rf_raw_model(X, y):
+     rf_best_params = {"n_estimators": 50,
+                      "max_depth": 100,
+                      "min_samples_leaf": 40,
+                      "min_samples_split": 50,
+                      "max_features": 'sqrt'}
+     clf_rf = RandomForestClassifier(**rf_best_params).fit(X, y)
+     joblib.dump(clf_rf, "best_rf_raw_model.joblib")
+     model = joblib.load("best_rf_raw_model.joblib")
+     return model
+  # Best LogReg raw model
+  @st.cache_data(persist="disk")
+  def best_LogReg_raw_model(X, y):
+     LogReg_best_params = {"C": 0.1,
+                      "solver": "sag",
+                      "max_iter":1000}
+     clf_LogReg = LogisticRegression(**LogReg_best_params, random_state = 42).fit(X, y)
+     joblib.dump(clf_LogReg, "best_lr_raw_model.joblib")
+     model = joblib.load("best_lr_raw_model.joblib")
+     return model
+  # Best Decision Tree raw model
+  @st.cache_data(persist="disk")
+  def best_DecTree_raw_model(X, y):
+     DecTree_best_params = {"criterion": "gini"}
+     clf_DecTree = DecisionTreeClassifier(**DecTree_best_params, random_state = 42).fit(X, y)
+     joblib.dump(clf_DecTree, "best_DecTree_raw_model.joblib")
+     model = joblib.load("best_DecTree_raw_model.joblib")
+     return model
 
-  classifier= st.selectbox("Sélection du modèle",("XGBoost", "Random Forest", "Regression Logistique","Arbre de Décision", "KNN", "Gradient Boosting"),key="model_selector")
+  ######################################################################################################################################################################
+  ### Fonctions de labelisation de set de données fournies en input pour une prédiction en temps réelles (en phase de production) ######################################
+  ######################################################################################################################################################################  
 
-  # Entrainement et sauvegarde des modèles
-  # Modèle 1 : XGBoost
-  if classifier == "XGBoost":
-    st.sidebar.subheader("Veuillez sélectionner les paramètres")
-    #Graphiques performances 
-    #graphes_perf = st.sidebar.multiselect("Choix graphiques",("Matrice confusion","Courbe ROC","Courbe Recall"))   
-    class_weights_option = st.sidebar.radio("Voulez-vous rééquilibrer les classes ?", ["Oui", "Non"], horizontal=True)
-    if class_weights_option == "Oui":
-      classes_weights = compute_class_weight(class_weight='balanced', classes=np.unique(y_train), y=y_train)
-      st.write("Les classes sont ré-équilibrées")
-    elif class_weights_option == "Non":
-      classes_weights = None
-      st.write("Les classes ne sont pas ré-équilibrées.")
+  # Labélisation des nouvelles données de prédiction
+  def real_data_process(data):
+    # Initialisation du dataframe pour le ML
+    data_shape = data.shape
+    X = pd.DataFrame(columns = overall_col, index=range(data_shape[0]))
+    # Remplacement des jours de la semaine par 1 à 7 au lieu de 0 à 6
+    data["DAY_OF_WEEK_DISCOVERY"] = data["DAY_OF_WEEK_DISCOVERY"].replace({0:1, 1:2, 2:3, 3:4, 4:5, 5:6, 6:7})
+    # Data preparation for time-series split
+    # Transformation cyclique
+    data_cyclic = cyclic_transform(data)
+    data[overall_col[-6:]] = data_cyclic
+    # Intégration des input à la grille labellisée du ML
+    for col in overall_col:
+       if col in data.columns:
+          X[col] = data[col]
+    # OneHot Encoding manuel des FIRE_SIZE_CLASS et STATE
+    FIRE_CLASS = ["FIRE_SIZE_CLASS_A", "FIRE_SIZE_CLASS_B", "FIRE_SIZE_CLASS_C", "FIRE_SIZE_CLASS_D", "FIRE_SIZE_CLASS_E", "FIRE_SIZE_CLASS_F", "FIRE_SIZE_CLASS_G"]
+    for i in range(data_shape[0]):
+       for fire_class in FIRE_CLASS:
+          if data.loc[i, "FIRE_SIZE_CLASS"] == fire_class[-1]:
+             X.loc[i, fire_class] = 1
+          else:
+             X.loc[i, fire_class] = 0
+       for state in (overall_col[14:-6]):
+          if data.loc[i, "STATE"] == state[6:]:
+             X.loc[i, state] = 1
+          else:
+             X.loc[i, state] = 0
+    return X
+  
+  
 
-    # Réduction du modèle avec la méthode feature importances
-    @st.cache_data(persist=True)
-    def model_reduction(X_train, y_train):
-      clf = XGBClassifier(tree_meethod = "approx",
-                          objective = "multi:softprob").fit(X_train, y_train)
-      feat_imp_data = pd.DataFrame(list(clf.get_booster().get_fscore().items()),
-                              columns=["feature", "importance"]).sort_values('importance', ascending=True)
-      feat_imp = list(feat_imp_data["feature"][-10:])
-      return feat_imp
-    
+    # FIPS CODE par STATE
+  def ETAT(nom_etat):
+    if nom_etat == "Alabama":
+      alabama_fips_code = X_train_final.loc[X_train_final["STATE_Alabama"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Alaska":
+      Alaska_fips_code = X_train_final.loc[X_train_final["STATE_Alaska"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Arizona":
+      Arizona_fips_code = X_train_final.loc[X_train_final["STATE_Arizona"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Arkansas":
+      Arkansas_fips_code = X_train_final.loc[X_train_final["STATE_Arkansas"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "California":
+      California_fips_code = X_train_final.loc[X_train_final["STATE_California"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Colorado":
+      Colorado_fips_code = X_train_final.loc[X_train_final["STATE_Colorado"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Delaware":
+      Delaware_fips_code = X_train_final.loc[X_train_final["STATE_Delaware"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Florida":
+      Florida_fips_code = X_train_final.loc[X_train_final["STATE_Florida"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Georgia":
+      Georgia_fips_code = X_train_final.loc[X_train_final["STATE_Georgia"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Idaho":
+      Idaho_fips_code = X_train_final.loc[X_train_final["STATE_Idaho"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Illinois":
+      Illinois_fips_code = X_train_final.loc[X_train_final["STATE_Illinois"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Indiana":
+      Indiana_fips_code = X_train_final.loc[X_train_final["STATE_Indiana"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Iowa":
+      Iowa_fips_code = X_train_final.loc[X_train_final["STATE_Iowa"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Kansas":
+      Kansas_fips_code = X_train_final.loc[X_train_final["STATE_Kansas"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Kentucky":
+      Kentucky_fips_code = X_train_final.loc[X_train_final["STATE_Kentucky"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Louisiana":
+      Louisiana_fips_code = X_train_final.loc[X_train_final["STATE_Louisiana"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Maine":
+      Maine_fips_code = X_train_final.loc[X_train_final["STATE_Maine"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Maryland":
+      Maryland_fips_code = X_train_final.loc[X_train_final["STATE_Maryland"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Massachusetts":
+      Massachusetts_fips_code = X_train_final.loc[X_train_final["STATE_Massachusetts"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Michigan":
+      Michigan_fips_code = X_train_final.loc[X_train_final["STATE_Michigan"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Minnesota":
+      Minnesota_fips_code = X_train_final.loc[X_train_final["STATE_Minnesota"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Mississippi":
+      Mississippi_fips_code = X_train_final.loc[X_train_final["STATE_Mississippi"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Missouri":
+      Missouri_fips_code = X_train_final.loc[X_train_final["STATE_Missouri"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Montana":
+      Montana_fips_code = X_train_final.loc[X_train_final["STATE_Montana"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Nebraska":
+      Nebraska_fips_code = X_train_final.loc[X_train_final["STATE_Nebraska"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Nevada":
+      Nevada_fips_code = X_train_final.loc[X_train_final["STATE_Nevada"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "New Hampshire":
+      New_Hampshire_fips_code = X_train_final.loc[X_train_final["STATE_New Hampshire"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "New Jersey":
+      New_Jersey_fips_code = X_train_final.loc[X_train_final["STATE_New Jersey"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "New Mexico":
+      New_Mexico_fips_code = X_train_final.loc[X_train_final["STATE_New Mexico"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "New York":
+      New_York_fips_code = X_train_final.loc[X_train_final["STATE_New York"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "North Carolina":
+      North_Carolina_fips_code = X_train_final.loc[X_train_final["STATE_North Carolina"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "North Dakota":
+      North_Dakota_fips_code = X_train_final.loc[X_train_final["STATE_North Dakota"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Ohio":
+      Ohio_fips_code = X_train_final.loc[X_train_final["STATE_Ohio"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Oklahoma":
+      Oklahoma_fips_code = X_train_final.loc[X_train_final["STATE_Oklahoma"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Oregon":
+      Oregon_fips_code = X_train_final.loc[X_train_final["STATE_Oregon"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Pennsylvania":
+      Pennsylvania_fips_code = X_train_final.loc[X_train_final["STATE_Pennsylvania"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Rhode Island":
+      Rhode_Island_fips_code = X_train_final.loc[X_train_final["STATE_Rhode Island"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "South Carolina":
+      South_Carolina_fips_code = X_train_final.loc[X_train_final["STATE_South Carolina"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "South Dakota":
+      South_Dakota_fips_code = X_train_final.loc[X_train_final["STATE_South Dakota"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Tennessee":
+      Tennessee_fips_code = X_train_final.loc[X_train_final["STATE_Tennessee"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Texas":
+      Texas_fips_code = X_train_final.loc[X_train_final["STATE_Texas"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Utah":
+      Utah_fips_code = X_train_final.loc[X_train_final["STATE_Utah"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Vermont":
+      Vermont_fips_code = X_train_final.loc[X_train_final["STATE_Vermont"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Virginia":
+      Virginia_fips_code = X_train_final.loc[X_train_final["STATE_Virginia"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Washington":
+      Washington_fips_code = X_train_final.loc[X_train_final["STATE_Washington"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "West Virginia":
+      West_Virginia_fips_code = X_train_final.loc[X_train_final["STATE_West Virginia"] == 1, "FIPS_CODE"].unique()
+    elif nom_etat == "Wisconsin":
+      Wisconsin_fips_code = X_train_final.loc[X_train_final["STATE_Wisconsin"] == 1, "FIPS_CODE"].unique()
+    elif STATE == "Wyoming":
+      Wyoming_fips_code = X_train_final.loc[X_train_final["STATE_Wyoming"] == 1, "FIPS_CODE"].unique()
+  ######################################################################################################################################################################
+  ### Code pour l'interface streamlit ##################################################################################################################################
+  ######################################################################################################################################################################  
+
+  classifier = st.selectbox("Veuillez sélectionner un modèle",("XGBoost", "Random Forest", "Regression Logistique","Arbre de Décision"),key="model_selector")
+  # st.sidebar.subheader("Veuillez sélectionner les paramètres")
+
+  ###################################
+  ### Test des différents modèles ###
+  ###################################
+  if st.checkbox("METIER : Voulez-vous tester les différents modèles ?"):
     Feature_importances = st.sidebar.radio("Voulez-vous réduire la dimension du jeu ?", ("Oui", "Non"), horizontal=True)
     if Feature_importances == "Oui":
-      feat_imp = model_reduction(X_train_final, y_train)
-      #st.write("Les variables les plus importantes sont", feat_imp)
+      feat_imp = model_reduction(classifier, X_train_final, y_train)
+      st.write("Les variables sont réduites")
       X_train_final, X_test_final = X_train_final[feat_imp], X_test_final[feat_imp]
     else:
       X_train_final, X_test_final = X_train_final, X_test_final
-
-    n_estimators = st.sidebar.slider("Veuillez choisir le nombre d'estimateurs", 10, 100, 10, 5)
-    tree_method = st.sidebar.radio("Veuillez choisir la méthode", ("approx", "hist"), horizontal=True)
-    max_depth = st.sidebar.slider("Veuillez choisir la profondeur de l'arbre", 3, 20, 5)
-    learning_rate = st.sidebar.slider("Veuillez choisir le learning rate", 0.005, 0.5, 0.1, 0.005) 
-
-  # Création d'un bouton pour le modèe avec les meilleurs paramètres
-  if st.sidebar.button("Best Model Execution"):
-    st.subheader("XGBoost Result")
-    best_params = {"learning_rate": 0.1, 
-                   "max_depth": 5, 
-                   "n_estimators": 10}
-    clf_xgb_best = XGBClassifier(objective = "multi:softprob",
-                                 tree_method = "approx",
-                                 **best_params).fit(X_train_final[feat_imp], y_train)
-    # Enrégistrement du meilleur modèle
-    joblib.dump(clf_xgb_best, "clf_xgb_best_model.joblib")
-    # Chargement du meilleur modèle
-    clf_best_model = joblib.load("clf_xgb_best_model.joblib")
-    # Prédiction avec le meilleur modèle
-    y_pred = clf_best_model.predict(X_test_final[feat_imp])
-    # st.write("Le score de prédiction est de :", clf_best_model.score(X_test_final[feat_imp], y_test))
-    # Métriques
-    accuracy = clf_best_model.score(X_test_final[feat_imp], y_test)
-    # recall = recall_scorer(y_test, best_clf_pred)
-    # recall_scorer = make_scorer(recall_score, average = "micro")
-    #Afficher
-    st.write("Accuracy",round(accuracy,4))
-    # st.write("recall",round(recall,4))
-
-    col1, col2, col3 = st.columns(3, gap="small", vertical_alignment="center") #
-    with col1:
-        with st.container(height=500):
-            #st.subheader("Courbe Precision Recall")
-            fig= multiclass_PR_curve(clf_best_model, X_test_final[feat_imp], y_test) 
-            fig.update_layout({
-            'plot_bgcolor': 'rgba(0, 0, 0, 0)',
-            'paper_bgcolor': 'rgba(0, 0, 0, 0)'
-        })
-            st.plotly_chart(fig)   
-           
-    with col2:
-        with st.container(height=500):
-            #st.subheader("Matrice de Confusion")
-            cm = confusion_matrix(y_test, y_pred)
-            figML = px.imshow(cm, labels={"x": "Classes Prédites", "y": "Classes réelles"}, width=400, height=400, text_auto=True)
-            #layout = go.Layout(title='Confusion Matrix', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')  
-            figML.update_layout(title='Confusion Matrix', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', width=1000, height=500, legend=dict(
-                x=0.5, y=1.05, orientation="h", xanchor="center", yanchor="bottom", font=dict(family="Arial", size=15, color="black")),
-               margin=dict(l=100, r=100, t=100, b=100), titlefont=dict(size=20))
-            st.plotly_chart(figML)
-
-    with col3:
-        with st.container(height=500):
-            #st.subheader("Feature Importance")
-            if hasattr(clf_best_model, 'feature_importances_'):
-                feat_imp = pd.Series(clf_best_model.feature_importances_, index=X_test_final.columns).sort_values(ascending=True)
-                fig = px.bar(feat_imp, x=feat_imp.values, y=feat_imp.index, orientation='h')
-                fig.update_layout(title='Feature Importance',
-                                  xaxis_title='Importance',
-                                  yaxis_title='Features',
-                                  paper_bgcolor='rgba(0,0,0,0)',  
-                                  plot_bgcolor='rgba(0,0,0,0)',  
-                                  width=1000, height=500,
-                                  legend=dict(x=0.5, y=0.93, orientation="h", xanchor="center", yanchor="bottom",
-                                              font=dict(family="Arial", size=15, color="black")),
-                                  margin=dict(l=100, r=100, t=100, b=100),
-                                  titlefont=dict(size=15))
-                st.plotly_chart(fig)
-
-
-  # Création d'un bouton utilisateur pour l'interactivité
-  if st.sidebar.button("User Execution", key = "classify"):
-    st.subheader("XGBoost User Results")
-    model = XGBClassifier(n_estimators = n_estimators,
-                          objective = "multi:softprob",
-                          tree_method = tree_method, 
-                          max_depth = max_depth,
-                          learning_rate = learning_rate,                  
-                          sample_weight = classes_weights).fit(X_train_final, y_train)
-    st.write("Le score d'entrainement est :", model.score(X_train_final, y_train))
-    y_pred = model.predict(X_test_final)
-    st.write("Le score de test est :", model.score(X_test_final, y_test))
+      st.write("Les variables ne sont pas réduites")
     
-    col1, col2, col3 = st.columns(3, gap="small", vertical_alignment="center") #
-    with col1:
-        with st.container(height=500):
-            #st.subheader("Courbe Precision Recall")
-            fig= multiclass_PR_curve(model, X_test_final[feat_imp], y_test) 
-            fig.update_layout({
-            'plot_bgcolor': 'rgba(0, 0, 0, 0)',
-            'paper_bgcolor': 'rgba(0, 0, 0, 0)'
-        })
-            st.plotly_chart(fig)   
-           
-    with col2:
-        with st.container(height=500):
-            #st.subheader("Matrice de Confusion")
-            cm = confusion_matrix(y_test, y_pred)
-            figML = px.imshow(cm, labels={"x": "Classes Prédites", "y": "Classes réelles"}, width=400, height=400, text_auto=True)
-            #layout = go.Layout(title='Confusion Matrix', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')  
-            figML.update_layout(title='Confusion Matrix', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', width=1000, height=500, legend=dict(
-                x=0.5, y=1.05, orientation="h", xanchor="center", yanchor="bottom", font=dict(family="Arial", size=15, color="black")),
-               margin=dict(l=100, r=100, t=100, b=100), titlefont=dict(size=20))
-            st.plotly_chart(figML)
-
-    with col3:
-        with st.container(height=500):
-            #st.subheader("Feature Importance")
-            if hasattr(model, 'feature_importances_'):
-                feat_imp = pd.Series(model.feature_importances_, index=X_test_final.columns).sort_values(ascending=True)
-                fig = px.bar(feat_imp, x=feat_imp.values, y=feat_imp.index, orientation='h')
-                fig.update_layout(title='Feature Importance',
-                                  xaxis_title='Importance',
-                                  yaxis_title='Features',
-                                  paper_bgcolor='rgba(0,0,0,0)',  
-                                  plot_bgcolor='rgba(0,0,0,0)',  
-                                  width=1000, height=500,
-                                  legend=dict(x=0.5, y=0.93, orientation="h", xanchor="center", yanchor="bottom",
-                                              font=dict(family="Arial", size=15, color="black")),
-                                  margin=dict(l=100, r=100, t=100, b=100),
-                                  titlefont=dict(size=15))
-                st.plotly_chart(fig)
-  
-  elif classifier == "Random Forest":
-    st.sidebar.subheader("Veuillez sélectionner les paramètres")
-    class_weights_option = st.sidebar.radio("Voulez-vous rééquilibrer les classes ?", ["Oui", "Non"], horizontal=True)
-    if class_weights_option == "Oui":
-        class_weights_array = compute_class_weight(class_weight='balanced', classes=np.unique(y_train), y=y_train)
-        classes_weights = {i: weight for i, weight in enumerate(class_weights_array)}
+    # Définition des paramètres des modèles sur l'interface streamlit
+    ####################################
+    ###        Modèle XGBoost        ###
+    ####################################
+    if classifier == "XGBoost": 
+      # Ré-équilibrage ou non des données 
+      class_weights_option = st.sidebar.radio("Voulez-vous rééquilibrer les classes ?", ["Oui", "Non"], horizontal=True)
+      if class_weights_option == "Oui":
+        classes_weights = compute_class_weight(class_weight='balanced', classes=np.unique(y_train), y=y_train)
         st.write("Les classes sont ré-équilibrées")
-    else:
+      elif class_weights_option == "Non":
         classes_weights = None
         st.write("Les classes ne sont pas ré-équilibrées.")
 
-    # Réduction du modèle avec la méthode feature importances
-    @st.cache_data(persist=True)
-    def model_reduction(X_train, y_train):
-        clf_rf = RandomForestClassifier(class_weight= classes_weights).fit(X_train, y_train)
-        feat_imp_data = pd.DataFrame(clf_rf.feature_importances_,
-                                    index=X_train.columns, columns=["importance"]).sort_values('importance', ascending=True)
-        feat_imp = list(feat_imp_data.index[-10:])
-        return feat_imp
+      n_estimators = st.sidebar.slider("Veuillez choisir le nombre d'estimateurs", 5, 30, 10, 5)
+      tree_method = st.sidebar.radio("Veuillez choisir la méthode", ("approx", "hist"), horizontal=True)
+      max_depth = st.sidebar.slider("Veuillez choisir la profondeur de l'arbre", 3, 20, 5)
+      learning_rate = st.sidebar.slider("Veuillez choisir le learning rate", 0.05, 0.25, 0.1, 0.05)
+    ####################################
+    ###     Modèle Random Forest     ###
+    ####################################
+    elif classifier == "Random Forest":
+      class_weights_option = st.sidebar.radio("Voulez-vous rééquilibrer les classes ?", ["Oui", "Non"], horizontal=True)
+      if class_weights_option == "Oui":
+          class_weights_array = compute_class_weight(class_weight='balanced', classes=np.unique(y_train), y=y_train)
+          classes_weights = {i: weight for i, weight in enumerate(class_weights_array)}
+          st.write("Les classes sont ré-équilibrées")
+      else:
+          classes_weights = None
+          st.write("Les classes ne sont pas ré-équilibrées.")
+      n_estimators = st.sidebar.slider("Veuillez choisir le nombre d'estimateurs", 5, 30, 10, 5)
+      max_depth = st.sidebar.slider("Veuillez choisir la profondeur de l'arbre", 3, 10)
+      min_samples_leaf = st.sidebar.slider("Veuillez choisir min_samples_leaf", 20, 60, 40, 5)
+      min_samples_split = st.sidebar.slider("Veuillez choisir min_samples_split", 30, 100, 100, 5)      
+      max_features = st.sidebar.radio("Veuillez choisir le nombre de features", ("sqrt", "log2"), horizontal=True)
+    ####################################
+    ### Modèle Regression Logistique ###
+    ####################################
+    elif classifier == "Regression Logistique":
+      class_weights_option = st.sidebar.radio("Voulez-vous rééquilibrer les classes ?", ["Oui", "Non"], horizontal=True)
+      if class_weights_option == "Oui":
+         classes_weights = 'balanced'
+      else:
+         classes_weights = None
+      max_iter = st.sidebar.slider("Veuillez choisir le nombre d'itérations", 100, 2000, 1000, 50)
+      solver = st.sidebar.radio("Veuillez choisir le solveur", ("lbfgs", "newton-cg", "sag", "saga"), horizontal=True)
+    ####################################
+    ###   Modèle Arbre de Décision   ###
+    ####################################
+    elif classifier == "Arbre de Décision":
+      class_weights_option = st.sidebar.radio("Voulez-vous rééquilibrer les classes ?", ["Oui", "Non"], horizontal=True)
+      if class_weights_option == "Oui":
+         classes_weights = 'balanced'
+      else:
+         classes_weights = None
+      criterion = st.sidebar.radio("Veuillez choisir le critère", ["gini", "entropy"], horizontal=True)
+      max_features = st.sidebar.radio("Veuillez choisir le critère", ["log2", "sqrt"], horizontal=True)
+      max_depth = st.sidebar.slider("Veuillez choisir la profondeur de l'arbre", 10, 200, 10, 10)
+      min_samples_split = st.sidebar.slider("Veuillez choisir la profondeur de l'arbre", 10, 50, 20, 5)
+      min_samples_leaf = st.sidebar.slider("Veuillez choisir la profondeur de l'arbre", 10, 100, 50, 5)
+    ####################################
+    ###  Modèle K-Nearest Neighbors  ###
+    ####################################
+    elif classifier == "KNN":
+      st.write("KNN")
+    ####################################
+    ###   Modèle Gradient Boosting   ###
+    ####################################
+    elif classifier == "Gradient Boosting":
+      st.write("Gradient Boosting")
 
-    Feature_importances = st.sidebar.radio("Voulez-vous réduire la dimension du jeu ?", ("Oui", "Non"), horizontal=True)
-    if Feature_importances == "Oui":
-        feat_imp = model_reduction(X_train_final, y_train)
-        #st.write("Les variables les plus importantes sont", feat_imp)
+    # Création d'un bouton pour le modèle avec les meilleurs paramètres
+    if st.sidebar.button("Best Model Execution"):
+      if classifier == "XGBoost":
+        st.subheader("XGBoost Result")
+        best_params = {"learning_rate": 0.015, 
+                        "max_depth": 3, 
+                        "n_estimators": 10}
+        classes_weights = class_weight.compute_sample_weight(class_weight='balanced', y = y_train)
+        feat_imp = model_reduction(classifier, X_train_final, y_train)
         X_train_final, X_test_final = X_train_final[feat_imp], X_test_final[feat_imp]
-    else:
-        X_train_final, X_test_final = X_train_final, X_test_final
+        clf_xgb_best = XGBClassifier(objective = "multi:softprob",
+                                      tree_method = "approx",
+                                      **best_params).fit(X_train_final, y_train, sample_weight = classes_weights)
+        # Enrégistrement du meilleur modèle
+        joblib.dump(clf_xgb_best, "clf_xgb_best_model.joblib")
+        # Chargement du meilleur modèle
+        model = joblib.load("clf_xgb_best_model.joblib")
+      elif classifier == "Random Forest":
+        st.subheader("Random Forest Result")
+        best_params = {"n_estimators": 50,
+                      "max_depth": 100,
+                      "min_samples_leaf": 40,
+                      "min_samples_split": 50,
+                      "max_features": 'sqrt'}
+        feat_imp = model_reduction(classifier, X_train_final, y_train)
+        X_train_final, X_test_final = X_train_final[feat_imp], X_test_final[feat_imp]
+        clf_rf_best = RandomForestClassifier(**best_params, class_weight='balanced').fit(X_train_final, y_train)
+        joblib.dump(clf_rf_best, "clf_rf_best_model.joblib")
+        # Chargement du meilleur modèle
+        model = joblib.load("clf_rf_best_model.joblib")
+      elif classifier == "Regression Logistique":
+        st.subheader("Logistic Regression Result")
+        best_params = {"max_iter":1000,
+                       "C":0.1,
+                       "solver":"sag"}
+        feat_imp = model_reduction(classifier, X_train_final, y_train)
+        X_train_final, X_test_final = X_train_final[feat_imp], X_test_final[feat_imp]
+        clf_LogReg_best = LogisticRegression(**best_params, class_weight = "balanced", random_state = 42).fit(X_train_final, y_train)
+        joblib.dump(clf_LogReg_best, "clf_LogReg_best_model.joblib")
+        model = joblib.load("clf_LogReg_best_model.joblib")
+      elif classifier == "Arbre de Décision":
+        st.subheader("Decision Tree Result")
+        best_params = {"criterion":"gini"}
+        feat_imp = model_reduction(classifier, X_train_final, y_train)
+        X_train_final, X_test_final = X_train_final[feat_imp], X_test_final[feat_imp]
+        clf_DecTree_best = DecisionTreeClassifier(**best_params, class_weight = "balanced", random_state = 42).fit(X_train_final, y_train)
+        joblib.dump(clf_DecTree_best, "clf_DecTree_best_model.joblib")
+        model = joblib.load("clf_DecTree_best_model.joblib")
+      y_pred = model.predict(X_test_final[feat_imp])
+      accuracy = model.score(X_test_final[feat_imp], y_test)
+      st.write("Accuracy", round(accuracy, 4))
+      
+      # Tracé des graphes (Feature Importances, Matrice de confusion, Precision-Recall)
+      col1, col2, col3 = st.columns(3, gap="small", vertical_alignment="center") #
+      with col3:
+          with st.container(height=500):
+              #st.subheader("Courbe Precision Recall")
+              fig= multiclass_PR_curve(model, X_test_final[feat_imp], y_test) 
+              fig.update_layout({
+              'plot_bgcolor': 'rgba(0, 0, 0, 0)',
+              'paper_bgcolor': 'rgba(0, 0, 0, 0)'
+          })
+              st.plotly_chart(fig)   
+            
+      with col2:
+          with st.container(height=500):
+              #st.subheader("Matrice de Confusion")
+              cm = np.round(confusion_matrix(y_test, y_pred, normalize = "true"), 4)
+              figML = px.imshow(cm, labels={"x": "Classes Prédites", "y": "Classes réelles"}, width=400, height=400, text_auto=True)  
+              figML.update_layout(title='Confusion Matrix', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', width=1000, height=500, legend=dict(
+                  x=0.5, y=1.05, orientation="h", xanchor="center", yanchor="bottom", font=dict(family="Arial", size=15, color="black")),
+                margin=dict(l=100, r=100, t=100, b=100), titlefont=dict(size=20))
+              st.plotly_chart(figML)
 
-    n_estimators = st.sidebar.slider("Veuillez choisir le nombre d'estimateurs", 30, 50, 100)
-    max_depth = st.sidebar.slider("Veuillez choisir la profondeur de l'arbre", 50, 100, 200)
-    min_samples_leaf = st.sidebar.slider("Veuillez choisir min_samples_leaf", 20, 40, 60)
-    min_samples_split = st.sidebar.slider("Veuillez choisir min_samples_split", 30, 50, 100)      
-    max_features = st.sidebar.radio("Veuillez choisir le nombre de features", ("sqrt", "log2"), horizontal=True)
+      with col1:
+          with st.container(height=500):
+              #st.subheader("Feature Importance")
+              if hasattr(model, 'feature_importances_'):
+                  feat_imp = pd.Series(model.feature_importances_, index=X_test_final.columns).sort_values(ascending=True)
+              elif hasattr(model, "coef_"):
+                  avg_importance_values = np.mean(np.abs(model.coef_), axis = 0)
+                  feat_imp = pd.Series(avg_importance_values, index=X_test_final.columns).sort_values(ascending=True)
+              fig = px.bar(feat_imp, x=feat_imp.values, y=feat_imp.index, orientation='h')
+              fig.update_layout(title='Feature Importance',
+                                xaxis_title='Importance',
+                                yaxis_title='Features',
+                                paper_bgcolor='rgba(0,0,0,0)',  
+                                plot_bgcolor='rgba(0,0,0,0)',  
+                                width=1000, height=500,
+                                legend=dict(x=0.5, y=0.93, orientation="h", xanchor="center", yanchor="bottom",
+                                            font=dict(family="Arial", size=15, color="black")),
+                                margin=dict(l=100, r=100, t=100, b=100),
+                                titlefont=dict(size=15))
+              st.plotly_chart(fig)
 
-  # Création d'un bouton pour le modèle avec les meilleurs paramètres
-  if st.sidebar.button("Best Model Execution", key="classify 2"):
-    st.subheader("Random Forest Result")
-    best_params = {"n_estimators": 50,
-                    "max_depth": 100,
-                    "min_samples_leaf": 40,
-                    "min_samples_split": 50,
-                    "max_features": 'sqrt'}
-    clf_rf_best = RandomForestClassifier(**best_params).fit(X_train_final, y_train)
-    joblib.dump(clf_rf_best, "clf_rf_best_model.joblib")
-    clf_best_rf = joblib.load("clf_rf_best_model.joblib")
-    best_rf_pred = clf_best_rf.predict(X_test_final[feat_imp])
-    accuracy = clf_best_rf.score(X_test_final[feat_imp], y_test)
-    #recall=recall_score(y_test, best_rf_pred) 
-    st.write("Accuracy", round(accuracy, 4))
+    # Création d'un bouton utilisateur pour l'interactivité
+    if st.sidebar.button("User Execution", key = "classify"):
+      if classifier == "XGBoost":
+        st.subheader("XGBoost User Results")
+        model = XGBClassifier(n_estimators = n_estimators,
+                              objective = "multi:softprob",
+                              tree_method = tree_method, 
+                              max_depth = max_depth,
+                              learning_rate = learning_rate,                  
+                              sample_weight = classes_weights).fit(X_train_final, y_train)
+      elif classifier == "Random Forest":
+        st.subheader("Random Forest User Results")
+        model = RandomForestClassifier(n_estimators=n_estimators,
+                                        max_depth=max_depth,
+                                        max_features=max_features,
+                                        class_weight = classes_weights).fit(X_train_final, y_train)
+      elif classifier == "Regression Logistique":
+         st.subheader("Logistic Regression User Results")
+         model = LogisticRegression(random_state = 42, 
+                                    max_iter = max_iter, 
+                                    solver = solver,
+                                    class_weight = classes_weights).fit(X_train_final, y_train)
+      elif classifier == "Arbre de Décision":
+        st.subheader("Decision Tree User Results")
+        model = DecisionTreeClassifier(random_state = 42,
+                                        criterion = criterion,
+                                        max_features = max_features,
+                                        max_depth = max_depth,
+                                        min_samples_split = min_samples_split,
+                                        min_samples_leaf = min_samples_leaf,
+                                        class_weight = classes_weights).fit(X_train_final, y_train)
+      st.write("Le score d'entrainement est :", np.round(model.score(X_train_final, y_train), 4))
+      y_pred = model.predict(X_test_final)
+      st.write("Le score de test est :", np.round(model.score(X_test_final, y_test), 4))
+      
+      # Tracé des graphes
+      col1, col2 = st.columns(2, gap="small", vertical_alignment="center") #
+      with col2:
+          with st.container(height=500):
+              #st.subheader("Courbe Precision Recall")
+              fig= multiclass_PR_curve(model, X_test_final, y_test) 
+              fig.update_layout({
+              'plot_bgcolor': 'rgba(0, 0, 0, 0)',
+              'paper_bgcolor': 'rgba(0, 0, 0, 0)'
+          })
+              st.plotly_chart(fig)   
+            
+      with col1:
+          with st.container(height=500):
+              #st.subheader("Matrice de Confusion")
+              cm = np.round(confusion_matrix(y_test, y_pred, normalize = "true"), 4)
+              figML = px.imshow(cm, labels={"x": "Classes Prédites", "y": "Classes réelles"}, width=400, height=400, text_auto=True)
+              #layout = go.Layout(title='Confusion Matrix', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')  
+              figML.update_layout(title='Confusion Matrix', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', width=1000, height=500, legend=dict(
+                  x=0.5, y=1.05, orientation="h", xanchor="center", yanchor="bottom", font=dict(family="Arial", size=15, color="black")),
+                margin=dict(l=100, r=100, t=100, b=100), titlefont=dict(size=20))
+              st.plotly_chart(figML)
+
+
+  #############################################################################
+  ### Déploiement en production (prédiction basée sur de nouvelles données) ###
+  #############################################################################
+
+  # # Affichage des données de validation (interactivité)
+  # if st.checkbox("Affichage d'exemples de données à utiliser pour la validation"):
+  #   st.dataframe(Fires_test2)
+
+  # Saisie des nouvelles données et prédiction des causes
+  if st.checkbox("PRODUCTION : Nouvelle prédiction"):
+    df = pd.DataFrame(columns=["FIRE_YEAR", "LATITUDE", "LONGITUDE", "FIPS_CODE", "AVG_TEMP", "AVG_PCP", "DURATION", "FIRE_SIZE_CLASS", "STATE", "MONTH_DISCOVERY", "DISCOVERY_WEEK", "DAY_OF_WEEK_DISCOVERY"])
+    STATE = Fires_ML["STATE"].unique()
     
-    col1, col2, col3 = st.columns(3, gap="small", vertical_alignment="center") #
-    with col1:
-        with st.container(height=500):
-            #st.subheader("Courbe Precision Recall")
-            fig= multiclass_PR_curve(clf_rf_best, X_test_final[feat_imp], y_test) 
-            fig.update_layout({
-            'plot_bgcolor': 'rgba(0, 0, 0, 0)',
-            'paper_bgcolor': 'rgba(0, 0, 0, 0)'
-        })
-            st.plotly_chart(fig)   
-           
-    with col2:
-        with st.container(height=500):
-            #st.subheader("Matrice de Confusion")
-            cm = confusion_matrix(y_test, best_rf_pred)
-            figML = px.imshow(cm, labels={"x": "Classes Prédites", "y": "Classes réelles"}, width=400, height=400, text_auto=True)
-            #layout = go.Layout(title='Confusion Matrix', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')  
-            figML.update_layout(title='Confusion Matrix', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', width=1000, height=500, legend=dict(
-                x=0.5, y=1.05, orientation="h", xanchor="center", yanchor="bottom", font=dict(family="Arial", size=15, color="black")),
-               margin=dict(l=100, r=100, t=100, b=100), titlefont=dict(size=20))
-            st.plotly_chart(figML)
-
-    with col3:
-        with st.container(height=500):
-            #st.subheader("Feature Importance")
-            if hasattr(clf_rf_best, 'feature_importances_'):
-                feat_imp = pd.Series(clf_rf_best.feature_importances_, index=X_test_final.columns).sort_values(ascending=True)
-                fig = px.bar(feat_imp, x=feat_imp.values, y=feat_imp.index, orientation='h')
-                fig.update_layout(title='Feature Importance',
-                                  xaxis_title='Importance',
-                                  yaxis_title='Features',
-                                  paper_bgcolor='rgba(0,0,0,0)',  
-                                  plot_bgcolor='rgba(0,0,0,0)',  
-                                  width=1000, height=500,
-                                  legend=dict(x=0.5, y=0.93, orientation="h", xanchor="center", yanchor="bottom",
-                                              font=dict(family="Arial", size=15, color="black")),
-                                  margin=dict(l=100, r=100, t=100, b=100),
-                                  titlefont=dict(size=15))
-                st.plotly_chart(fig)
-  
-  # Création d'un bouton utilisateur pour l'interactivité
-  if st.sidebar.button("User Execution", key="classify 3"):
-    st.subheader("Random Forest User Results")
-    model = RandomForestClassifier(n_estimators=n_estimators,
-                                   max_depth=max_depth,
-                                   max_features=max_features,
-                                   class_weight='balanced').fit(X_train_final, y_train)
-    st.write("Le score d'entrainement est :", model.score(X_train_final, y_train))
-    y_pred = model.predict(X_test_final)
-    st.write("Le score de test est :", model.score(X_test_final, y_test))
-    
-    col1, col2, col3 = st.columns(3, gap="small", vertical_alignment="center") #
-    with col1:
-        with st.container(height=500):
-            #st.subheader("Courbe Precision Recall")
-            fig= multiclass_PR_curve(model, X_test_final[feat_imp], y_test) 
-            fig.update_layout({
-            'plot_bgcolor': 'rgba(0, 0, 0, 0)',
-            'paper_bgcolor': 'rgba(0, 0, 0, 0)'
-        })
-            st.plotly_chart(fig)   
-           
-    with col2:
-        with st.container(height=500):
-            #st.subheader("Matrice de Confusion")
-            cm = confusion_matrix(y_test, y_pred)
-            figML = px.imshow(cm, labels={"x": "Classes Prédites", "y": "Classes réelles"}, width=400, height=400, text_auto=True)
-            #layout = go.Layout(title='Confusion Matrix', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')  
-            figML.update_layout(title='Confusion Matrix', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', width=1000, height=500, legend=dict(
-                x=0.5, y=1.05, orientation="h", xanchor="center", yanchor="bottom", font=dict(family="Arial", size=15, color="black")),
-               margin=dict(l=100, r=100, t=100, b=100), titlefont=dict(size=20))
-            st.plotly_chart(figML)
-
-    with col3:
-        with st.container(height=500):
-            #st.subheader("Feature Importance")
-            if hasattr(model, 'feature_importances_'):
-                feat_imp = pd.Series(model.feature_importances_, index=X_test_final.columns).sort_values(ascending=True)
-                fig = px.bar(feat_imp, x=feat_imp.values, y=feat_imp.index, orientation='h')
-                fig.update_layout(title='Feature Importance',
-                                  xaxis_title='Importance',
-                                  yaxis_title='Features',
-                                  paper_bgcolor='rgba(0,0,0,0)',  
-                                  plot_bgcolor='rgba(0,0,0,0)',  
-                                  width=1000, height=500,
-                                  legend=dict(x=0.5, y=0.93, orientation="h", xanchor="center", yanchor="bottom",
-                                              font=dict(family="Arial", size=15, color="black")),
-                                  margin=dict(l=100, r=100, t=100, b=100),
-                                  titlefont=dict(size=15))
-                st.plotly_chart(fig)
+    config = {
+      "FIRE_YEAR": st.column_config.NumberColumn("FIRE_YEAR", min_value = 2015, required = True, help = "Entrer une année supérieure à 2015"),
+      "LATITUDE": st.column_config.NumberColumn("LATITUDE", min_value = 17.9, max_value = 70.4, required = True),
+      "LONGITUDE": st.column_config.NumberColumn("LONGITUDE", min_value = -179, max_value = 0, required = True),
+      "STATE": st.column_config.SelectboxColumn("STATE", options = STATE, required = True),
+      "FIPS_CODE": st.column_config.NumberColumn("FIPS_CODE", min_value = 0, max_value = 810, required = True),
+      "AVG_TEMP": st.column_config.NumberColumn("AVG_TEMP", min_value = -50, max_value = 50, required = True, help = "Entrer une température en °C"),
+      "AVG_PCP": st.column_config.NumberColumn("AVG_PCP", min_value = 0, max_value = 1000, required = True, help = "Entrer un niveau de précipitation en mm"),
+      "DURATION": st.column_config.NumberColumn("DURATION", min_value = 0, max_value = 200, required = True, help = "Entrer une durée en jour"),
+      "MONTH_DISCOVERY": st.column_config.NumberColumn("MONTH_DISCOVERY", min_value = 1, max_value = 12, required = True, help = "Entrer une valeur comprise entre 1 et 12"),
+      "DISCOVERY_WEEK": st.column_config.NumberColumn("DISCOVERY_WEEK", min_value = 1, max_value = 53, required = True, help = "Entrer une valeur comprise entre 1 et 53"),
+      "DAY_OF_WEEK_DISCOVERY": st.column_config.NumberColumn("DAY_OF_WEEK_DISCOVERY", min_value = 0, max_value = 6, required = True, help = "Entrer une valeur comprise entre 0 et 6"),
+      "FIRE_SIZE_CLASS": st.column_config.SelectboxColumn("FIRE_SIZE_CLASS", options=["A", "B", "C", "D", "E", "F", "G"], required = True),
+      # "STATE": st.column_config.SelectboxColumn("STATE", options = STATE, required = True)
+      }
+    input_data = st.data_editor(df, column_config = config, num_rows='dynamic')
+    if st.button("RUN"):
+      input_data_ML = real_data_process(input_data).astype("float")
+      # # Affichage des inputs labelisées
+      # st.dataframe(input_data_ML)
+      # Prédiction de la cause du (des) feu(x)
+      if classifier == "XGBoost":
+          clf = best_xgb_raw_model(X_train_final, y_train)
+      elif classifier == "Random Forest":
+          clf = best_rf_raw_model(X_train_final, y_train)
+      elif classifier == "Regression Logistique":
+          clf = best_LogReg_raw_model(X_train_final, y_train)
+      elif classifier == "Arbre de Décision":
+          clf = best_DecTree_raw_model(X_train_final, y_train)
+      y_pred = clf.predict(input_data_ML)
+      y_pred = pd.DataFrame(y_pred, columns = ["FIRE CAUSE"], index = input_data.index)
+      y_pred.loc[y_pred["FIRE CAUSE"] == 0, "FIRE CAUSE"] = "Humaine"
+      y_pred.loc[y_pred["FIRE CAUSE"] == 1, "FIRE CAUSE"] = "Criminelle"
+      y_pred.loc[y_pred["FIRE CAUSE"] == 2, "FIRE CAUSE"] = "Naturelle"
+      st.dataframe(y_pred)
 
 
 if page == pages[4] :  
