@@ -8,7 +8,7 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-st.title('Prédiction des feux de forêts aux USA 🔥')
+# st.title('Prédiction des feux de forêts aux USA 🔥')
 from collections import Counter
 from imblearn.ensemble import EasyEnsembleClassifier
 from imblearn.ensemble import BalancedRandomForestClassifier
@@ -53,6 +53,22 @@ import joblib
 from itertools import cycle
 import json
 
+col1, col2, col3 = st.columns([0.6, 0.25, 0.15], gap="small", vertical_alignment="top")
+with col1:
+  st.title("Prédiction des feux de forêts aux USA 🔥")
+with col2:
+  st.write("""
+           #### Promotion DA - Fév2024 :
+           ###### Marie-Laure MAILLET / Gigi DECORMON         
+           ###### Adoté Sitou BLIVI / Amilcar LOPEZ TELLEZ
+           """)
+with col3:
+  st.markdown("""
+              #### Mentor :
+              ###### Antoine TARDIVON
+              """)
+
+st.subheader("", divider="gray")
 
 # Mise en forme couleur du fond de l'application
 page_bg_img="""<style>
@@ -89,8 +105,10 @@ if page == pages[0] :
   st.write("### Contexte et présentation du projet")
   #st.image("ImageFeu.jpg")
   st.image("feu_foret.jpg", caption="Feu de forêt en Californie du Nord", width=500)
-  st.write("Nous sommes en réorientation professionnelle et cherchons à approfondir nos compétences en data analysis. Ce projet nous permet de mettre en pratique les méthodes et outils appris durant notre formation, de l’exploration des données à la modélisation et la data visualisation.")
-  st.markdown("""
+  st.markdown("""<div style="text-align: justify;">
+              Nous sommes en réorientation professionnelle et cherchons à approfondir nos compétences en data analysis. Ce projet nous permet de mettre en pratique les méthodes et outils appris durant notre formation, de l’exploration des données à la modélisation et la data visualisation.
+              </div>""", unsafe_allow_html=True)
+  st.write("""
     ### Étapes du projet :
     - **Nettoyage et pré-processing des données**
     - **Storytelling avec DataViz** (Plotly, seaborn, matplotlib)
@@ -105,7 +123,7 @@ if page == pages[0] :
     - Évaluation des risques de grande taille.
     """)
 
-#Création de la page 1 avec explication du préprocessing     
+# Création de la page 1 avec explication du préprocessing     
 #if page == pages[1] : 
 
 if page == pages[1]:
@@ -169,7 +187,7 @@ if page == pages[1]:
   if st.checkbox("Afficher les na") :
     st.dataframe(df.isna().sum(), width=300, height=640)
       
-#Création de la page 2 Datavizualisation
+# Création de la page 2 Datavizualisation
 if page == pages[2] : 
   st.header("DataVizualisation")
   #st.write("Nous avons analysé le dataset sous différents angles afin d’en faire ressortir les principales caractéristiques.")
@@ -507,9 +525,9 @@ if page == pages[2] :
 
   st.write("En analysant ces données plus en détail, on peut mieux comprendre les facteurs qui contribuent aux feux. Ces données soulignent l’importance de la prévention des feux de foret d’origine humaine et de la gestion des risques naturels pour minimiser les dégâts causés par les feux de forêt.")
   
-
+# Modèles de prédiction des causes
 if page == pages[3] : 
-  st.write("## Prédiction causes de feux")
+  st.write("## Prédiction des causes de feux")
 
   # Suppression des variables non utiles au ML
   Drop_col_ML = ["NWCG_REPORTING_UNIT_NAME", "FPA_ID","DISCOVERY_DATE","DISCOVERY_DOY","DISCOVERY_TIME","CONT_DOY","CONT_DATE","CONT_TIME","FIRE_SIZE","STAT_CAUSE_DESCR","COUNTY","FIPS_NAME"] 
@@ -541,7 +559,7 @@ if page == pages[3] :
     with col1:
       st.write("#### Distribution initiale des causes de feux")
       count = Fires_ML["STAT_CAUSE_DESCR_1"].value_counts()
-      color = ["blue", "orange", "yellow", "blue", "blue", "blue", "blue", "blue", "blue", "blue", "blue"]
+      color = ["blue", "orange", "red", "blue", "blue", "blue", "blue", "blue", "blue", "blue", "blue"]
       fig, ax = plt.subplots(figsize=(12, 9), facecolor='none') 
       ax.bar(count.index, count.values, label = Fires_ML["STAT_CAUSE_DESCR_1"].unique(), color=color)
       ax.set_facecolor('none') 
@@ -549,17 +567,18 @@ if page == pages[3] :
       ax.set_ylabel("COUNT", fontsize=20)
       ax.set_xticks(range(len(count.index)))
       ax.set_xticklabels(count.index, rotation=75, fontsize=18)
-      # ax.set_yticklabels(count.values, fontsize=40)
       ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
       st.pyplot(fig)
-      st.write("""On observe un grand déséquilibre du jeu de données. Ce qui va rendre complexe la prédiction de l'analyse.
-               Les feux Missing/Undefined et Miscellaneous représentent environ le quart des données. 
-               Compte tenu de leur caractère inerte par rapport à l'objectif de l'étude, nous les supprimerons.
-               Pour les diverses qui peuvent se ressembler, nous procéderons à leur regroupement dans une cause parente""")
+      st.markdown("""<div style="text-align: justify;">
+                  On observe un grand déséquilibre du jeu de données. Ce qui va rendre complexe la prédiction de l'analyse.
+                  Les feux Missing/Undefined et Miscellaneous représentent environ le quart des données.
+                  Compte tenu de leur caractère inerte par rapport à l'objectif de l'étude, nous les supprimerons.
+                  Pour les diverses qui peuvent se ressembler, nous procéderons à leur regroupement dans une cause parente
+                  </div>""", unsafe_allow_html=True)
     with col2:
       st.write("#### Distribution des causes après regroupement")
       count2 = Fires_ML["STAT_CAUSE_CODE"].value_counts()
-      color = ["blue", "orange", "yellow"]
+      color = ["blue", "orange", "red"]
       fig, ax = plt.subplots(figsize=(12, 9), facecolor='none')  
       ax.bar(count2.index, count2.values, color=color)
       ax.set_facecolor('none') 
@@ -573,9 +592,9 @@ if page == pages[3] :
       st.write("Suppresion des causses non-définies : Missing/Undefined, Miscellaneous, Others")
       st.write("""
                Regroupement des feux en 3 principales causes :
-               - **Humaine (0)** : Debris burning, Campfire, Children, Smoking, Equipment Use, Railroad, Powerline, Structure, Fireworks"
-               - **Criminelle (1)** : Arson"
-               - **Naturelle (2)** : Ligthning
+               - **:blue[Humaine] (0)** : Debris burning, Campfire, Children, Smoking, Equipment Use, Railroad, Powerline, Structure, Fireworks"
+               - **:red[Criminelle] (1)** : Arson"
+               - **:orange[Naturelle] (2)** : Ligthning
                """)
 
   ######################################################################################################################################################################
@@ -662,8 +681,6 @@ if page == pages[3] :
     overall_col = X_train_final.columns
     return X_train_final, X_test_final, overall_col
   X_train_final, X_test_final, overall_col = X_concat(num_train_imputed, num_test_imputed, circular_train, circular_test)
-  y_train.to_csv("y_train.csv", index=False)
-  y_test.to_csv("y_test.csv", index=False)
 
 
   # Réduction du modèle avec la méthode feature importances
@@ -813,103 +830,7 @@ if page == pages[3] :
   
 
     # FIPS CODE par STATE
-  def ETAT(nom_etat):
-    if nom_etat == "Alabama":
-      alabama_fips_code = X_train_final.loc[X_train_final["STATE_Alabama"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Alaska":
-      Alaska_fips_code = X_train_final.loc[X_train_final["STATE_Alaska"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Arizona":
-      Arizona_fips_code = X_train_final.loc[X_train_final["STATE_Arizona"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Arkansas":
-      Arkansas_fips_code = X_train_final.loc[X_train_final["STATE_Arkansas"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "California":
-      California_fips_code = X_train_final.loc[X_train_final["STATE_California"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Colorado":
-      Colorado_fips_code = X_train_final.loc[X_train_final["STATE_Colorado"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Delaware":
-      Delaware_fips_code = X_train_final.loc[X_train_final["STATE_Delaware"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Florida":
-      Florida_fips_code = X_train_final.loc[X_train_final["STATE_Florida"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Georgia":
-      Georgia_fips_code = X_train_final.loc[X_train_final["STATE_Georgia"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Idaho":
-      Idaho_fips_code = X_train_final.loc[X_train_final["STATE_Idaho"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Illinois":
-      Illinois_fips_code = X_train_final.loc[X_train_final["STATE_Illinois"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Indiana":
-      Indiana_fips_code = X_train_final.loc[X_train_final["STATE_Indiana"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Iowa":
-      Iowa_fips_code = X_train_final.loc[X_train_final["STATE_Iowa"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Kansas":
-      Kansas_fips_code = X_train_final.loc[X_train_final["STATE_Kansas"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Kentucky":
-      Kentucky_fips_code = X_train_final.loc[X_train_final["STATE_Kentucky"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Louisiana":
-      Louisiana_fips_code = X_train_final.loc[X_train_final["STATE_Louisiana"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Maine":
-      Maine_fips_code = X_train_final.loc[X_train_final["STATE_Maine"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Maryland":
-      Maryland_fips_code = X_train_final.loc[X_train_final["STATE_Maryland"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Massachusetts":
-      Massachusetts_fips_code = X_train_final.loc[X_train_final["STATE_Massachusetts"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Michigan":
-      Michigan_fips_code = X_train_final.loc[X_train_final["STATE_Michigan"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Minnesota":
-      Minnesota_fips_code = X_train_final.loc[X_train_final["STATE_Minnesota"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Mississippi":
-      Mississippi_fips_code = X_train_final.loc[X_train_final["STATE_Mississippi"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Missouri":
-      Missouri_fips_code = X_train_final.loc[X_train_final["STATE_Missouri"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Montana":
-      Montana_fips_code = X_train_final.loc[X_train_final["STATE_Montana"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Nebraska":
-      Nebraska_fips_code = X_train_final.loc[X_train_final["STATE_Nebraska"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Nevada":
-      Nevada_fips_code = X_train_final.loc[X_train_final["STATE_Nevada"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "New Hampshire":
-      New_Hampshire_fips_code = X_train_final.loc[X_train_final["STATE_New Hampshire"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "New Jersey":
-      New_Jersey_fips_code = X_train_final.loc[X_train_final["STATE_New Jersey"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "New Mexico":
-      New_Mexico_fips_code = X_train_final.loc[X_train_final["STATE_New Mexico"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "New York":
-      New_York_fips_code = X_train_final.loc[X_train_final["STATE_New York"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "North Carolina":
-      North_Carolina_fips_code = X_train_final.loc[X_train_final["STATE_North Carolina"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "North Dakota":
-      North_Dakota_fips_code = X_train_final.loc[X_train_final["STATE_North Dakota"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Ohio":
-      Ohio_fips_code = X_train_final.loc[X_train_final["STATE_Ohio"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Oklahoma":
-      Oklahoma_fips_code = X_train_final.loc[X_train_final["STATE_Oklahoma"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Oregon":
-      Oregon_fips_code = X_train_final.loc[X_train_final["STATE_Oregon"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Pennsylvania":
-      Pennsylvania_fips_code = X_train_final.loc[X_train_final["STATE_Pennsylvania"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Rhode Island":
-      Rhode_Island_fips_code = X_train_final.loc[X_train_final["STATE_Rhode Island"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "South Carolina":
-      South_Carolina_fips_code = X_train_final.loc[X_train_final["STATE_South Carolina"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "South Dakota":
-      South_Dakota_fips_code = X_train_final.loc[X_train_final["STATE_South Dakota"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Tennessee":
-      Tennessee_fips_code = X_train_final.loc[X_train_final["STATE_Tennessee"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Texas":
-      Texas_fips_code = X_train_final.loc[X_train_final["STATE_Texas"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Utah":
-      Utah_fips_code = X_train_final.loc[X_train_final["STATE_Utah"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Vermont":
-      Vermont_fips_code = X_train_final.loc[X_train_final["STATE_Vermont"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Virginia":
-      Virginia_fips_code = X_train_final.loc[X_train_final["STATE_Virginia"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Washington":
-      Washington_fips_code = X_train_final.loc[X_train_final["STATE_Washington"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "West Virginia":
-      West_Virginia_fips_code = X_train_final.loc[X_train_final["STATE_West Virginia"] == 1, "FIPS_CODE"].unique()
-    elif nom_etat == "Wisconsin":
-      Wisconsin_fips_code = X_train_final.loc[X_train_final["STATE_Wisconsin"] == 1, "FIPS_CODE"].unique()
-    elif STATE == "Wyoming":
-      Wyoming_fips_code = X_train_final.loc[X_train_final["STATE_Wyoming"] == 1, "FIPS_CODE"].unique()
+
   ######################################################################################################################################################################
   ### Code pour l'interface streamlit ##################################################################################################################################
   ######################################################################################################################################################################  
@@ -1043,7 +964,10 @@ if page == pages[3] :
         model = joblib.load("clf_DecTree_best_model.joblib")
       y_pred = model.predict(X_test_final[feat_imp])
       accuracy = model.score(X_test_final[feat_imp], y_test)
-      st.write("Accuracy", round(accuracy, 4))
+      cm = np.round(confusion_matrix(y_test, y_pred, normalize = "true"), 4)
+      recall = np.diag(cm) / np.sum(cm, axis = 1)
+      st.write("Test Accuracy", round(accuracy, 4))
+      st.write("Test Recall", round(np.mean(recall), 4))
       
       # Tracé des graphes (Feature Importances, Matrice de confusion, Precision-Recall)
       col1, col2, col3 = st.columns(3, gap="small", vertical_alignment="center") #
@@ -1060,8 +984,7 @@ if page == pages[3] :
       with col2:
           with st.container(height=500):
               #st.subheader("Matrice de Confusion")
-              cm = np.round(confusion_matrix(y_test, y_pred, normalize = "true"), 4)
-              figML = px.imshow(cm, labels={"x": "Classes Prédites", "y": "Classes réelles"}, width=400, height=400, text_auto=True)  
+              figML = px.imshow(cm, labels={"x": "Classes Prédites", "y": "Classes réelles"}, color_continuous_scale = "RdYlGn", width=400, height=400, text_auto=True)  
               figML.update_layout(title='Confusion Matrix', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', width=1000, height=500, legend=dict(
                   x=0.5, y=1.05, orientation="h", xanchor="center", yanchor="bottom", font=dict(family="Arial", size=15, color="black")),
                 margin=dict(l=100, r=100, t=100, b=100), titlefont=dict(size=20))
@@ -1075,6 +998,7 @@ if page == pages[3] :
               elif hasattr(model, "coef_"):
                   avg_importance_values = np.mean(np.abs(model.coef_), axis = 0)
                   feat_imp = pd.Series(avg_importance_values, index=X_test_final.columns).sort_values(ascending=True)
+              feat_imp = feat_imp.loc[feat_imp.values > 0]
               fig = px.bar(feat_imp, x=feat_imp.values, y=feat_imp.index, orientation='h')
               fig.update_layout(title='Feature Importance',
                                 xaxis_title='Importance',
@@ -1119,9 +1043,13 @@ if page == pages[3] :
                                         min_samples_split = min_samples_split,
                                         min_samples_leaf = min_samples_leaf,
                                         class_weight = classes_weights).fit(X_train_final, y_train)
-      st.write("Le score d'entrainement est :", np.round(model.score(X_train_final, y_train), 4))
+      # st.write("Le score d'entrainement est :", np.round(model.score(X_train_final, y_train), 4))
       y_pred = model.predict(X_test_final)
-      st.write("Le score de test est :", np.round(model.score(X_test_final, y_test), 4))
+      cm = np.round(confusion_matrix(y_test, y_pred, normalize = "true"), 4)
+      accuracy = np.round(model.score(X_test_final, y_test), 4)
+      recall = np.diag(cm) / np.sum(cm, axis = 1)
+      st.write("Test Accuracy", round(accuracy, 4))
+      st.write("Test Recall :", round(np.mean(recall), 4))
       
       # Tracé des graphes
       col1, col2 = st.columns(2, gap="small", vertical_alignment="center") #
@@ -1138,8 +1066,7 @@ if page == pages[3] :
       with col1:
           with st.container(height=500):
               #st.subheader("Matrice de Confusion")
-              cm = np.round(confusion_matrix(y_test, y_pred, normalize = "true"), 4)
-              figML = px.imshow(cm, labels={"x": "Classes Prédites", "y": "Classes réelles"}, width=400, height=400, text_auto=True)
+              figML = px.imshow(cm, labels={"x": "Classes Prédites", "y": "Classes réelles"}, color_continuous_scale = "RdYlGn", width=400, height=400, text_auto=True)
               #layout = go.Layout(title='Confusion Matrix', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')  
               figML.update_layout(title='Confusion Matrix', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', width=1000, height=500, legend=dict(
                   x=0.5, y=1.05, orientation="h", xanchor="center", yanchor="bottom", font=dict(family="Arial", size=15, color="black")),
@@ -1197,7 +1124,7 @@ if page == pages[3] :
       y_pred.loc[y_pred["FIRE CAUSE"] == 2, "FIRE CAUSE"] = "Naturelle 🌩️"
       st.dataframe(y_pred)
 
-
+# Modèles de prédiction des classes
 if page == pages[4] :  
 
  @st.cache_data(persist=True)
@@ -1491,7 +1418,8 @@ if page == pages[4] :
      st.image("feu_rouge.jpg",width=40)
     with col2:
      st.markdown(":red[Probabilité classe 1 > 50%]")
-  
+
+# Conclusion
 if page == pages[5] : 
   #  st.write("### Conclusion")
   st.write("### Conclusion et propositions d’optimisation")
@@ -1513,12 +1441,4 @@ Ce projet a démontré l'importance de la data analysis et du machine learning d
 En termes d'expertise, ce projet nous a permis de développer nos compétences en Python et en modélisation via le Machine Learning, des domaines nouveaux pour la plupart d'entre nous. Nous avons également appris à utiliser des outils interactifs comme Streamlit pour la restitution de nos résultats.
 Pour aller plus loin, il serait bénéfique de collaborer avec des spécialistes en lutte contre les incendies de forêt pour affiner nos modèles et mieux comprendre les enjeux opérationnels. De plus, l'intégration de données météorologiques plus précises pourrait améliorer encore davantage les performances de nos modèles.
 En conclusion, ce projet nous a permis de mettre en pratique les compétences acquises durant notre formation et de contribuer à un enjeu crucial de préservation de l'environnement et de sécurité publique.
-""")
-# Ajout des informations en bas de la barre latérale
-st.sidebar.write("""
-### Promotion Data Analyst - Février 2024
-- Marie-Laure MAILLET
-- Gigi DECORMON
-- Adoté Sitou BLIVI
-- Amilcar LOPEZ TELLEZ
 """)
