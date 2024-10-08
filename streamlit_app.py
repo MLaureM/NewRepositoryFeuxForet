@@ -972,7 +972,7 @@ if page == pages[3] :
       # Tracé des graphes (Feature Importances, Matrice de confusion, Precision-Recall)
       col1, col2, col3 = st.columns(3, gap="small", vertical_alignment="center") #
       with col3:
-          with st.container(height=500):
+          with st.container():
               #st.subheader("Courbe Precision Recall")
               fig= multiclass_PR_curve(model, X_test_final[feat_imp], y_test) 
               fig.update_layout({
@@ -982,7 +982,7 @@ if page == pages[3] :
               st.plotly_chart(fig)   
             
       with col2:
-          with st.container(height=500):
+          with st.container():
               #st.subheader("Matrice de Confusion")
               figML = px.imshow(cm, labels={"x": "Classes Prédites", "y": "Classes réelles"}, color_continuous_scale = "RdYlGn", width=400, height=400, text_auto=True)  
               figML.update_layout(title='Confusion Matrix', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', width=1000, height=500, legend=dict(
@@ -991,7 +991,7 @@ if page == pages[3] :
               st.plotly_chart(figML)
 
       with col1:
-          with st.container(height=500):
+          with st.container():
               #st.subheader("Feature Importance")
               if hasattr(model, 'feature_importances_'):
                   feat_imp = pd.Series(model.feature_importances_, index=X_test_final.columns).sort_values(ascending=True)
@@ -1054,7 +1054,7 @@ if page == pages[3] :
       # Tracé des graphes
       col1, col2 = st.columns(2, gap="small", vertical_alignment="center") #
       with col2:
-          with st.container(height=500):
+          with st.container():
               #st.subheader("Courbe Precision Recall")
               fig= multiclass_PR_curve(model, X_test_final, y_test) 
               fig.update_layout({
@@ -1064,7 +1064,7 @@ if page == pages[3] :
               st.plotly_chart(fig)   
             
       with col1:
-          with st.container(height=500):
+          with st.container():
               #st.subheader("Matrice de Confusion")
               figML = px.imshow(cm, labels={"x": "Classes Prédites", "y": "Classes réelles"}, color_continuous_scale = "RdYlGn", width=400, height=400, text_auto=True)
               #layout = go.Layout(title='Confusion Matrix', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')  
