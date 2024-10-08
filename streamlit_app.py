@@ -36,6 +36,7 @@ from sklearn.metrics import roc_curve
 from sklearn.model_selection import GridSearchCV, train_test_split, StratifiedKFold, cross_val_score
 from sklearn import model_selection
 from sklearn import tree
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import precision_recall_curve, auc, PrecisionRecallDisplay, average_precision_score, roc_auc_score  
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.ensemble import GradientBoostingClassifier
@@ -96,7 +97,7 @@ def load_data():
 df=load_data()
 
 st.sidebar.title("Sommaire")
-pages=["Contexte et présentation", "Preprocessing", "DataVizualization", "Prédiction causes de feux", "Prédiction classes de feux", "Conclusion"]
+pages=["Contexte et présentation", "Preprocessing", "DataVizualization", "Prédiction des causes de feux", "Prédiction des classes de feux", "Conclusion"]
 page=st.sidebar.radio("Aller vers", pages)
 
 # Création contenu de la première page (page 0) avec le contexte et présentation du projet
@@ -272,6 +273,7 @@ if page == pages[2] :
   st.subheader("3 - Répartition temporelle des feux")
   st.write("Cet axe révèle assez clairement des périodes à risque sur les départs et la gravité des feux")
 #Histogrammes année
+  st.write("**Variabilité annuelle**")
   st.write("Certaines années semblent clairement plus propices aux départs de feux. Cela peut s’expliquer par les conditions météorologiques. On observe notamment que les années où les surfaces brûlées sont significativement supérieures à la moyenne cela est dû à la foudre")
   #if st.checkbox("Afficher graphiques année") :
     #fig2 = make_subplots(rows=1, cols=2, shared_yaxes=False,subplot_titles=("Surfaces brûlées (acres)","Nombre de départs"))
@@ -310,6 +312,7 @@ if page == pages[2] :
     fig3bis=graph_annee_nombre()
     fig3bis
 #Histogrammes mois
+  st.write("**Périodes à risque**")
   st.write("Les mois de juin à août sont les plus dévastateurs ce qui qui peut sous-entendre 2 facteurs : un climat plus favorable aux départs de feux, des activités humaines à risque plus élevées pendant les périodes de vacances")
   #if st.checkbox("Afficher graphiques mois") :
   @st.cache_data(persist=True)
@@ -329,6 +332,7 @@ if page == pages[2] :
 
 
 #Histogrammes jour semaine
+  st.write("**Corrélation avec les feux d’origine humaine**")   
   st.write("On observe également des départs de feux significativement plus élevés le week-end. Ce qui peut être mis en corrélation avec les feux d'origine humaine déclenchés par des activités à risque plus propices en périodes de week-end (feux de camps...)")
   #if st.checkbox("Afficher graphiques jour de la semaine") :
   @st.cache_data(persist=True)
@@ -368,6 +372,7 @@ if page == pages[2] :
 
 # Durée moyenne
   st.write('L’analyse de la durée des feux par cause montre une certaine hétérogénéité de la durée des feux en fonction de la cause. Les feux liés à la foudre sont en moyenne deux fois plus longs à contenir que les autres types de feux')
+  st.write("La Foudre : Les feux déclenchés par la foudre sont souvent situés dans des zones difficiles d’accès, ce qui complique les efforts de lutte contre les incendies. De plus, ces feux peuvent se propager rapidement en raison des conditions météorologiques associées aux orages, comme les vents forts.")
   #if st.checkbox("Afficher graphiques par durée") :
   @st.cache_data(persist=True)
   def durée(): 
@@ -383,7 +388,7 @@ if page == pages[2] :
       x='BURN_TIME',
       y='STAT_CAUSE_DESCR',
       labels={"STAT_CAUSE_DESCR": "Cause", "BURN_TIME": "Durée moyenne (jours)"},
-      title='Durée moyenne de feux par cause',
+      title='Durée moyenne des feux par cause',
       orientation='h',  # Horizontal orientation
       color='STAT_CAUSE_DESCR',
       color_discrete_sequence=px.colors.sequential.Reds_r)
@@ -396,6 +401,9 @@ if page == pages[2] :
  
   st.subheader("4 - Répartition géographique")
   st.markdown("On observe une densité plus élevée de surfaces brûlées à l’ouest des États-Unis, ce qui pourrait être attribué à divers facteurs tels que le climat, la végétation et les activités humaines.")
+  st.markdown("**Facteurs Climatiques**- périodes de sécheresse prolongées")
+  st.markdown("**Végétations**- type de végétation vulnérables aux feux et contribule à la propagation des feux")
+  st.markdown("**Activités humaines**- l’urbanisation croissante dans les zones à risque, les pratiques agricoles, et les loisirs en plein air augmentent la probabilité de départs de feux")
   @st.cache_data(persist=True)
   def load_FiresClasse():
     Fires_bis = df
@@ -497,6 +505,8 @@ if page == pages[2] :
 #style.use('ggplot')
   
   #if st.checkbox("Afficher heatmap") :
+  st.write('Cette matrice permet d’identifier quelles variables ont de fortes corrélations entre elles, ce qui nous aide à **sélectionner les caractéristiques les plus pertinentes** pour notre modèle de Machine Learning.')
+  st.write('Elles nous permettent de **comprendre les relations entre les variables**, d’améliorer la performance et l’interprétabilité du modèle en réduisant le bruit et en se concentrant sur les variables les plus influentes.')
   @st.cache_data(persist=True)
   def heat_map():
     df_Fires_ML_num = df.select_dtypes(include=[np.number])
@@ -512,6 +522,8 @@ if page == pages[2] :
     return fig7b
   fig7b=heat_map()
   fig7b 
+
+  st.write("En analysant ces données plus en détail, on peut mieux comprendre les facteurs qui contribuent aux feux. Ces données soulignent l’importance de la prévention des feux de foret d’origine humaine et de la gestion des risques naturels pour minimiser les dégâts causés par les feux de forêt.")
   
 # Modèles de prédiction des causes
 if page == pages[3] : 
@@ -523,9 +535,11 @@ if page == pages[3] :
   Fires_ML = Fires35.drop(Drop_col_ML, axis = 1)
   # Suppression des lignes de "STATE", "AVG_TEMP [°C]", "AVG_PCP [mm]" ayant des données manquantes 
   Fires_ML = Fires_ML.dropna(subset = ["STATE", "AVG_TEMP [°C]", "AVG_PCP [mm]"])
-  # Création d'une checkbox pour afficher ou non le jeu de données ML
-  if st.checkbox("Affichage du jeu de données pour Machine Learning") :
-    st.dataframe(Fires_ML.head(50))
+
+  st.subheader("Objectif 🎯", divider="blue") 
+  st.write("""L'objectif de cette section est de :
+  - définir les causes de feux
+  - construire des modèles de prédictions capables de déterminer la cause d'un feu à partir des caractéristiques de celui-ci.""")
   
   # Création d'une checkbox pour afficher la distribution des causes avant et après regroupement
   # Nouvelle distribution des causes suite au regroupement des causes initiales
@@ -539,17 +553,18 @@ if page == pages[3] :
   Fires_test2 = Fires_ML.iloc[-200:, :]
   Fires_ML = Fires_ML.iloc[:-200, :]
 
-  if st.checkbox("Regroupement des causes de feux"):
+  st.subheader("Regroupement des causes 🗂️", divider="blue") 
+  if st.checkbox("Cliquez pour voir les causes de feux"):
     col1, col2= st.columns(spec = 2, gap = "large")
     with col1:
-      st.write("### Distribution initiale des causes de feux")
+      st.write("#### Distribution initiale des causes de feux")
       count = Fires_ML["STAT_CAUSE_DESCR_1"].value_counts()
       color = ["blue", "orange", "red", "blue", "blue", "blue", "blue", "blue", "blue", "blue", "blue"]
       fig, ax = plt.subplots(figsize=(12, 9), facecolor='none') 
       ax.bar(count.index, count.values, label = Fires_ML["STAT_CAUSE_DESCR_1"].unique(), color=color)
       ax.set_facecolor('none') 
       fig.patch.set_alpha(0.0) 
-      ax.set_ylabel("COUNT", fontsize=25)
+      ax.set_ylabel("COUNT", fontsize=20)
       ax.set_xticks(range(len(count.index)))
       ax.set_xticklabels(count.index, rotation=75, fontsize=18)
       ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
@@ -561,16 +576,16 @@ if page == pages[3] :
                   Pour les diverses qui peuvent se ressembler, nous procéderons à leur regroupement dans une cause parente
                   </div>""", unsafe_allow_html=True)
     with col2:
-      st.write("### Distribution des causes après regroupement")
+      st.write("#### Distribution des causes après regroupement")
       count2 = Fires_ML["STAT_CAUSE_CODE"].value_counts()
       color = ["blue", "orange", "red"]
       fig, ax = plt.subplots(figsize=(12, 9), facecolor='none')  
       ax.bar(count2.index, count2.values, color=color)
       ax.set_facecolor('none') 
       fig.patch.set_alpha(0.0) 
-      ax.set_ylabel("COUNT", fontsize = 25)
+      ax.set_ylabel("COUNT", fontsize = 20)
       ax.set_xticks([0, 1, 2])
-      ax.set_xticklabels(["Humaine", "Criminelle", "Naturelle"], rotation = 25, fontsize = 25)
+      ax.set_xticklabels(["Humaine", "Criminelle", "Naturelle"], rotation = 25, fontsize = 18)
       ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
       st.pyplot(fig)
 
@@ -826,7 +841,8 @@ if page == pages[3] :
   ###################################
   ### Test des différents modèles ###
   ###################################
-  if st.checkbox("METIER : Voulez-vous tester les différents modèles ?"):
+  st.subheader("Développement METIER - A vous de jouer :smiley:", divider="blue") 
+  if st.checkbox("Voulez-vous tester les différents modèles ?"):
     Feature_importances = st.sidebar.radio("Voulez-vous réduire la dimension du jeu ?", ("Oui", "Non"), horizontal=True)
     if Feature_importances == "Oui":
       feat_imp = model_reduction(classifier, X_train_final, y_train)
@@ -896,16 +912,7 @@ if page == pages[3] :
       max_depth = st.sidebar.slider("Veuillez choisir la profondeur de l'arbre", 10, 200, 10, 10)
       min_samples_split = st.sidebar.slider("Veuillez choisir la profondeur de l'arbre", 10, 50, 20, 5)
       min_samples_leaf = st.sidebar.slider("Veuillez choisir la profondeur de l'arbre", 10, 100, 50, 5)
-    ####################################
-    ###  Modèle K-Nearest Neighbors  ###
-    ####################################
-    elif classifier == "KNN":
-      st.write("KNN")
-    ####################################
-    ###   Modèle Gradient Boosting   ###
-    ####################################
-    elif classifier == "Gradient Boosting":
-      st.write("Gradient Boosting")
+
 
     # Création d'un bouton pour le modèle avec les meilleurs paramètres
     if st.sidebar.button("Best Model Execution"):
@@ -1076,6 +1083,7 @@ if page == pages[3] :
   #   st.dataframe(Fires_test2)
 
   # Saisie des nouvelles données et prédiction des causes
+  st.subheader("Prédiction 🔎", divider="blue") 
   if st.checkbox("PRODUCTION : Nouvelle prédiction"):
     df = pd.DataFrame(columns=["FIRE_YEAR", "LATITUDE", "LONGITUDE", "FIPS_CODE", "AVG_TEMP", "AVG_PCP", "DURATION", "FIRE_SIZE_CLASS", "STATE", "MONTH_DISCOVERY", "DISCOVERY_WEEK", "DAY_OF_WEEK_DISCOVERY"])
     STATE = Fires_ML["STATE"].unique()
@@ -1111,9 +1119,9 @@ if page == pages[3] :
           clf = best_DecTree_raw_model(X_train_final, y_train)
       y_pred = clf.predict(input_data_ML)
       y_pred = pd.DataFrame(y_pred, columns = ["FIRE CAUSE"], index = input_data.index)
-      y_pred.loc[y_pred["FIRE CAUSE"] == 0, "FIRE CAUSE"] = "Humaine"
-      y_pred.loc[y_pred["FIRE CAUSE"] == 1, "FIRE CAUSE"] = "Criminelle"
-      y_pred.loc[y_pred["FIRE CAUSE"] == 2, "FIRE CAUSE"] = "Naturelle"
+      y_pred.loc[y_pred["FIRE CAUSE"] == 0, "FIRE CAUSE"] = "Humaine 🧑"
+      y_pred.loc[y_pred["FIRE CAUSE"] == 1, "FIRE CAUSE"] = "Criminelle 🦹🏻‍♂️🔥"
+      y_pred.loc[y_pred["FIRE CAUSE"] == 2, "FIRE CAUSE"] = "Naturelle 🌩️"
       st.dataframe(y_pred)
 
 # Modèles de prédiction des classes
