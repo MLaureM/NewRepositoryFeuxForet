@@ -7,3 +7,4 @@ seaborn
 requests
 xgboost
 streamlit_folium
+plotly==5.10.0
