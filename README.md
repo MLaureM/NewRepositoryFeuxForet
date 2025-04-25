@@ -1,6 +1,6 @@
 # 🔥 Projet prédiction feux de forêt aux USA
 
-Cette application vise à prédire la cause des feux de forêt ainsi que la probabilité qu'un feu atteigne une taille critique. 
+Cette application vise à prédire la cause des feux de forêt aux USA ainsi que la probabilité qu'un feu atteigne une taille critique. 
 
 ## Demo App
 
